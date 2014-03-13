@@ -1,0 +1,81 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link type="text/css" rel="stylesheet" href="rickshaw.min.css">
+<link type="text/css" rel="stylesheet" href="css.css">
+<script src="d3.v3.js"></script>
+<script src="rickshaw.js"></script>
+<script type="text/javascript" src="lastwave.js"></script>
+</head>
+<body>
+<div id="chart"><div id="band_names"></div></div>
+<div id="legend"></div>
+<script>
+
+var palette = new Rickshaw.Color.Palette( { scheme: 'lastwave' } );
+var include_artists = [];
+for(artist in userdata){
+	include_artists.push(artist);
+}
+
+var series_data = [];
+
+for(a=0;a<include_artists.length;a++){
+	//Artist name
+	selected_artist = include_artists[a];
+	
+	//Hold all the coordinate information in this temporary variable
+	var tempdata = [];
+	
+	//Populate tempdata
+	for(i=1;i<userdata[selected_artist].length;i++){
+		if(userdata[selected_artist][i] != undefined){
+			tempdata[i-1] = { x: userdata[selected_artist][i][0], y: userdata[selected_artist][i][1]}
+		}
+	}
+	
+	//Populate series_data (each part is an artist)
+	series_data[a]= {color:palette.color(),name: selected_artist,data: tempdata};
+	
+	}
+var graph = new Rickshaw.Graph( {
+    element: document.querySelector("#chart"), 
+    width: 3000, 
+    height: 2000, 
+	renderer: 'area',
+	offset: 'wiggle',
+	stroke: true,
+	preserve: true,
+    series: series_data
+});
+
+
+graph.render();
+
+//Add labels to the graph
+
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph,
+	xFormatter: function(x) {
+		hoverDetail.currentX = 375;
+		hoverDetail.currentY = 550;
+		return "test";
+	}
+} );
+var  artistnames = [];
+for(i=0;i<include_artists.length;i++){
+	artist_name = include_artists[i];
+	x_value_for_max_point = parseInt(userdata[artist_name][0][0]) - 1;
+	//alert(artist_name + "-"+x_value_for_max_point+" && "+(((x_value_for_max_point)*3)+1));
+	y_value_for_max_point = parseInt(graph.series[i].path.getElementsByTagName("path")[0].getAttribute("d").split(',')[(((x_value_for_max_point)*3)+1)]);
+	x_value_for_max_point *= 375;
+	x_value_for_max_point -= 50;
+	artistnames.push(artist_name);
+	document.getElementById("band_names").innerHTML += "<span id='"+selected_artist+"' style='position:absolute;top:"+y_value_for_max_point+";left:"+x_value_for_max_point+"'>"+artist_name+"</span>";
+}
+
+
+
+</script>
+</body>
+</html>

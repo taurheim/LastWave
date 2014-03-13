@@ -1,0 +1,17 @@
+.artist_label {
+	height: 30px;
+	width: 500px;
+	position: absolute;
+	color: #fff;
+}
+
+.rickshaw_graph .detail {
+	background: none !important;
+}
+
+#band_names {
+	height: 30px;
+	width: 150px;
+	position: absolute;
+	color: #fff;
+}

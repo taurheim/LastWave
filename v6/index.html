@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<!--
+This is a proof-of-concept demo for saving d3js graphics as PDF/PNG/SVG files.
+
+Copyright (C) 2012 by A. Gordon (gordon at cshl dot edu)
+All code written by me is released under BSD license: http://opensource.org/licenses/BSD-3-Clause
+(also uses several other libraries that have their own licenses).
+
+See here for more details:
+	https://github.com/agordon/d3export_demo
+
+See here for online demo:
+	http://d3export.cancan.cshl.edu/
+
+-->
+<head>
+<title>LastWave v5.0</title>
+<link type="text/css" rel="stylesheet" href="rickshaw.min.css">
+<link type="text/css" rel="stylesheet" href="css.css">
+<script src="d3.v3.js"></script>
+<script src="rickshaw.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="lastwave.js"></script>
+
+<!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
+     Original version is here: http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css -->
+<style>
+.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:bold}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:bold}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:bold}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+</style>
+</head>
+
+<body>
+
+<div class="titlebar">
+	<img class="center_block" src="logo.png"/>
+	<div id ="loading"></div>
+	<div id="box_1" class="center_block">
+		Last.fm Username:<input type="text" name="user" id="user" value="Taurheim"><br/><br/>
+		Data Range: <br/>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (Calendar goes here)<br/><br/>
+		Colour Scheme: 
+		<select id="scheme">
+			<option value="spectrum14">Spectrum 14</option>
+			<option value="spectrum2000">Spectrum 2000</option>
+			<option value="spectrum2001">Spectrum 2001</option>
+			<option value="lastwave">LastWave</option>
+			<option value="classic9">Classic 9</option>
+			<option value="httpStatus">httpStatus</option>
+			<option value="colorwheel">Color Wheel</option>
+			<option value="cool">Cool</option>
+			<option value="munin">Munin</option>
+		</select><br/><br/>
+		Number of plays to be included: <input type="text" name="plays" id="plays" value="10"/><br/><br/>
+		Dimensions: <input type="text" name="width" id="width" value="2000"/> x <input type="text" name="height" id="height" value="1000"/><br/><br/>
+		Artist Names?: <input type="checkbox" name="artist_names" id="artist_names" checked="true"/><br/><br/>
+		<center><input type="submit" value="Create Wave!" onclick="CreateWave()"></center>
+	</div>
+	<div id="box_2" class="center_block">
+		<br/>
+		<center>
+		<button class="btn btn-success" id="save_as_svg" value="">
+			Save as SVG</button>
+		<button class="btn btn-success" id="save_as_pdf" value="">
+			Save as PDF</button>
+		<button class="btn btn-success" id="save_as_png" value="">
+			Save as High-Res PNG</button>
+			</center>
+	</div>
+
+</div>
+
+<!-- ########### The Drawing Section ####### -->
+<div class='chart' id='ex1'></div>
+
+<!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
+     The form is populated and submitted by the JavaScript below. -->
+<form id="svgform" method="post" action="http://savas.ca/cgi-bin/download.pl">
+ <input type="hidden" id="output_format" name="output_format" value="">
+ <input type="hidden" id="data" name="data" value="">
+</form>
+
+
+</body>
+</html>

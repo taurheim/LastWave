@@ -1,0 +1,104 @@
+<!doctype html>
+<head>
+	<link type="text/css" rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css">
+	<link type="text/css" rel="stylesheet" href="../src/css/graph.css">
+	<link type="text/css" rel="stylesheet" href="../src/css/detail.css">
+	<link type="text/css" rel="stylesheet" href="../src/css/legend.css">
+	<link type="text/css" rel="stylesheet" href="css/extensions.css?v=2">
+
+	<script src="../vendor/d3.v3.js"></script>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.15/jquery-ui.min.js"></script>
+
+	<script src="../src/js/Rickshaw.js"></script>
+	<script src="../src/js/Rickshaw.Class.js"></script>
+	<script src="../src/js/Rickshaw.Graph.js"></script>
+	<script src="../src/js/Rickshaw.Graph.Renderer.js"></script>
+	<script src="../src/js/Rickshaw.Graph.Renderer.Area.js"></script>
+	<script src="../src/js/Rickshaw.Graph.Smoother.js"></script>
+	<script src="../src/js/Rickshaw.Fixtures.RandomData.js"></script>
+	<script src="../src/js/Rickshaw.Fixtures.Color.js"></script>
+	<script src="../src/js/Rickshaw.Color.Palette.js"></script>
+	<script src="../src/js/Rickshaw.Graph.HoverDetail.js"></script>
+
+	<script src="js/extensions.js"></script>
+</head>
+<body>
+
+<div id="content">
+	<div id="chart_container">
+		<div id="chart"></div>
+		<div id="timeline"></div>
+		<div id="preview"></div>
+	</div>
+
+</div>
+
+<script>
+
+// set up our data series with 150 random data points
+
+var seriesData = [ [], [], [], [], [], [], [], [], [] ];
+var random = new Rickshaw.Fixtures.RandomData(150);
+
+for (var i = 0; i < 150; i++) {
+	random.addData(seriesData);
+}
+
+var palette = new Rickshaw.Color.Palette( { scheme: 'classic9' } );
+
+// instantiate our graph!
+
+var graph = new Rickshaw.Graph( {
+	element: document.getElementById("chart"),
+	width: 900,
+	height: 500,
+	renderer: 'area',
+	stroke: true,
+	preserve: true,
+	series: [
+		{
+			color: palette.color(),
+			data: seriesData[0],
+			name: 'Moscow'
+		}, {
+			color: palette.color(),
+			data: seriesData[1],
+			name: 'Shanghai'
+		}, {
+			color: palette.color(),
+			data: seriesData[2],
+			name: 'Amsterdam'
+		}, {
+			color: palette.color(),
+			data: seriesData[3],
+			name: 'Paris'
+		}, {
+			color: palette.color(),
+			data: seriesData[4],
+			name: 'Tokyo'
+		}, {
+			color: palette.color(),
+			data: seriesData[5],
+			name: 'London'
+		}, {
+			color: palette.color(),
+			data: seriesData[6],
+			name: 'New York'
+		}
+	]
+} );
+
+graph.render();
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph,
+	xFormatter: function(x) {
+		return "test";
+	}
+} );
+
+
+</script>
+
+</body>

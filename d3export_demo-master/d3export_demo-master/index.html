@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<!--
+This is a proof-of-concept demo for saving d3js graphics as PDF/PNG/SVG files.
+
+Copyright (C) 2012 by A. Gordon (gordon at cshl dot edu)
+All code written by me is released under BSD license: http://opensource.org/licenses/BSD-3-Clause
+(also uses several other libraries that have their own licenses).
+
+See here for more details:
+	https://github.com/agordon/d3export_demo
+
+See here for online demo:
+	http://d3export.cancan.cshl.edu/
+
+-->
+<head>
+<title>Export d3js/SVG as SVG/PDF</title>
+<link type="text/css" rel="stylesheet" href="rickshaw.min.css">
+<link type="text/css" rel="stylesheet" href="css.css">
+<script src="d3.v3.js"></script>
+<script src="rickshaw.js"></script>
+<script type="text/javascript" src="lastwave.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap-combined.min.css" rel="stylesheet">
+<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/js/bootstrap.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/prettify/188.0.0/prettify.js"></script>
+
+<!-- couldn't find a CDN'd version of vkBeautify, so include it locally -->
+<script src="vkbeautify.0.99.00.beta.js"></script>
+
+<!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
+     Original version is here: http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css -->
+<style>
+.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:bold}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:bold}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:bold}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+
+<!-- ########### The Drawing Section ####### -->
+<div class="row">
+	<div class="span12">
+
+		<h2>d3js drawing</h2>
+		<!-- This will be the d3js drawing element -->
+		<div class='chart' id='ex1'></div>
+<div id="chart"><div id="band_names"></div></div>
+	</div>
+</div>
+
+
+<!-- ########### The Export Section ####### -->
+<div class="row">
+	<div class="span12">
+		<h2>Export Drawing</h2>
+
+		<br/>
+		<button class="btn btn-success" id="save_as_svg" value="">
+			Save as SVG</button>
+		<button class="btn btn-success" id="save_as_pdf" value="">
+			Save as PDF</button>
+		<button class="btn btn-success" id="save_as_png" value="">
+			Save as High-Res PNG</button>
+		<br>
+		<br>
+		SVG Code:<br>
+		<pre class="prettyprint lang-xml" id="svg_code">
+		</pre>
+	</div>
+</div>
+
+<!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
+     The form is populated and submitted by the JavaScript below. -->
+<form id="svgform" method="post" action="http://savas.ca/cgi-bin/download.pl">
+ <input type="hidden" id="output_format" name="output_format" value="">
+ <input type="hidden" id="data" name="data" value="">
+</form>
+
+
+</div> <!--container, end of Bootstrap-->
+
+<script type="text/javascript">
+
+/*
+   Utility function: populates the <FORM> with the SVG data
+   and the requested output format, and submits the form.
+*/
+function submit_download_form(output_format)
+{
+	// Get the d3js SVG element
+	var tmp = document.getElementById("ex1");
+	var svg = tmp.getElementsByTagName("svg")[0];
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+
+	// Submit the <FORM> to the server.
+	// The result will be an attachment file to download.
+	var form = document.getElementById("svgform");
+	form['output_format'].value = output_format;
+	form['data'].value = svg_xml ;
+	form.submit();
+}
+
+/*
+d3js Example code, based on the "Three Little Circles" tutorial:
+http://mbostock.github.com/d3/tutorial/circle.html
+*/
+function create_d3js_drawing()
+{
+	var data = [32, 57, 112],
+		dataEnter = data.concat(293),
+		dataExit = data.slice(0, 2),
+		w = 360,
+		h = 180,
+		x = d3.scale.ordinal().domain([57, 32, 112]).rangePoints([0, w], 1),
+		y = d3.scale.ordinal().domain(data).rangePoints([0, h], 2);
+
+	var svg = d3.select("#ex1").append("svg")
+		.attr("width", w)
+		.attr("height", h);
+/*
+	svg.selectAll(".little")
+		.data(data)
+		.enter().append("circle")
+		.attr("class", "little")
+		.attr("cx", x)
+		.attr("cy", y)
+		.attr("r", 12);
+*/
+	d3.select("#randomize").on("click", function() {
+		svg.selectAll(".little")
+			.transition()
+			.duration(750)
+			.attr("cx", function() { return Math.random() * w; })
+			.attr("cy", function() { return Math.random() * h; })
+			.attr("fill", function() { return '#'+Math.floor(Math.random()*16777215).toString(16); });
+		/* Random Hex Color in Javascript, from: http://paulirish.com/2009/random-hex-color-code-snippets/ */
+
+		// Show the new SVG code
+		show_svg_code();
+		});
+}
+function show_svg_code()
+{
+	// Get the d3js SVG element
+	var tmp  = document.getElementById("ex1");
+	var svg = tmp.getElementsByTagName("svg")[0];
+
+	// Extract the data as SVG text string
+	var svg_xml = (new XMLSerializer).serializeToString(svg);
+
+	//Optional: prettify the XML with proper indentations
+	svg_xml = vkbeautify.xml(svg_xml);
+
+	// Set the content of the <pre> element with the XML
+	$("#svg_code").text(svg_xml);
+
+	//Optional: Use Google-Code-Prettifier to add colors.
+	prettyPrint();
+}
+
+/*
+    One-time initialization
+*/
+$(document).ready(function() {
+	create_d3js_drawing();
+
+	// on first visit, randomize the positions & colors
+
+	// Attached actions to the buttons
+	$("#show_svg_code").click(function() { show_svg_code(); });
+
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+
+	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
+
+	$("#save_as_png").click(function() { submit_download_form("png"); });
+});
+</script>
+<script>
+
+var palette = new Rickshaw.Color.Palette( { scheme: 'lastwave' } );
+var include_artists = [];
+for(artist in userdata){
+	include_artists.push(artist);
+}
+
+var series_data = [];
+
+for(a=0;a<include_artists.length;a++){
+	//Artist name
+	selected_artist = include_artists[a];
+	
+	//Hold all the coordinate information in this temporary variable
+	var tempdata = [];
+	
+	//Populate tempdata
+	for(i=1;i<userdata[selected_artist].length;i++){
+		if(userdata[selected_artist][i] != undefined){
+			tempdata[i-1] = { x: userdata[selected_artist][i][0], y: userdata[selected_artist][i][1]}
+		}
+	}
+	
+	//Populate series_data (each part is an artist)
+	series_data[a]= {color:palette.color(),name: selected_artist,data: tempdata};
+	
+	}
+var graph = new Rickshaw.Graph( {
+    element: document.querySelector(".chart"), 
+    width: 3000, 
+    height: 3000, 
+	renderer: 'area',
+	offset: 'wiggle',
+	stroke: true,
+	preserve: true,
+    series: series_data
+});
+
+
+graph.render();
+
+//Add labels to the graph
+var abc=0
+var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+	graph: graph
+} );
+var  artistnames = [];
+for(i=0;i<include_artists.length;i++){
+	artist_name = include_artists[i];
+	x_point = userdata[artist_name][0][0];
+	x_value_for_max_point = parseInt(x_point) - 1;
+	y_value_for_max_point = 3000-parseInt(graph.series[i].stack[x_point-1].y0*5);
+	//alert(artist_name + "-"+x_value_for_max_point+" && "+(((x_value_for_max_point)*3)+1));
+	//y_value_for_max_point = parseInt(graph.series[i].path.getElementsByTagName("path")[0].getAttribute("d").split(',')[(((x_value_for_max_point)*3)+1)]);
+	x_value_for_max_point *= 333;
+	x_value_for_max_point -= 50;
+	if(x_value_for_max_point<=0) x_value_for_max_point=0;
+	hoverDetail.currentX = x_value_for_max_point;
+	hoverDetail.currentY = y_value_for_max_point;
+	console.log(artist_name+": "+x_point+"-- (x,y): ("+x_value_for_max_point+","+y_value_for_max_point+")");
+	//hoverDetail.update();
+	artistnames.push(artist_name);
+	
+	d3.select("#ex1").select("svg").append("text").text(artist_name).attr("x",x_value_for_max_point).attr("y",y_value_for_max_point);
+	//document.getElementById("band_names").innerHTML += "<span id='"+selected_artist+"' style='position:absolute;top:"+y_value_for_max_point+";left:"+x_value_for_max_point+"'>"+artist_name+"</span>";
+}
+
+
+</script>
+</body>
+</html>
