@@ -90,3 +90,7 @@
 	padding-left: 75px;
 	padding-right: 75px;
 }
+
+#start_date, #end_date {
+	width: 150px;
+}

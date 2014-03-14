@@ -18,6 +18,7 @@ See here for online demo:
 <title>LastWave v5.0</title>
 <link type="text/css" rel="stylesheet" href="rickshaw.min.css">
 <link type="text/css" rel="stylesheet" href="css.css">
+<link type="text/css" rel="stylesheet" href="jquery-ui-1.10.4.custom.min.css">
 <script src="d3.v3.js"></script>
 <script src="rickshaw.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
@@ -25,6 +26,7 @@ See here for online demo:
 <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/rgbcolor.js"></script> 
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
+<script type="text/javascript" src="jquery-ui-1.10.4.custom.min.js"></script>
 <script type="text/javascript" src="lastwave.js"></script>
 
 <!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
@@ -41,7 +43,10 @@ See here for online demo:
 	<div id ="loading"></div>
 	<div id="box_1" class="center_block">
 		Last.fm Username:<input type="text" name="user" id="user" value="Taurheim"><br/><br/>
-		Data Range: <br/>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (Calendar goes here)<br/><br/>
+		Data Range : <br/>
+		<input type="text" id="start_date"/> to 
+		<input type="text" id="end_date"/>
+		<br/><br/>
 		Colour Scheme: 
 		<select id="scheme">
 			<option value="spectrum14">Spectrum 14</option>

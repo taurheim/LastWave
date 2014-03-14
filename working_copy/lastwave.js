@@ -7,12 +7,28 @@ var showartistnames = true;
 var font_color = "black";
 var font_name = "Arial";
 var graph_type = "Wiggle";
+var time_start = 0;
+var time_end = 0;
 
+//Initialize datepickers
+$(function() {
+		$("#start_date").datepicker();
+		$("#end_date").datepicker();
+  });
 //TESTING
-var test_artist = "lejfaojefaoi";
-
+var test_artist = "The Shins";
 
 function CreateWave(){
+	//Format the date
+	rawdate = document.getElementById("start_date").value.split("/");
+	time_start = new Date(rawdate[2],parseInt(rawdate[0])-1,rawdate[1],"0","0","0","0").getTime()/1000;
+	time_start = round_week(time_start)-302400;
+	
+	rawdate = document.getElementById("end_date").value.split("/");
+	time_end = new Date(rawdate[2],parseInt(rawdate[0])-1,rawdate[1],"0","0","0","0").getTime()/1000;
+	time_end = round_week(time_end)-302400;
+	
+	
 	graph_height = parseInt(document.getElementById("height").value);
 	graph_width = parseInt(document.getElementById("width").value);
 	font_name = document.getElementById("font_name").value;
@@ -22,22 +38,24 @@ function CreateWave(){
 }
 var userdata = {};
 function loadXML(selected_user,min_playcount) {
+
 	xmlhttp=new XMLHttpRequest();
+	/*
 	xmlhttp.open("GET","http://ws.audioscrobbler.com/2.0/?method=user.getinfo&user="+selected_user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72",false);
 	xmlhttp.send();
 	userinfo = xmlhttp.responseXML;
 	var time_start = round_week(userinfo.getElementsByTagName("registered")[0].getAttribute('unixtime'))-302400-604800;
-	
+	*/
 	//Edited time start, last 10 weeks
-	time_start = 1386504000;
+	//time_start = round_week(time_start)-302400;
 	
-	var time_end = time_start+604800;
-	var current_time = round_week((new Date).getTime()/1000);
+	//var time_end = time_start+604800;
+	//var current_time = round_week(time_end);//round_week((new Date).getTime()/1000);//
 
 	//User Data variable. Store all the information here, then graph it.
 
 	//Calculate how many weeks the user has been on last.fm (we're going to run through the loop for every week)
-	var total_weeks = Math.ceil((current_time-time_start)/604800);
+	var total_weeks = Math.ceil((time_end-time_start)/604800);
 
 	//Run through every week, adding artists as we go
 	for(w=1;w<total_weeks;w++){
@@ -52,7 +70,7 @@ function loadXML(selected_user,min_playcount) {
 		week_data = xmlhttp.responseXML;
 		
 		//If there is an error, remove the point
-		if(week_data.getElementsByTagName("lfm")[0].getAttribute("status") != "ok"){
+		if((week_data.getElementsByTagName("lfm")[0].getAttribute("status") != "ok") || week_data.getElementsByTagName("lfm")[0].childNodes.length<=1){
 			console.log("Skipped Week "+w);
 			for(artist in userdata){
 				userdata[artist][w] = [w,0];
@@ -454,7 +472,7 @@ function drawLastWave() {
 				//Extra positioning to make up for curves
 				if(mC<1 && mC>0 && mD<-2){
 					y_value_for_max_point -= artist_name.height(fontsize+"px "+font_name);
-					console.log("Correcting");
+					//console.log("Correcting");
 				}
 			}
 			
@@ -464,13 +482,7 @@ function drawLastWave() {
 			// APPROACH: Find the max width line, assume that the box is centered around it, keep resizing the box until it fits
 			else if(((mA<=0)&&(mB<0)&&(mC<0)&&(mD<=0))||((mA>0)&&(mB>=0)&&(mC>=0)&&(mD>0))){
 				
-				console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
-				if(artist_name=="Pink Floyd"){
-					console.log("y = "+mA+"x + "+bA);
-					console.log("y = "+mB+"x + "+bB);
-					console.log("y = "+mC+"x + "+bC);
-					console.log("y = "+mD+"x + "+bD);
-				}
+				//console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				//Run through all y values, check width.
 				//maxWidth = [actual width, y value, left_coll]
 				maxWidth = [0,0];
@@ -566,7 +578,7 @@ function drawLastWave() {
 			// 5. From this new point, run steps 2-4 until the x point is similar each run.
 			//			y1									y2								y3							y4
 			else if((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)||(mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)||(mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)||(mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){
-				console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				//console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				//Let's get our starting point, and figure out the sign of our first line.
 				var start_point; //a or b
 				var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
@@ -681,7 +693,6 @@ function drawLastWave() {
 						(((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)) && ((bV-bQ)/(mQ-mV) > topleft.x) && (bV-bQ)/(mQ-mV) < a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < btmleft.y)
 					 ) {
 						start_point = previous_start_point;
-						console.log("Unexpected collision 1 - "+artist_name);
 						break;
 					 } else {
 					
@@ -711,7 +722,6 @@ function drawLastWave() {
 						//y4
 						(((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)) && ((bU-bX)/(mX-mU) > topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU > btmleft.y)
 					 ) {
-						console.log("Unexpected collision 2 - "+artist_name);
 						intersect2 = { "x": (bU - bX)/(mX - mU), "y": ((mU)*(bU - bX)/(mX - mU))+bU};
 					 } else {
 					
@@ -789,7 +799,7 @@ function drawLastWave() {
 				if(mC>-1 && mC<1 && mD<-2 && (y_value_for_max_point<(b.y-Math.abs(b.y-a.y)))){
 					x_value_for_max_point += "W".width(fontsize+"px "+font_name);
 					y_value_for_max_point -= (.5*artist_name.height(fontsize+"px "+font_name));
-					console.log("Corrected");
+					//console.log("Corrected");
 				}
 				//}
 				//fontsize = 25;
@@ -875,7 +885,7 @@ function drawLastWave() {
 			//fontsize=40;
 			//So, the equation for each line will be something like this: y = mA (x) + b
 			if(fontsize<8){
-				console.log(artist_name +" failed with a font size of "+fontsize);
+				//console.log(artist_name +" failed with a font size of "+fontsize);
 				continue;
 			}
 			d3.select("#ex1").select("svg").append("text").text(artist_name).attr("x",x_value_for_max_point).attr("y",y_value_for_max_point).attr("font-size",fontsize).attr("fill",font_color).attr("font-family",font_name);
