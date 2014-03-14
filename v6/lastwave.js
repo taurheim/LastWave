@@ -9,7 +9,7 @@ var font_name = "Arial";
 var graph_type = "Wiggle";
 
 //TESTING
-var test_artist = "Nujabes";
+var test_artist = "A Great Big World";
 
 
 function CreateWave(){
@@ -328,6 +328,13 @@ function drawLastWave() {
 			btmright = {"x": (x_point-1)*xratio + 1, "y": (graph.series[i].stack[x_point-1].y + graph.series[i].stack[x_point-1].y0/2)*yratio};
 			}
 			
+			if(artist_name==test_artist){
+				d3.select("#ex1").select("svg").append("line").attr("x1",topleft.x).attr("y1",graph.height-topleft.y).attr("x2",a.x).attr("y2",graph.height-a.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#ex1").select("svg").append("line").attr("x1",btmleft.x).attr("y1",graph.height-btmleft.y).attr("x2",b.x).attr("y2",graph.height-b.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#ex1").select("svg").append("line").attr("x1",a.x).attr("y1",graph.height-a.y).attr("x2",topright.x).attr("y2",graph.height-topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#ex1").select("svg").append("line").attr("x1",b.x).attr("y1",graph.height-b.y).attr("x2",btmright.x).attr("y2",graph.height-btmright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+			}
+			
 			//Now we can find the slopes for ABCD, mA,mB,mC,mD
 			mA = (a.y - topleft.y)/(a.x - topleft.x);
 			mB = (topright.y - a.y)/(topright.x - a.x);
@@ -354,6 +361,13 @@ function drawLastWave() {
 			bB = a.y - mB*a.x;
 			bC = b.y - mC*b.x;
 			bD = b.y - mD*b.x;
+			
+			//(to 10 decimal places)
+			mA = parseInt(mA*10000000000)/10000000000;
+			mB = parseInt(mB*10000000000)/10000000000;
+			mC = parseInt(mC*10000000000)/10000000000;
+			mD = parseInt(mD*10000000000)/10000000000;
+			
 			
 			//Let's figure out the dimensions of our box. For Arial, the average character width is 2/3 of the pixel height
 			// e.g. If our font size is 20px and the name is 5 characters long (e.g. Metric), then the box size would be 20*(2/3)*5 = 67px
@@ -449,7 +463,7 @@ function drawLastWave() {
 			// APPROACH: Find the max width line, assume that the box is centered around it, keep resizing the box until it fits
 			else if(((mA<=0)&&(mB<0)&&(mC<0)&&(mD<=0))||((mA>0)&&(mB>=0)&&(mC>=0)&&(mD>0))){
 				continue;
-				console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				//console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				if(artist_name=="Pink Floyd"){
 					console.log("y = "+mA+"x + "+bA);
 					console.log("y = "+mB+"x + "+bB);
@@ -508,7 +522,7 @@ function drawLastWave() {
 				if(diag_B.x < a.x) {var top_collision = diag_A}
 				if(diag_C.x > a.x) {var btm_collision = diag_D}
 				if(diag_D.x < a.x) {var btm_collision = diag_C}
-				if(artist_name=="Daft Punk") var btm_collision = diag_C;
+				//if(artist_name=="Daft Punk") var btm_collision = diag_C;
 				
 				/*if(diag_A.y < diag_B.y) {top_collision = diag_A;} else {top_collision = diag_B;}
 				if(diag_C.y > diag_D.y) {btm_collision = diag_C;} else {btm_collision = diag_D;}*/
@@ -521,10 +535,6 @@ function drawLastWave() {
 					fontsize = Math.abs(a.y-b.y);
 				}
 				
-				if(artist_name == "Daft Punk"){
-					console.log(a);
-					console.log(b);
-				}
 				fontsize*=0.9;
 				boxHeight = artist_name.height(fontsize+"px "+font_name);
 				boxWidth = artist_name.width(fontsize+"px "+font_name);
@@ -535,6 +545,12 @@ function drawLastWave() {
 				//Extra positioning to make up for the curve
 				if(mA<=0){
 					x_value_for_max_point -= "W".width(fontsize+"px "+font_name);
+				}
+				if(artist_name==test_artist){
+					console.log(coll_right)
+					console.log(maxWidth);
+					//Green line
+					d3.select("#ex1").select("svg").append("line").attr("x1",coll_left).attr("y1",graph.height-maxWidth[1]).attr("x2",coll_right).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
 				}
 			}
 			// TYPE: y
@@ -548,7 +564,7 @@ function drawLastWave() {
 			// 5. From this new point, run steps 2-4 until the x point is similar each run.
 			//			y1									y2								y3							y4
 			else if((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)||(mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)||(mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)||(mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){
-				console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				//console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				//Let's get our starting point, and figure out the sign of our first line.
 				var start_point; //a or b
 				var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
@@ -584,8 +600,7 @@ function drawLastWave() {
 						mU = mB;
 						bU = bB;
 					}
-				}
-				if(mC<=0 && mD<0 || mC>=0 && mD>0) {
+				} else if(mC<=0 && mD<0 || mC>=0 && mD>0) {
 					start_point = b;
 					offset_sign = 1;
 					if(mC>=0){ //Opposite line: A -> B ^ D
@@ -614,6 +629,8 @@ function drawLastWave() {
 							offset=1;
 						}
 					}
+				} else {
+				console.log("Really weird error - "+artist_name)
 				}
 				
 				//Draw the line (from now on referred to as Q)
@@ -647,9 +664,29 @@ function drawLastWave() {
 					mQ = slope*slope_sign;
 					bQ = start_point.y - mQ*start_point.x;
 					
-					//Find intersection between Q and O
-					//Intersection: x = (b2-b1)/(m1-m2). line 1 = Q, line 2 = O
-					intersect1 = {"x": (bO - bQ)/(mQ - mO), "y": ((mO)*(bO - bQ)/(mQ - mO))+bO};
+					//First check if Q intersects with V
+					if(
+						//y1
+						(((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)) && ((bV-bQ)/(mQ-mV) < topright.x) && (bV-bQ)/(mQ-mV) > a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > topright.y)
+						||
+						//y2
+						(((mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)) && ((bV-bQ)/(mQ-mV) > topleft.x) && (bV-bQ)/(mQ-mV) < a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > topleft.y)
+						||
+						//y3
+						(((mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)) && ((bV-bQ)/(mQ-mV) < topright.x) && (bV-bQ)/(mQ-mV) > a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < btmright.y)
+						||
+						//y4
+						(((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)) && ((bV-bQ)/(mQ-mV) > topleft.x) && (bV-bQ)/(mQ-mV) < a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < btmleft.y)
+					 ) {
+						start_point = previous_start_point;
+						console.log("Unexpected collision 1 - "+artist_name);
+						break;
+					 } else {
+					
+						//Find intersection between Q and O
+						//Intersection: x = (b2-b1)/(m1-m2). line 1 = Q, line 2 = O
+						intersect1 = {"x": (bO - bQ)/(mQ - mO), "y": ((mO)*(bO - bQ)/(mQ - mO))+bO};
+					}
 					
 					
 					//New line going backwards (from now on referred to as X)
@@ -659,26 +696,34 @@ function drawLastWave() {
 					//Find intersection between X and V
 					
 					//First check if X collides with line U before it collides with V
-					/*if(
+					if(
 						//y1
-						((SOMETHING) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topright.y)
+						(((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topright.y)
 						||
 						//y2
-						((SOMETHING) && ((bU-bX)/(mX-mU) > topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topleft.y)
+						(((mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)) && ((bU-bX)/(mX-mU) > topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topleft.y)
 						||
 						//y3
-						((SOMETHING) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topright.y)
+						(((mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU > btmright.y)
 						||
-					 )*/
+						//y4
+						(((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)) && ((bU-bX)/(mX-mU) > topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU > btmleft.y)
+					 ) {
+						console.log("Unexpected collision 2 - "+artist_name);
+						intersect2 = { "x": (bU - bX)/(mX - mU), "y": ((mU)*(bU - bX)/(mX - mU))+bU};
+					 } else {
 					
 					//Intersection x = (b2-b1)/(m1-m2). line 1 = X, line 2 = V
 					intersect2 = {"x": (bV - bX)/(mX - mV), "y": ((mV)*(bV - bX)/(mX - mV))+bV};
-					
+					}
 					if(artist_name==test_artist){
 						//green line (start_point -> intersect1)
 						d3.select("#ex1").select("svg").append("line").attr("x1",start_point.x).attr("y1",graph.height-start_point.y).attr("x2",intersect1.x).attr("y2",graph.height-intersect1.y).attr("style","stroke:rgb(0,255,0);stroke-width:1");
-						//blue line  (intersect1 -> intersect2)
+						//blue line  (intersect1 -> intersect2) (X)
 						d3.select("#ex1").select("svg").append("line").attr("x1",intersect1.x).attr("y1",graph.height-start_point.y).attr("x2",intersect2.x).attr("y2",graph.height-intersect2.y).attr("style","stroke:rgb(0,0,255);stroke-width:1");
+						
+						//intersect2
+						d3.select("#ex1").select("svg").append("circle").attr("cx",intersect2.x).attr("cy",graph.height-intersect2.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
 					}
 					
 					//Check if we're out of our bounds
@@ -712,14 +757,31 @@ function drawLastWave() {
 						//console.log(intersect1.y-previous_start_point.y);
 					}
 					}
+				
 				fontsize = Math.round(Math.abs(intersect1.y-previous_start_point.y));
 				fontsize*= 0.8;
-				x_value_for_max_point = Math.min(start_point.x,intersect1.x,intersect2.x);
 				
-				y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+font_name) )/2);// - fontsize*offset;
+				//Pick value based on type
+									 
+				//y1
+				if((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - start_point.y;}
+				//y2
+				if((mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph.height - previous_start_point.y;}
+				//y3
+				if((mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - intersect1.y;}
+				//y4
+				if((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - intersect1.y;}
+				//x_value_for_max_point = Math.min(start_point.x,intersect1.x,intersect2.x);
+				
+				//y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+font_name) )/2);// - fontsize*offset;
 				
 				if(artist_name==test_artist){
-					d3.select("#ex1").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
+						//black line (start_point -> intersect1)
+						d3.select("#ex1").select("svg").append("line").attr("x1",start_point.x).attr("y1",graph.height-start_point.y).attr("x2",intersect1.x).attr("y2",graph.height-intersect1.y).attr("style","stroke:rgb(0,0,0);stroke-width:1");
+						//white line  (intersect1 -> intersect2)
+						d3.select("#ex1").select("svg").append("line").attr("x1",intersect1.x).attr("y1",graph.height-start_point.y).attr("x2",intersect2.x).attr("y2",graph.height-intersect2.y).attr("style","stroke:rgb(255,255,255);stroke-width:1");
+						
+						d3.select("#ex1").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
 				}
 				//Curve fixes
 				if(mC>-1 && mC<1 && mD<-2 && (y_value_for_max_point<(b.y-Math.abs(b.y-a.y)))){
@@ -812,13 +874,8 @@ function drawLastWave() {
 			//fontsize=40;
 			//So, the equation for each line will be something like this: y = mA (x) + b
 			if(fontsize<8){
+				console.log(artist_name +" failed with a font size of "+fontsize);
 				continue;
-			}
-			if(artist_name==test_artist){
-				d3.select("#ex1").select("svg").append("line").attr("x1",topleft.x).attr("y1",graph.height-topleft.y).attr("x2",a.x).attr("y2",graph.height-a.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#ex1").select("svg").append("line").attr("x1",btmleft.x).attr("y1",graph.height-btmleft.y).attr("x2",b.x).attr("y2",graph.height-b.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#ex1").select("svg").append("line").attr("x1",a.x).attr("y1",graph.height-a.y).attr("x2",topright.x).attr("y2",graph.height-topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#ex1").select("svg").append("line").attr("x1",b.x).attr("y1",graph.height-b.y).attr("x2",btmright.x).attr("y2",graph.height-btmright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 			}
 			d3.select("#ex1").select("svg").append("text").text(artist_name).attr("x",x_value_for_max_point).attr("y",y_value_for_max_point).attr("font-size",fontsize).attr("fill",font_color).attr("font-family",font_name);
 			//document.getElementById("band_names").innerHTML += "<span id='"+selected_artist+"' style='position:absolute;top:"+y_value_for_max_point+";left:"+x_value_for_max_point+"'>"+artist_name+"</span>";
