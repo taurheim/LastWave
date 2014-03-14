@@ -9,14 +9,18 @@ var font_name = "Arial";
 var graph_type = "Wiggle";
 var time_start = 0;
 var time_end = 0;
+var total_weeks;
 
-//Initialize datepickers
-$(function() {
-		$("#start_date").datepicker();
-		$("#end_date").datepicker();
-  });
+//Initialize datepickers, convert buttons
+  
+$(document).ready(function() {
+	$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	$("#save_as_png").click(function() { pngconvert(); });
+	$("#start_date").datepicker();
+	$("#end_date").datepicker();
+});
 //TESTING
-var test_artist = "The Shins";
+var test_artist = "asdf";
 
 function CreateWave(){
 	//Format the date
@@ -55,12 +59,15 @@ function loadXML(selected_user,min_playcount) {
 	//User Data variable. Store all the information here, then graph it.
 
 	//Calculate how many weeks the user has been on last.fm (we're going to run through the loop for every week)
-	var total_weeks = Math.ceil((time_end-time_start)/604800);
-
+	total_weeks = Math.ceil((time_end-time_start)/604800);
+	if (total_weeks<4){
+		alert("Please choose a time of at least 4 weeks");
+		return false;
+	}
 	//Run through every week, adding artists as we go
-	for(w=1;w<total_weeks;w++){
+	for(w=1;w<=total_weeks;w++){
 		//Add a week to timer
-		var week_start=time_start+ (604800*w);
+		var week_start=time_start+ (604800*(w-1));
 		var week_end=week_start + 604800;
 		
 		
@@ -69,7 +76,7 @@ function loadXML(selected_user,min_playcount) {
 		xmlhttp.send();
 		week_data = xmlhttp.responseXML;
 		
-		//If there is an error, remove the point
+		//If there is an error, add 0s to all artists
 		if((week_data.getElementsByTagName("lfm")[0].getAttribute("status") != "ok") || week_data.getElementsByTagName("lfm")[0].childNodes.length<=1){
 			console.log("Skipped Week "+w);
 			for(artist in userdata){
@@ -106,12 +113,14 @@ function loadXML(selected_user,min_playcount) {
 				//Add the data to userdata
 				userdata[artist_name][w] = [w,parseInt(artist_plays)];
 				//If it's not the first week or the last week AND the current # of plays is higher than the previous max, update max
-				if((w!=1 && (userdata[artist_name][0] == undefined || artist_plays>userdata[artist_name][0][1])) || w==1){
+				if(((userdata[artist_name][0] == undefined || artist_plays>userdata[artist_name][0][1])) || w==1){
 					userdata[artist_name][0] = [w,parseInt(artist_plays)];
 				}
 			}
 		}
 	}
+	
+	//Now that we've got all of our data, draw the wave
 	drawLastWave();
 }
 
@@ -140,21 +149,6 @@ function submit_download_form(output_format)
 	form.submit();
 }
 
-function create_d3js_drawing()
-{
-	d3.select("#randomize").on("click", function() {
-		svg.selectAll(".little")
-			.transition()
-			.duration(750)
-			.attr("cx", function() { return Math.random() * w; })
-			.attr("cy", function() { return Math.random() * h; })
-			.attr("fill", function() { return '#'+Math.floor(Math.random()*16777215).toString(16); });
-		/* Random Hex Color in Javascript, from: http://paulirish.com/2009/random-hex-color-code-snippets/ */
-
-		// Show the new SVG code
-		show_svg_code();
-		});
-}
 
 function show_svg_code()
 {
@@ -172,17 +166,6 @@ function show_svg_code()
 }
 
 
-$(document).ready(function() {
-	create_d3js_drawing();
-
-	// on first visit, randomize the positions & colors
-
-	// Attached actions to the buttons
-
-	$("#save_as_svg").click(function() { submit_download_form("svg"); });
-
-	$("#save_as_png").click(function() { pngconvert(); });
-});
 var graph; //This can be removed, just here so we can see it in the DOM
 function drawLastWave() {
 	
@@ -249,8 +232,8 @@ function drawLastWave() {
 		} );*/
 		var maxy0 = 0;
 		for(i=0;i<graph.series[include_artists.length-1].stack.length;i++){
-			if(graph.series[include_artists.length-1].stack[i].y0 > maxy0){
-				maxy0 = graph.series[include_artists.length-1].stack[i].y0;
+			if((graph.series[include_artists.length-1].stack[i].y0+graph.series[include_artists.length-1].stack[i].y) > maxy0){
+				maxy0 = graph.series[include_artists.length-1].stack[i].y0+graph.series[include_artists.length-1].stack[i].y;
 			}
 		}
 		
@@ -328,23 +311,26 @@ function drawLastWave() {
 			if(artist_name.height("8px "+font_name) > a.y-b.y){
 				continue;
 			}
+			console.log(artist_name + " - "+a.y +","+ b.y);
 			
 			//To get A,B,C,D we need the surrounding 4 points (hereafter referred to as topleft,topright,btmleft,btmright
 			
 			//If we're on the edge, don't even bother (for now)
 			if(x_point-2<0){
-				continue;
-			}
-			topleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y + graph.series[i].stack[x_point-2].y0)*yratio};
-			btmleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y0)*yratio};
-			
-			if(graph.series[i].data.length != x_point){
-			topright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y + graph.series[i].stack[x_point].y0)*yratio};
-			btmright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y0)*yratio};
+				topleft = {"x": (x_point-1)*xratio -1, "y": b.y+1};
+				btmleft = {"x": (x_point-1)*xratio -1, "y": b.y};
 			} else {
-			topright = {"x": (x_point-1)*xratio + 1, "y": (graph.series[i].stack[x_point-1].y + graph.series[i].stack[x_point-1].y0/2)*yratio};
-			btmright = {"x": (x_point-1)*xratio + 1, "y": (graph.series[i].stack[x_point-1].y + graph.series[i].stack[x_point-1].y0/2)*yratio};
+				topleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y + graph.series[i].stack[x_point-2].y0)*yratio};
+				btmleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y0)*yratio};
 			}
+			if((x_point)==total_weeks){
+				topright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)+1};
+				btmright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)};
+			} else {
+				topright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y + graph.series[i].stack[x_point].y0)*yratio};
+				btmright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y0)*yratio};
+			}
+			
 			
 			if(artist_name==test_artist){
 				d3.select("#ex1").select("svg").append("line").attr("x1",topleft.x).attr("y1",graph.height-topleft.y).attr("x2",a.x).attr("y2",graph.height-a.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
@@ -644,7 +630,8 @@ function drawLastWave() {
 						}
 					}
 				} else {
-				console.log("Really weird error - "+artist_name)
+					console.log("Really weird error - "+artist_name);
+					console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				}
 				
 				//Draw the line (from now on referred to as Q)
@@ -894,10 +881,6 @@ function drawLastWave() {
 	}
 	$('#box_1').css("display","none");
 	$('#box_2').css("display","block");
-}
-
-function drawBounds(){
-
 }
 
 String.prototype.width = function(font) {
