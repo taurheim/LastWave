@@ -9,7 +9,7 @@ var font_name = "Arial";
 var graph_type = "Wiggle";
 
 //TESTING
-var test_artist = "A Great Big World";
+var test_artist = "lejfaojefaoi";
 
 
 function CreateWave(){
@@ -454,6 +454,7 @@ function drawLastWave() {
 				//Extra positioning to make up for curves
 				if(mC<1 && mC>0 && mD<-2){
 					y_value_for_max_point -= artist_name.height(fontsize+"px "+font_name);
+					console.log("Correcting");
 				}
 			}
 			
@@ -462,8 +463,8 @@ function drawLastWave() {
 			// DESCRIPTION: Two straight lines (top & bottom both have one inward facing, one outward facing)
 			// APPROACH: Find the max width line, assume that the box is centered around it, keep resizing the box until it fits
 			else if(((mA<=0)&&(mB<0)&&(mC<0)&&(mD<=0))||((mA>0)&&(mB>=0)&&(mC>=0)&&(mD>0))){
-				continue;
-				//console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				
+				console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				if(artist_name=="Pink Floyd"){
 					console.log("y = "+mA+"x + "+bA);
 					console.log("y = "+mB+"x + "+bB);
@@ -544,13 +545,14 @@ function drawLastWave() {
 				
 				//Extra positioning to make up for the curve
 				if(mA<=0){
-					x_value_for_max_point -= "W".width(fontsize+"px "+font_name);
+					//x_value_for_max_point -= "W".width(fontsize+"px "+font_name);
 				}
 				if(artist_name==test_artist){
 					console.log(coll_right)
 					console.log(maxWidth);
 					//Green line
 					d3.select("#ex1").select("svg").append("line").attr("x1",coll_left).attr("y1",graph.height-maxWidth[1]).attr("x2",coll_right).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
+					
 				}
 			}
 			// TYPE: y
@@ -564,7 +566,7 @@ function drawLastWave() {
 			// 5. From this new point, run steps 2-4 until the x point is similar each run.
 			//			y1									y2								y3							y4
 			else if((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)||(mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)||(mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)||(mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){
-				//console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
 				//Let's get our starting point, and figure out the sign of our first line.
 				var start_point; //a or b
 				var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
@@ -770,7 +772,7 @@ function drawLastWave() {
 				//y3
 				if((mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - intersect1.y;}
 				//y4
-				if((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - intersect1.y;}
+				if((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect2.x;y_value_for_max_point = graph.height - intersect1.y;}
 				//x_value_for_max_point = Math.min(start_point.x,intersect1.x,intersect2.x);
 				
 				//y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+font_name) )/2);// - fontsize*offset;
@@ -780,7 +782,7 @@ function drawLastWave() {
 						d3.select("#ex1").select("svg").append("line").attr("x1",start_point.x).attr("y1",graph.height-start_point.y).attr("x2",intersect1.x).attr("y2",graph.height-intersect1.y).attr("style","stroke:rgb(0,0,0);stroke-width:1");
 						//white line  (intersect1 -> intersect2)
 						d3.select("#ex1").select("svg").append("line").attr("x1",intersect1.x).attr("y1",graph.height-start_point.y).attr("x2",intersect2.x).attr("y2",graph.height-intersect2.y).attr("style","stroke:rgb(255,255,255);stroke-width:1");
-						
+						//black dot - final resting point
 						d3.select("#ex1").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
 				}
 				//Curve fixes
@@ -802,7 +804,6 @@ function drawLastWave() {
 			// MP formula: (x+x)/2 , (y+y)/2
 			else if((mA>0)&&(mB<0)&&(mC<0)&&(mD>0)){
 				//console.log(artist_name + " - z" + " - " + mA + "," + mB + "," + mC + "," + mD);
-				
 				//Get all the midpoints
 				rightMP = {"x": (topright.x+btmright.x)/2, "y" : (topright.y+btmright.y)/2};
 				leftMP = {"x": (topleft.x+btmleft.x)/2, "y" : (topleft.y+btmleft.y)/2};
