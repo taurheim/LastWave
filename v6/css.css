@@ -85,3 +85,8 @@
 .size_30 {
 	font: px Secrcode, arial;
 }
+
+#ex1 img {
+	padding-left: 75px;
+	padding-right: 75px;
+}

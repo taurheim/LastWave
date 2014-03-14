@@ -5,12 +5,18 @@ var graph_height = 1500;
 var graph_width = 3000;
 var showartistnames = true;
 var font_color = "black";
-var test_artist = "Franz Ferdinand";
+var font_name = "Arial";
+var graph_type = "Wiggle";
+
+//TESTING
+var test_artist = "Nujabes";
 
 
 function CreateWave(){
 	graph_height = parseInt(document.getElementById("height").value);
 	graph_width = parseInt(document.getElementById("width").value);
+	font_name = document.getElementById("font_name").value;
+	graph_type = document.getElementById("graph_type").value;
 	showartistnames = document.getElementById("artist_names").checked;
 	loadXML(document.getElementById('user').value,document.getElementById('plays').value);
 }
@@ -157,22 +163,28 @@ $(document).ready(function() {
 
 	$("#save_as_svg").click(function() { submit_download_form("svg"); });
 
-	$("#save_as_pdf").click(function() { submit_download_form("pdf"); });
-
-	$("#save_as_png").click(function() { submit_download_form("png"); });
+	$("#save_as_png").click(function() { pngconvert(); });
 });
 var graph; //This can be removed, just here so we can see it in the DOM
 function drawLastWave() {
+	
+	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
 	var palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
 	if(scheme.value=="spectrum2001") font_color = "white";
+	
+	//Make a list of artists.
 	var include_artists = [];
-	var artistnames = [];
 	for(artist in userdata){
 		include_artists.push(artist);
 	}
-
+	
+	//This is how the actual graph is created.
 	var series_data = [];
+	
+	//Which artist are we currently selecting(chosen in the next for loop)
+	var selected_artist;
 
+	
 	for(a=0;a<include_artists.length;a++){
 		//Artist name
 		selected_artist = include_artists[a];
@@ -203,7 +215,7 @@ function drawLastWave() {
 		width: graph_width, 
 		height: graph_height, 
 		renderer: 'area',
-		offset: 'silhouette',
+		offset: graph_type,
 		stroke: true,
 		preserve: true,
 		series: series_data
@@ -212,10 +224,11 @@ function drawLastWave() {
 
 	graph.render();
 	if(showartistnames){
+	/*
 		//Add labels to the graph.
 		var hoverDetail = new Rickshaw.Graph.HoverDetail( {
 			graph: graph
-		} );
+		} );*/
 		var maxy0 = 0;
 		for(i=0;i<graph.series[include_artists.length-1].stack.length;i++){
 			if(graph.series[include_artists.length-1].stack[i].y0 > maxy0){
@@ -268,7 +281,6 @@ function drawLastWave() {
 			hoverDetail.currentH = offset*ratio;
 			console.log(artist_name+": "+x_point+"-- (x,y): ("+x_value_for_max_point+","+y_value_for_max_point+")");
 			hoverDetail.update();*/
-			artistnames.push(artist_name);
 			
 			/* EPIC SHIT ABOUT TO GO DOWN */
 			
@@ -295,7 +307,7 @@ function drawLastWave() {
 			b = {"x": (x_point-1)*xratio, "y": (graph.series[i].stack[x_point-1].y0)*yratio};
 			
 			//If our height isn't big enough to fit a font, gtfo.
-			if(artist_name.height("8px Arial") > a.y-b.y){
+			if(artist_name.height("8px "+font_name) > a.y-b.y){
 				continue;
 			}
 			
@@ -373,7 +385,7 @@ function drawLastWave() {
 						if(coll_left<topleft.x) coll_left=topleft.x;
 						coll_right = (btm_bound - bB)/mB;
 						if(coll_right>topright.x) coll_right=topright.x;
-						boxWidth = artist_name.width(fontsize+"px Arial");
+						boxWidth = artist_name.width(fontsize+"px "+font_name);
 						if((coll_right-coll_left)>(topright.x-topleft.x)){
 							coll_left = topleft.x;
 							fontsize = topleft.y - coll_left.y;
@@ -384,13 +396,13 @@ function drawLastWave() {
 							break;
 						}
 					}
-					if(artist_name.height(fontsize+"px Arial")>a.y-b.y){
+					if(artist_name.height(fontsize+"px "+font_name)>a.y-b.y){
 						//TODO
 						//Change this so that it will keep subtracting font sizes until it fits
 						fontsize = a.y-b.y;
 					}
 					fontsize*=0.75;
-					y_value_for_max_point = graph.height - btm_bound + artist_name.height(fontsize+"px Arial");
+					y_value_for_max_point = graph.height - btm_bound + artist_name.height(fontsize+"px "+font_name);
 				} else { //w1
 					//console.log("\\\/"+artist_name);
 					top_bound = a.y;
@@ -401,7 +413,7 @@ function drawLastWave() {
 						if(coll_left<topleft.x) coll_left=topleft.x;
 						coll_right = (btm_bound - bD)/mD;
 						if(coll_right>topright.x) coll_right=topright.x;
-						boxWidth = artist_name.width(fontsize+"px Arial");
+						boxWidth = artist_name.width(fontsize+"px "+font_name);
 						if((coll_right-coll_left)>(topright.x-topleft.x)){
 							coll_left = topleft.x;
 							fontsize = top_bound - btmleft.y;
@@ -413,13 +425,13 @@ function drawLastWave() {
 						}
 					}
 				//CHANGE THIS (see above)
-				if(artist_name.height(fontsize+"px Arial")>a.y-b.y){
+				if(artist_name.height(fontsize+"px "+font_name)>a.y-b.y){
 					fontsize = a.y-b.y;
 				}
 				fontsize*=0.9;
-				y_value_for_max_point = graph.height - top_bound + artist_name.height(fontsize+"px Arial");
+				y_value_for_max_point = graph.height - top_bound + artist_name.height(fontsize+"px "+font_name);
 				}
-				boxWidth = artist_name.width(fontsize+"px Arial");
+				boxWidth = artist_name.width(fontsize+"px "+font_name);
 				x_value_for_max_point = coll_left;//+boxWidth*0.15;
 				/*if(fontsize==5){
 					console.log("Skipping "+artist_name);
@@ -427,7 +439,7 @@ function drawLastWave() {
 				}*/
 				//Extra positioning to make up for curves
 				if(mC<1 && mC>0 && mD<-2){
-					y_value_for_max_point -= artist_name.height(fontsize+"px Arial");
+					y_value_for_max_point -= artist_name.height(fontsize+"px "+font_name);
 				}
 			}
 			
@@ -514,15 +526,15 @@ function drawLastWave() {
 					console.log(b);
 				}
 				fontsize*=0.9;
-				boxHeight = artist_name.height(fontsize+"px Arial");
-				boxWidth = artist_name.width(fontsize+"px Arial");
+				boxHeight = artist_name.height(fontsize+"px "+font_name);
+				boxWidth = artist_name.width(fontsize+"px "+font_name);
 				
 				x_value_for_max_point = ctrpt.x - boxWidth/2;
 				y_value_for_max_point = graph.height - maxWidth[1] + boxHeight/2;
 				
 				//Extra positioning to make up for the curve
 				if(mA<=0){
-					x_value_for_max_point -= "W".width(fontsize+"px Arial");
+					x_value_for_max_point -= "W".width(fontsize+"px "+font_name);
 				}
 			}
 			// TYPE: y
@@ -547,7 +559,7 @@ function drawLastWave() {
 				var mV; //This line is horizontally opposite to O
 				var bV;
 				var mU; //This line is vertically opposite to V
-				var bU;
+				//var bU;
 				var offset = 0; //This variable is helpful to move the text to give room for curved edges (we pretend like we're only dealing with flat in all the calculations)
 				if(mA<0 && mB<0 || mA>0 && mB>0) {
 					start_point = a;
@@ -616,6 +628,21 @@ function drawLastWave() {
 				last_fontsize = 0;
 				previous_start_point = {"x":0,"y":0};
 				while(true){
+					/*CLARIFICATION:
+										 |
+							   o\	line V
+							  /    \  (2)|
+					line O	/		 (  \|
+						  / 	  (      |
+					 (1)/	   X		 /
+					  /	)	 (		   / |
+					/	   Q	    /    |
+					|	  (	 )	 /	line U
+					|	(	   o		 |
+					| (  ____ /			 |
+					|  /				 |
+					   
+					*/
 					count++;
 					mQ = slope*slope_sign;
 					bQ = start_point.y - mQ*start_point.x;
@@ -630,6 +657,20 @@ function drawLastWave() {
 					bX = start_point.y - mX*intersect1.x;
 					
 					//Find intersection between X and V
+					
+					//First check if X collides with line U before it collides with V
+					/*if(
+						//y1
+						((SOMETHING) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topright.y)
+						||
+						//y2
+						((SOMETHING) && ((bU-bX)/(mX-mU) > topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topleft.y)
+						||
+						//y3
+						((SOMETHING) && ((bU-bX)/(mX-mU) < topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < topright.y)
+						||
+					 )*/
+					
 					//Intersection x = (b2-b1)/(m1-m2). line 1 = X, line 2 = V
 					intersect2 = {"x": (bV - bX)/(mX - mV), "y": ((mV)*(bV - bX)/(mX - mV))+bV};
 					
@@ -675,15 +716,15 @@ function drawLastWave() {
 				fontsize*= 0.8;
 				x_value_for_max_point = Math.min(start_point.x,intersect1.x,intersect2.x);
 				
-				y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px Arial") )/2);// - fontsize*offset;
+				y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+font_name) )/2);// - fontsize*offset;
 				
 				if(artist_name==test_artist){
 					d3.select("#ex1").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
 				}
 				//Curve fixes
 				if(mC>-1 && mC<1 && mD<-2 && (y_value_for_max_point<(b.y-Math.abs(b.y-a.y)))){
-					x_value_for_max_point += "W".width(fontsize+"px Arial");
-					y_value_for_max_point -= (.5*artist_name.height(fontsize+"px Arial"));
+					x_value_for_max_point += "W".width(fontsize+"px "+font_name);
+					y_value_for_max_point -= (.5*artist_name.height(fontsize+"px "+font_name));
 					console.log("Corrected");
 				}
 				//}
@@ -712,7 +753,7 @@ function drawLastWave() {
 				while(true){
 					//Moving out from the center point, increase the font size and check for collisions
 					boxHeight = fontsize;
-					boxWidth = artist_name.width(fontsize+"px Arial");
+					boxWidth = artist_name.width(fontsize+"px "+font_name);
 						
 					//Get a y value for the top and bottom of the constraint box
 					boxTop = middleMP.y + boxHeight/2;
@@ -779,7 +820,7 @@ function drawLastWave() {
 				d3.select("#ex1").select("svg").append("line").attr("x1",a.x).attr("y1",graph.height-a.y).attr("x2",topright.x).attr("y2",graph.height-topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 				d3.select("#ex1").select("svg").append("line").attr("x1",b.x).attr("y1",graph.height-b.y).attr("x2",btmright.x).attr("y2",graph.height-btmright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 			}
-			d3.select("#ex1").select("svg").append("text").text(artist_name).attr("x",x_value_for_max_point).attr("y",y_value_for_max_point).attr("font-size",fontsize).attr("fill",font_color).attr("font-family","TR2N");
+			d3.select("#ex1").select("svg").append("text").text(artist_name).attr("x",x_value_for_max_point).attr("y",y_value_for_max_point).attr("font-size",fontsize).attr("fill",font_color).attr("font-family",font_name);
 			//document.getElementById("band_names").innerHTML += "<span id='"+selected_artist+"' style='position:absolute;top:"+y_value_for_max_point+";left:"+x_value_for_max_point+"'>"+artist_name+"</span>";
 		}
 	}
@@ -824,4 +865,21 @@ String.prototype.slope = function(font) {
   o.remove();
 
   return 24/w;
+}
+
+function pngconvert(){
+    var $container = $('#ex1'),
+        // Canvg requires trimmed content
+        content = $container.html().trim(),
+        canvas = document.getElementById('svg-canvas');
+
+    // Draw svg on canvas
+    canvg(canvas, content);
+	$('svg-canvas').empty();
+    // Change img be SVG representation
+    var theImage = canvas.toDataURL('image/png');
+	$('#ex1').html('<img id="svg-img" />');
+    $('#svg-img').attr('src', theImage);
+	$('#box_1').css("display","none");
+	
 }

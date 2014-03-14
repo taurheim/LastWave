@@ -23,6 +23,8 @@ See here for online demo:
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <link href="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap-combined.min.css" rel="stylesheet">
 <script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/rgbcolor.js"></script> 
+<script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
 <script type="text/javascript" src="lastwave.js"></script>
 
 <!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
@@ -55,6 +57,14 @@ See here for online demo:
 		Number of plays to be included: <input type="text" name="plays" id="plays" value="10"/><br/><br/>
 		Dimensions: <input type="text" name="width" id="width" value="2000"/> x <input type="text" name="height" id="height" value="1000"/><br/><br/>
 		Artist Names?: <input type="checkbox" name="artist_names" id="artist_names" checked="true"/><br/><br/>
+		Font Name: <input type="text" name="font_name" id="font_name" value="Arial"/><br/><br/>
+		Graph:
+		<select id="graph_type">
+			<option value="silhouette">Silhouette</option>
+			<option value="wiggle">Wiggle</option>
+			<option value="expand">Expand</option>
+			<option value="zero">Zero</option>
+		</select><br/><br/>
 		<center><input type="submit" value="Create Wave!" onclick="CreateWave()"></center>
 	</div>
 	<div id="box_2" class="center_block">
@@ -62,10 +72,8 @@ See here for online demo:
 		<center>
 		<button class="btn btn-success" id="save_as_svg" value="">
 			Save as SVG</button>
-		<button class="btn btn-success" id="save_as_pdf" value="">
-			Save as PDF</button>
 		<button class="btn btn-success" id="save_as_png" value="">
-			Save as High-Res PNG</button>
+			Convert to PNG</button>
 			</center>
 	</div>
 
@@ -80,7 +88,7 @@ See here for online demo:
  <input type="hidden" id="output_format" name="output_format" value="">
  <input type="hidden" id="data" name="data" value="">
 </form>
-
+<canvas id="svg-canvas" style="display:none"></canvas>
 
 </body>
 </html>
