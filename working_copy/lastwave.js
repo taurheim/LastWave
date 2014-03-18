@@ -20,7 +20,7 @@ $(document).ready(function() {
 	$("#end_date").datepicker();
 });
 //TESTING
-var test_artist = "asdf";
+var test_artist = "God Is An Astronaut";
 
 function CreateWave(){
 	//Format the date
@@ -31,6 +31,11 @@ function CreateWave(){
 	rawdate = document.getElementById("end_date").value.split("/");
 	time_end = new Date(rawdate[2],parseInt(rawdate[0])-1,rawdate[1],"0","0","0","0").getTime()/1000;
 	time_end = round_week(time_end)-302400;
+	
+	if(time_end > round_week((new Date).getTime()/1000)){
+		alert("Your end date is in the future");
+		return false;
+	}
 	
 	
 	graph_height = parseInt(document.getElementById("height").value);
@@ -168,6 +173,8 @@ function show_svg_code()
 
 var graph; //This can be removed, just here so we can see it in the DOM
 function drawLastWave() {
+	
+	document.getElementById("ex1").innerHTML = "";
 	
 	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
 	var palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
@@ -311,21 +318,22 @@ function drawLastWave() {
 			if(artist_name.height("8px "+font_name) > a.y-b.y){
 				continue;
 			}
-			console.log(artist_name + " - "+a.y +","+ b.y);
+			//console.log(artist_name + " - "+a.y +","+ b.y);
 			
 			//To get A,B,C,D we need the surrounding 4 points (hereafter referred to as topleft,topright,btmleft,btmright
 			
-			//If we're on the edge, don't even bother (for now)
+			//If we're on the edge, add the left/right points accordingly
 			if(x_point-2<0){
-				topleft = {"x": (x_point-1)*xratio -1, "y": b.y+1};
-				btmleft = {"x": (x_point-1)*xratio -1, "y": b.y};
+				topleft = {"x": (x_point-1)*xratio -1, "y": b.y+((a.y-b.y)/2)};
+				btmleft = {"x": (x_point-1)*xratio -1, "y": b.y+((a.y-b.y)/2)};
 			} else {
 				topleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y + graph.series[i].stack[x_point-2].y0)*yratio};
 				btmleft = {"x": (x_point-2)*xratio, "y": (graph.series[i].stack[x_point-2].y0)*yratio};
 			}
+			
 			if((x_point)==total_weeks){
-				topright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)+1};
-				btmright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)};
+				topright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)+((a.y-b.y)/2)};
+				btmright = {"x": ((x_point-1)*xratio)+5, "y": (b.y)+((a.y-b.y)/2)};
 			} else {
 				topright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y + graph.series[i].stack[x_point].y0)*yratio};
 				btmright = {"x": (x_point)*xratio, "y": (graph.series[i].stack[x_point].y0)*yratio};
@@ -472,7 +480,7 @@ function drawLastWave() {
 				//Run through all y values, check width.
 				//maxWidth = [actual width, y value, left_coll]
 				maxWidth = [0,0];
-				for (v=b.y;v<a.y;v++){
+				for (v=(b.y+1);v<a.y;v++){
 					if(mA>=0){
 						coll_left = (v-bA)/mA;
 						coll_right = (v-bD)/mD;
@@ -549,7 +557,7 @@ function drawLastWave() {
 					console.log(coll_right)
 					console.log(maxWidth);
 					//Green line
-					d3.select("#ex1").select("svg").append("line").attr("x1",coll_left).attr("y1",graph.height-maxWidth[1]).attr("x2",coll_right).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
+					d3.select("#ex1").select("svg").append("line").attr("x1",maxWidth[2]).attr("y1",graph.height-maxWidth[1]).attr("x2",maxWidth[2]+maxWidth[0]).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
 					
 				}
 			}
@@ -577,10 +585,10 @@ function drawLastWave() {
 				var mU; //This line is vertically opposite to V
 				//var bU;
 				var offset = 0; //This variable is helpful to move the text to give room for curved edges (we pretend like we're only dealing with flat in all the calculations)
-				if(mA<0 && mB<0 || mA>0 && mB>0) {
+				if(mA<=0 && mB<0 || mA>=0 && mB>0) {
 					start_point = a;
 					offset_sign = -1;
-					if(mA>0){ //Opposite line: D -> C ^ A
+					if(mA>0 || mA==0 && mB>0){ //Opposite line: D -> C ^ A
 						//console.log("a");
 						slope_sign = -1;
 						mO = mD;
@@ -590,7 +598,7 @@ function drawLastWave() {
 						mU = mA;
 						bU = bA;
 					}
-					if(mA<0){ //Opposite line: C -> D ^ B
+					if(mA<0 || mA==0 && mB<0){ //Opposite line: C -> D ^ B
 						//console.log("b");
 						slope_sign = 1;
 						mO = mC;
@@ -933,4 +941,10 @@ function pngconvert(){
     $('#svg-img').attr('src', theImage);
 	$('#box_1').css("display","none");
 	
+}
+
+function show_options(){
+
+	$('#box_1').css("display","block");
+	$('#box_2').css("display","none");
 }
