@@ -5,3 +5,4 @@
 > Watermark
 	> Make future dates impossible
 > Show months
+> For straight lines, not only check around the "maxwidth" but also around the center, check which gives a larger value

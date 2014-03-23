@@ -3177,7 +3177,7 @@ Rickshaw.Graph.Renderer = Rickshaw.Class.create( {
 			tension: 0.8,
 			strokeWidth: 2,
 			unstack: true,
-			padding: { top: 0.01, right: 0, bottom: 0.01, left: 0 },
+			padding: { top: 0.00, right: 0, bottom: 0.00, left: 0 },
 			stroke: false,
 			fill: false
 		};

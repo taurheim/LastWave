@@ -20,7 +20,7 @@ $(document).ready(function() {
 	$("#end_date").datepicker();
 });
 //TESTING
-var test_artist = "God Is An Astronaut";
+var test_artist = "---";
 
 function CreateWave(){
 	//Format the date
@@ -37,6 +37,10 @@ function CreateWave(){
 		return false;
 	}
 	
+	if(document.getElementById('user').value,document.getElementById('plays').value < 5){
+		alert("Minimum number of plays to count is 5");
+		return false;
+	}
 	
 	graph_height = parseInt(document.getElementById("height").value);
 	graph_width = parseInt(document.getElementById("width").value);
@@ -47,7 +51,7 @@ function CreateWave(){
 }
 var userdata = {};
 function loadXML(selected_user,min_playcount) {
-
+	userdata = [];
 	xmlhttp=new XMLHttpRequest();
 	/*
 	xmlhttp.open("GET","http://ws.audioscrobbler.com/2.0/?method=user.getinfo&user="+selected_user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72",false);
@@ -106,7 +110,7 @@ function loadXML(selected_user,min_playcount) {
 			//Get each artist name,playcount
 			artist_name = week_data.getElementsByTagName("name")[i].childNodes[0].nodeValue;
 			artist_plays = week_data.getElementsByTagName("playcount")[i].childNodes[0].nodeValue;
-			if((userdata[artist_name]!=undefined) || (parseInt(artist_plays)>=min_playcount)){
+			if((userdata[artist_name]!=undefined) && parseInt(artist_plays)>=5 || (parseInt(artist_plays)>=min_playcount)){
 				if(userdata[artist_name] == undefined){
 					//Add an artist if the artist didn't previously exist, fill all previous values with 0s
 					userdata[artist_name] = [];
@@ -185,6 +189,23 @@ function drawLastWave() {
 	for(artist in userdata){
 		include_artists.push(artist);
 	}
+
+	//ORDERING
+
+	//Split "include_artists" in half, then sort each to push the higher maxes to the middle
+	/**/
+	var firsthalf = include_artists.slice(0, include_artists.length /2);
+	var secondhalf = include_artists.slice(include_artists.length/2,include_artists.length);
+
+	firsthalf.sort(function (a,b){
+		return userdata[a][0][1]-userdata[b][0][1];
+	});
+	secondhalf.sort(function (a,b){
+		return userdata[b][0][1]-userdata[a][0][1];
+	});
+	include_artists = firsthalf.concat(secondhalf);
+	/**/
+
 	
 	//This is how the actual graph is created.
 	var series_data = [];
@@ -247,7 +268,7 @@ function drawLastWave() {
 		//Get ratios
 		var yratio = graph.height/maxy0;
 		var xratio = graph.width/(graph.series[0].stack.length-1);
-		console.log("ratio: "+yratio);
+		console.log("y ratio: "+yratio);
 		/*for(i=0;i<include_artists.length;i++){
 			artist_name = include_artists[i];
 			x_point = userdata[artist_name][0][0];
@@ -399,7 +420,9 @@ function drawLastWave() {
 			// APPROACH: Assume that the text box's side must touch one of the points, and is then bounded by the left and right by the inward facing lines
 			//				w2									w1
 			if(((mA<=0)&&(mB>=0)&&(mC<0)&&(mD>0))||((mA>0)&&(mB<0)&&(mC>=0)&&(mD<=0))){
-				//console.log(artist_name + " - w" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				if(artist_name==test_artist){
+					console.log(artist_name + " - w" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				}
 				fontsize = 5;
 				if(mA>0){ // w2
 					//console.log("\/\\"+artist_name);
@@ -428,7 +451,7 @@ function drawLastWave() {
 						fontsize = a.y-b.y;
 					}
 					fontsize*=0.75;
-					y_value_for_max_point = graph.height - btm_bound + artist_name.height(fontsize+"px "+font_name);
+					y_value_for_max_point = graph.height - btm_bound + artist_name.height(fontsize+"px "+font_name)/2;
 				} else { //w1
 					//console.log("\\\/"+artist_name);
 					top_bound = a.y;
@@ -464,9 +487,9 @@ function drawLastWave() {
 					continue;
 				}*/
 				//Extra positioning to make up for curves
-				if(mC<1 && mC>0 && mD<-2){
-					y_value_for_max_point -= artist_name.height(fontsize+"px "+font_name);
-					//console.log("Correcting");
+				if(mC<0.5 && mC>0 && mD<-1.5){
+					y_value_for_max_point -= artist_name.height(fontsize+"px "+font_name)/2;
+					console.log("[w]Correcting "+artist_name);
 				}
 			}
 			
@@ -476,7 +499,9 @@ function drawLastWave() {
 			// APPROACH: Find the max width line, assume that the box is centered around it, keep resizing the box until it fits
 			else if(((mA<=0)&&(mB<0)&&(mC<0)&&(mD<=0))||((mA>0)&&(mB>=0)&&(mC>=0)&&(mD>0))){
 				
-				//console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
+			if(artist_name==test_artist){
+				console.log(artist_name + " - x" + " - " + mA + "," + mB + "," + mC + "," + mD);
+			}
 				//Run through all y values, check width.
 				//maxWidth = [actual width, y value, left_coll]
 				maxWidth = [0,0];
@@ -546,19 +571,30 @@ function drawLastWave() {
 				boxHeight = artist_name.height(fontsize+"px "+font_name);
 				boxWidth = artist_name.width(fontsize+"px "+font_name);
 				
-				x_value_for_max_point = ctrpt.x - boxWidth/2;
-				y_value_for_max_point = graph.height - maxWidth[1] + boxHeight/2;
-				
-				//Extra positioning to make up for the curve
-				if(mA<=0){
-					//x_value_for_max_point -= "W".width(fontsize+"px "+font_name);
+				//Which x/y values we pick is based on whether we have the graph getting steeper/shallower after a&b
+
+				//Steeper
+				if(mA<0 && mB<mA && mD<mC){
+					console.log("trigger "+ artist_name)
+					x_value_for_max_point = Math.max(top_collision.x,btm_collision.x) - boxWidth;
+					y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
+				} else {
+					x_value_for_max_point = Math.min(top_collision.x,btm_collision.x);//ctrpt.x - boxWidth/2;
+					y_value_for_max_point = graph.height-btm_collision.y;//graph.height - maxWidth[1] + boxHeight/2;
+				}
+				//There's no way I can make an estimate for this
+				if((Math.abs(mA+mC)<0.25 && Math.abs(mB+mD)>2) || (Math.abs(mB+mD)<0.25 && Math.abs(mA+mC)>2) ){
+					console.log("Impossible to estimate "+artist_name);
 				}
 				if(artist_name==test_artist){
 					console.log(coll_right)
 					console.log(maxWidth);
 					//Green line
 					d3.select("#ex1").select("svg").append("line").attr("x1",maxWidth[2]).attr("y1",graph.height-maxWidth[1]).attr("x2",maxWidth[2]+maxWidth[0]).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
-					
+					d3.select("#ex1").select("svg").append("circle").attr("cx",top_collision.x).attr("cy",graph.height - top_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
+					d3.select("#ex1").select("svg").append("circle").attr("cx",btm_collision.x).attr("cy",graph.height - btm_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
+					d3.select("#ex1").select("svg").append("circle").attr("cx",ctrpt.x).attr("cy",graph.height - ctrpt.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
+				
 				}
 			}
 			// TYPE: y
@@ -572,7 +608,10 @@ function drawLastWave() {
 			// 5. From this new point, run steps 2-4 until the x point is similar each run.
 			//			y1									y2								y3							y4
 			else if((mA>0)&&(mB<0)&&(mC>=0)&&(mD>0)||(mA>0)&&(mB<0)&&(mC<0)&&(mD<=0)||(mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)||(mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){
-				//console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				
+				if(artist_name==test_artist){
+					console.log(artist_name + " - y" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				}
 				//Let's get our starting point, and figure out the sign of our first line.
 				var start_point; //a or b
 				var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
@@ -585,7 +624,7 @@ function drawLastWave() {
 				var mU; //This line is vertically opposite to V
 				//var bU;
 				var offset = 0; //This variable is helpful to move the text to give room for curved edges (we pretend like we're only dealing with flat in all the calculations)
-				if(mA<=0 && mB<0 || mA>=0 && mB>0) {
+				if(mA<=0 && mB<0 || mA>=0 && mB>=0) {
 					start_point = a;
 					offset_sign = -1;
 					if(mA>0 || mA==0 && mB>0){ //Opposite line: D -> C ^ A
@@ -791,10 +830,14 @@ function drawLastWave() {
 						d3.select("#ex1").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
 				}
 				//Curve fixes
-				if(mC>-1 && mC<1 && mD<-2 && (y_value_for_max_point<(b.y-Math.abs(b.y-a.y)))){
-					x_value_for_max_point += "W".width(fontsize+"px "+font_name);
+
+				//if C is flat and D is steep
+				if(mC>-0.5 && mC<0.5 && mD<-1 && (y_value_for_max_point<(b.y-Math.abs(b.y-a.y)))){
+					//x_value_for_max_point += "W".width(fontsize+"px "+font_name);
 					y_value_for_max_point -= (.5*artist_name.height(fontsize+"px "+font_name));
-					//console.log("Corrected");
+					//if(artist_name ==test_artist){
+						console.log("[y]Correcting " + artist_name);
+					//}
 				}
 				//}
 				//fontsize = 25;
@@ -808,7 +851,10 @@ function drawLastWave() {
 			// 			and find the midpoint of THAT line. Then keep the text centered on this point and expand it until it's sized properly.
 			// MP formula: (x+x)/2 , (y+y)/2
 			else if((mA>0)&&(mB<0)&&(mC<0)&&(mD>0)){
-				//console.log(artist_name + " - z" + " - " + mA + "," + mB + "," + mC + "," + mD);
+
+				if(artist_name==test_artist){
+					console.log(artist_name + " - z" + " - " + mA + "," + mB + "," + mC + "," + mD);
+				}
 				//Get all the midpoints
 				rightMP = {"x": (topright.x+btmright.x)/2, "y" : (topright.y+btmright.y)/2};
 				leftMP = {"x": (topleft.x+btmleft.x)/2, "y" : (topleft.y+btmleft.y)/2};
@@ -947,4 +993,6 @@ function show_options(){
 
 	$('#box_1').css("display","block");
 	$('#box_2').css("display","none");
+	graph = "";
+	include_artists = "";
 }
