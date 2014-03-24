@@ -4,6 +4,7 @@
 var graph_height = 1500;
 var graph_width = 3000;
 var showartistnames = true;
+var normalize = false;
 var font_color = "black";
 var font_name = "Arial";
 var graph_type = "Wiggle";
@@ -47,6 +48,7 @@ function CreateWave(){
 	font_name = document.getElementById("font_name").value;
 	graph_type = document.getElementById("graph_type").value;
 	showartistnames = document.getElementById("artist_names").checked;
+	normalize = document.getElementById("normalize").checked;
 	loadXML(document.getElementById('user').value,document.getElementById('plays').value);
 }
 var userdata = {};
@@ -194,16 +196,18 @@ function drawLastWave() {
 
 	//Split "include_artists" in half, then sort each to push the higher maxes to the middle
 	/**/
-	var firsthalf = include_artists.slice(0, include_artists.length /2);
-	var secondhalf = include_artists.slice(include_artists.length/2,include_artists.length);
+	if(normalize){
+		var firsthalf = include_artists.slice(0, include_artists.length /2);
+		var secondhalf = include_artists.slice(include_artists.length/2,include_artists.length);
 
-	firsthalf.sort(function (a,b){
-		return userdata[a][0][1]-userdata[b][0][1];
-	});
-	secondhalf.sort(function (a,b){
-		return userdata[b][0][1]-userdata[a][0][1];
-	});
-	include_artists = firsthalf.concat(secondhalf);
+		firsthalf.sort(function (a,b){
+			return userdata[a][0][1]-userdata[b][0][1];
+		});
+		secondhalf.sort(function (a,b){
+			return userdata[b][0][1]-userdata[a][0][1];
+		});
+		include_artists = firsthalf.concat(secondhalf);
+	}
 	/**/
 
 	
@@ -816,7 +820,7 @@ function drawLastWave() {
 				//y3
 				if((mA<=0)&&(mB<0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph.height - intersect1.y;}
 				//y4
-				if((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){x_value_for_max_point = intersect2.x;y_value_for_max_point = graph.height - intersect1.y;}
+				if((mA>0)&&(mB>=0)&&(mC<0)&&(mD>0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph.height - intersect1.y;}
 				//x_value_for_max_point = Math.min(start_point.x,intersect1.x,intersect2.x);
 				
 				//y_value_for_max_point = graph.height - Math.min(start_point.y,intersect1.y,intersect2.y);// - Math.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+font_name) )/2);// - fontsize*offset;
