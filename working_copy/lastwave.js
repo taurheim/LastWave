@@ -24,7 +24,7 @@ var old_start = 0;
 var old_end = 0;
 
 var userdata = {};
-	var full_week_data = [];
+var full_week_data = [];
 
 //Initialize datepickers, convert buttons
   
@@ -73,7 +73,7 @@ function CreateWave(){
 		return false;
 	}
 
-	if(time_start == old_start || time_end == old_end){
+	if(time_start == old_start && time_end == old_end){
 		parseXML();
 	} else {
 		loadXML(document.getElementById('user').value);
@@ -91,6 +91,7 @@ function CreateWave(){
 
 function loadXML(selected_user) {
 	userdata = [];
+	full_week_data = [];
 	xmlhttp=new XMLHttpRequest();
 	/*
 	xmlhttp.open("GET","http://ws.audioscrobbler.com/2.0/?method=user.getinfo&user="+selected_user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72",false);
@@ -191,7 +192,7 @@ function get_week(user, weeknum){
 
 		$('#loading').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
 
-	}, 1000*(weeknum-1));
+	}, 500*(weeknum-1));
 	
 }
 
@@ -1009,6 +1010,7 @@ function drawLastWave() {
 	}
 	$('#loading').html("Wave Complete!");
 	$('#box_2').css("display","block");
+	addWatermark();
 }
 
 String.prototype.width = function(font) {
@@ -1069,4 +1071,13 @@ function show_options(){
 	$('#box_2').css("display","none");
 	graph = "";
 	include_artists = "";
+}
+
+function addWatermark(){
+	var watermark = "savas.ca/lastwave";
+	var watermark_height = graph.height*0.03;
+	var watermark_width = watermark.width(watermark_height+"px Lucida Sans Unicode");
+
+	d3.select("#ex1").select("svg").append("text").text(watermark).attr("x",graph.width-watermark_width).attr("y",graph.height).attr("font-size",watermark_height).attr("fill","#000").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif").transition().style("opacity", 0.5);
+
 }
