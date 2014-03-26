@@ -1,7 +1,7 @@
 > Multiple text drawing points
 > Toggle hide empty weeks/failed weeks
 	> Change time interval button
-> Asynchronous processing
+	> Asynchronous processing
 > Watermark
 	> Make future dates impossible
 > Show months

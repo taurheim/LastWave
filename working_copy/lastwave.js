@@ -1,3 +1,9 @@
+/*$.get( "http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user=Taurheim&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from=1394366400&to=1394971200", function( data ) {
+  alert( "Data Loaded: " + data );
+});*/
+
+
+
 /****************************
  ***** CONFIG SHIT **********
  ****************************/
@@ -10,7 +16,15 @@ var font_name = "Arial";
 var graph_type = "Wiggle";
 var time_start = 0;
 var time_end = 0;
-var total_weeks;
+var min_playcount = 5;
+var total_weeks = 0;
+
+//Change this later
+var old_start = 0;
+var old_end = 0;
+
+var userdata = {};
+	var full_week_data = [];
 
 //Initialize datepickers, convert buttons
   
@@ -22,6 +36,7 @@ $(document).ready(function() {
 });
 //TESTING
 var test_artist = "---";
+
 
 function CreateWave(){
 	//Format the date
@@ -49,10 +64,32 @@ function CreateWave(){
 	graph_type = document.getElementById("graph_type").value;
 	showartistnames = document.getElementById("artist_names").checked;
 	normalize = document.getElementById("normalize").checked;
-	loadXML(document.getElementById('user').value,document.getElementById('plays').value);
+	min_playcount = document.getElementById('plays').value;
+
+
+	total_weeks = Math.ceil((time_end-time_start)/604800);
+	if (total_weeks<4){
+		alert("Please choose a time of at least 4 weeks");
+		return false;
+	}
+
+	if(time_start == old_start || time_end == old_end){
+		parseXML();
+	} else {
+		loadXML(document.getElementById('user').value);
+	}
+
+
+
+	old_start = time_start;
+	old_end = time_end;
+
+	//Hide settings box
+
+	$('#box_1').css("display","none");
 }
-var userdata = {};
-function loadXML(selected_user,min_playcount) {
+
+function loadXML(selected_user) {
 	userdata = [];
 	xmlhttp=new XMLHttpRequest();
 	/*
@@ -70,22 +107,21 @@ function loadXML(selected_user,min_playcount) {
 	//User Data variable. Store all the information here, then graph it.
 
 	//Calculate how many weeks the user has been on last.fm (we're going to run through the loop for every week)
-	total_weeks = Math.ceil((time_end-time_start)/604800);
-	if (total_weeks<4){
-		alert("Please choose a time of at least 4 weeks");
-		return false;
-	}
-	//Run through every week, adding artists as we go
+	//New code - Asynchronous
+
+	//Run through each week, adding a new call to the full_week_data
 	for(w=1;w<=total_weeks;w++){
-		//Add a week to timer
-		var week_start=time_start+ (604800*(w-1));
-		var week_end=week_start + 604800;
-		
-		
-		//Get the week's data
-		xmlhttp.open("GET","http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+selected_user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end,false);
-		xmlhttp.send();
-		week_data = xmlhttp.responseXML;
+		get_week(selected_user,w);
+	}
+}
+
+function parseXML(){
+
+	//Run through every week, adding artists as we go
+	$('#loading').html("Parsing XML...");
+
+	for(w=1;w<=total_weeks;w++){
+		week_data = full_week_data[w-1].responseXML;
 		
 		//If there is an error, add 0s to all artists
 		if((week_data.getElementsByTagName("lfm")[0].getAttribute("status") != "ok") || week_data.getElementsByTagName("lfm")[0].childNodes.length<=1){
@@ -130,9 +166,41 @@ function loadXML(selected_user,min_playcount) {
 			}
 		}
 	}
-	
+	/**/
 	//Now that we've got all of our data, draw the wave
+	$('#loading').html("Finished parsing XML...");
 	drawLastWave();
+}
+
+
+//Retrieve a single week
+function get_week(user, weeknum){
+	setTimeout( function() { 
+		//Add a week to timer
+		var week_start=time_start+ (604800*(weeknum-1));
+		var week_end=week_start + 604800;
+
+		//Get the data
+		full_week_data.push(
+					$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
+		);
+
+		if(weeknum==total_weeks){
+				xmlwait();
+		}
+
+		$('#loading').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
+
+	}, 1000*(weeknum-1));
+	
+}
+
+function xmlwait() {
+
+	$.when.apply(null,full_week_data).done(function() {
+		$('#loading').append("All weeks loaded!");
+		parseXML();
+	})
 }
 
 function round_week(n){
@@ -179,6 +247,8 @@ function show_svg_code()
 
 var graph; //This can be removed, just here so we can see it in the DOM
 function drawLastWave() {
+
+	$('#loading').html("Drawing Wave...");
 	
 	document.getElementById("ex1").innerHTML = "";
 	
@@ -937,7 +1007,7 @@ function drawLastWave() {
 			//document.getElementById("band_names").innerHTML += "<span id='"+selected_artist+"' style='position:absolute;top:"+y_value_for_max_point+";left:"+x_value_for_max_point+"'>"+artist_name+"</span>";
 		}
 	}
-	$('#box_1').css("display","none");
+	$('#loading').html("Wave Complete!");
 	$('#box_2').css("display","block");
 }
 
