@@ -3390,7 +3390,6 @@ Rickshaw.Graph.RangeSlider.Preview = Rickshaw.Class.create({
 			.style("width", this.config.width + "px")
 			.style("position", "relative")
 			.style("top", -this.previewHeight + "px");
-
 		this._renderDimming();
 		this._renderFrame();
 		this._renderGrippers();
@@ -3758,6 +3757,7 @@ Rickshaw.Graph.Renderer = Rickshaw.Class.create( {
 		args = args || {};
 
 		var graph = this.graph;
+
 		var series = args.series || graph.series;
 
 		var vis = args.vis || graph.vis;

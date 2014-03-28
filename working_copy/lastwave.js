@@ -11,6 +11,7 @@ var graph_height = 1500;
 var graph_width = 3000;
 var showartistnames = true;
 var normalize = false;
+var show_months = true;
 var font_color = "black";
 var font_name = "Arial";
 var graph_type = "Wiggle";
@@ -22,9 +23,11 @@ var total_weeks = 0;
 //Change this later
 var old_start = 0;
 var old_end = 0;
+var old_user = "";
 
 var userdata = {};
 var full_week_data = [];
+var time_span = [];
 
 //Initialize datepickers, convert buttons
   
@@ -63,6 +66,7 @@ function CreateWave(){
 	font_name = document.getElementById("font_name").value;
 	graph_type = document.getElementById("graph_type").value;
 	showartistnames = document.getElementById("artist_names").checked;
+	show_months = document.getElementById("show_months").checked
 	normalize = document.getElementById("normalize").checked;
 	min_playcount = document.getElementById('plays').value;
 
@@ -73,9 +77,10 @@ function CreateWave(){
 		return false;
 	}
 
-	if(time_start == old_start && time_end == old_end){
+	if(time_start == old_start && time_end == old_end && document.getElementById('user').value == old_user){
 		parseXML();
 	} else {
+		time_span = [];
 		loadXML(document.getElementById('user').value);
 	}
 
@@ -83,6 +88,7 @@ function CreateWave(){
 
 	old_start = time_start;
 	old_end = time_end;
+	old_user = document.getElementById('user').value;
 
 	//Hide settings box
 
@@ -180,10 +186,11 @@ function get_week(user, weeknum){
 		//Add a week to timer
 		var week_start=time_start+ (604800*(weeknum-1));
 		var week_end=week_start + 604800;
+		time_span.push(week_start);
 
 		//Get the data
 		full_week_data.push(
-					$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
+					$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end).fail(function() {$('#errors').append("Error loading Week "+weeknum+"<br/>")})
 		);
 
 		if(weeknum==total_weeks){
@@ -198,7 +205,7 @@ function get_week(user, weeknum){
 
 function xmlwait() {
 
-	$.when.apply(null,full_week_data).done(function() {
+	$.when.apply(null,full_week_data).fail(function(){$("errors").html("Some weeks failed to load. The graph might not be 100% accurate.")}).always(function() {
 		$('#loading').append("All weeks loaded!");
 		parseXML();
 	})
@@ -211,6 +218,15 @@ if(n > 0)
         return Math.floor(n/604800.0) * 604800;
     else
         return 604800;
+}
+
+function round_month(n){
+	if(n > 0)
+        return Math.ceil(n/2629743.0) * 2629743;
+    else if( n < 0)
+        return Math.floor(n/2629743.0) * 2629743;
+    else
+        return 2629743;
 }
 
 function submit_download_form(output_format)
@@ -250,6 +266,12 @@ var graph; //This can be removed, just here so we can see it in the DOM
 function drawLastWave() {
 
 	$('#loading').html("Drawing Wave...");
+
+
+
+
+
+
 	
 	document.getElementById("ex1").innerHTML = "";
 	
@@ -325,8 +347,65 @@ function drawLastWave() {
 		series: series_data
 	});
 
-
 	graph.render();
+
+	if(show_months){
+		//x ratio
+		var xratio = graph.width/(graph.series[0].stack.length-1);
+
+		d3.select("#ex1").select("svg").append("g").attr("id", "Months");
+		d3.select("#ex1").select("svg").selectAll("g").sort(function(a, b) { 
+			if(a== undefined) return -1;
+			if (a.id == "Months") return 1;
+			else {
+				return 1;
+				alert(a);
+			}
+		});
+		//Push all months to background
+
+		//Set up background
+		var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+		/*
+		var firstmonth = new Date(round_month(time_span[0])*1000);
+		var lastmonth = new Date(round_month(time_span[total_weeks-1])*1000);*/
+		console.log("Total Distance:"+(time_end-time_start));
+		/*alert("Number of Months: "+ (lastmonth.getMonth() - firstmonth.getMonth()));
+		for(i=(time_start*1000);i<(time_end*1000);i+=(2629743000)){
+			alert("test");
+		}*/
+
+		//If our rounded month is behind our start time, skip it
+		for(t=time_start;t<time_end;t+=2629743){
+			var month = round_month(t);
+			month_name = months[new Date((month*1000)+604800000).getMonth()];
+
+			if(month<time_start){
+				month+=2629743;
+			}
+			if(month>time_end){
+				break;
+			}
+
+			var rah = (month-time_start)/(time_end-time_start);
+			rah*= graph.width;
+			console.log(month_name + " " + rah);
+			console.log(new Date(month*1000));
+
+			d3.select("#ex1").select("svg").select("#Months").append("line").attr("x1",rah).attr("y1","0").attr("x2",rah).attr("y2",graph.height-40).attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.4;");
+			d3.select("#ex1").select("svg").select("#Months").append("text").text(month_name).attr("x",rah - month_name.width("20px Lucida Sans Unicode")/2).attr("y",graph.height-20).attr("font-size",20).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
+		}
+	}
+
+	/*
+	for(i=firstmonth;i<(lastmonth);i++){
+		console.log(date);
+
+		d3.select("#ex1").select("svg").select("#Months").append("line").attr("x1",i*4*xratio).attr("y1","0").attr("x2",i*4*xratio).attr("y2",graph.height).attr("style","stroke:rgb(100,100,100);stroke-width:5");
+		d3.select("#ex1").select("svg").select("#Months").append("text").text(months[date.getMonth()]).attr("x",i*4*xratio).attr("y",graph.height-100).attr("font-size",16).attr("fill","red").attr("font-family","Arial");
+	}*/
+
+
 	if(showartistnames){
 	/*
 		//Add labels to the graph.
@@ -339,10 +418,11 @@ function drawLastWave() {
 				maxy0 = graph.series[include_artists.length-1].stack[i].y0+graph.series[include_artists.length-1].stack[i].y;
 			}
 		}
-		
+
 		//Get ratios
 		var yratio = graph.height/maxy0;
 		var xratio = graph.width/(graph.series[0].stack.length-1);
+		
 		console.log("y ratio: "+yratio);
 		/*for(i=0;i<include_artists.length;i++){
 			artist_name = include_artists[i];
@@ -1010,6 +1090,7 @@ function drawLastWave() {
 	}
 	$('#loading').html("Wave Complete!");
 	$('#box_2').css("display","block");
+	$('#loading').css("display","none");
 	addWatermark();
 }
 

@@ -41,6 +41,7 @@ See here for online demo:
 <div class="titlebar">
 	<img class="center_block" src="logo.png"/>
 	<div id ="loading"></div>
+	<div id="errors"></div>
 	<div id="box_1" class="center_block">
 		Last.fm Username:<input type="text" name="user" id="user" value="Taurheim"><br/><br/>
 		Data Range : <br/>
@@ -49,6 +50,8 @@ See here for online demo:
 		<br/><br/>
 		Colour Scheme: 
 		<select id="scheme">
+			<option value="bluegreen">BlueGreen</option>
+			<option value="pinkorange">PinkOrange</option>
 			<option value="spectrum14">Spectrum 14</option>
 			<option value="spectrum2000">Spectrum 2000</option>
 			<option value="spectrum2001">Spectrum 2001</option>
@@ -58,13 +61,12 @@ See here for online demo:
 			<option value="colorwheel">Color Wheel</option>
 			<option value="cool">Cool</option>
 			<option value="munin">Munin</option>
-			<option value="pinkorange">PinkOrange</option>
-			<option value="bluegreen">BlueGreen</option>
 		</select><br/><br/>
 		Number of plays to be included: <input type="text" name="plays" id="plays" value="10"/><br/><br/>
 		Dimensions: <input type="text" name="width" id="width" value="2000"/> x <input type="text" name="height" id="height" value="1000"/><br/><br/>
-		Artist Names?: <input type="checkbox" name="artist_names" id="artist_names" checked="true"/><br/><br/>
-		Normalize?: <input type="checkbox" name="normalize" id="normalize" checked="false"/>
+		Artist Names?: <input type="checkbox" name="artist_names" id="artist_names" checked /><br/><br/>
+		Show Months?: <input type="checkbox" name="show_months" id="show_months" checked /><br/><br/>
+		Normalize?: <input type="checkbox" name="normalize" id="normalize" />
 		<br/><br/>
 		Font Name: <input type="text" name="font_name" id="font_name" value="Arial"/><br/><br/>
 		Graph:

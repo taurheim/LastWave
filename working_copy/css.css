@@ -94,3 +94,9 @@
 #start_date, #end_date {
 	width: 150px;
 }
+
+#loading {
+	color: #35586C;
+    font-family: "Lucida Sans Unicode";
+    text-align: center;
+}
