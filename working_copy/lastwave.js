@@ -81,6 +81,7 @@ function CreateWave(){
 		parseXML();
 	} else {
 		time_span = [];
+		$('#loading').css("display","block");
 		loadXML(document.getElementById('user').value);
 	}
 
@@ -128,6 +129,13 @@ function parseXML(){
 	$('#loading').html("Parsing XML...");
 
 	for(w=1;w<=total_weeks;w++){
+		if(full_week_data[w-1].status == 503){
+			console.log("Error Loading Week "+w);
+			for(artist in userdata){
+				userdata[artist][w] = [w,0];
+			}
+			continue;
+		}
 		week_data = full_week_data[w-1].responseXML;
 		
 		//If there is an error, add 0s to all artists
@@ -199,13 +207,13 @@ function get_week(user, weeknum){
 
 		$('#loading').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
 
-	}, 500*(weeknum-1));
+	}, 250*(weeknum-1));
 	
 }
 
 function xmlwait() {
 
-	$.when.apply(null,full_week_data).fail(function(){$("errors").html("Some weeks failed to load. The graph might not be 100% accurate.")}).always(function() {
+	$.when.apply(null,full_week_data).done(function() {
 		$('#loading').append("All weeks loaded!");
 		parseXML();
 	})
@@ -353,15 +361,15 @@ function drawLastWave() {
 		//x ratio
 		var xratio = graph.width/(graph.series[0].stack.length-1);
 
-		d3.select("#ex1").select("svg").append("g").attr("id", "Months");
-		d3.select("#ex1").select("svg").selectAll("g").sort(function(a, b) { 
+		d3.select("#ex1").select("svg").select("g").append("g").attr("id", "Months");
+		/*d3.select("#ex1").select("svg").selectAll("g").sort(function(a, b) { 
 			if(a== undefined) return -1;
 			if (a.id == "Months") return 1;
 			else {
 				return 1;
 				alert(a);
 			}
-		});
+		});*/
 		//Push all months to background
 
 		//Set up background
@@ -392,7 +400,7 @@ function drawLastWave() {
 			console.log(month_name + " " + rah);
 			console.log(new Date(month*1000));
 
-			d3.select("#ex1").select("svg").select("#Months").append("line").attr("x1",rah).attr("y1","0").attr("x2",rah).attr("y2",graph.height-40).attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.4;");
+			d3.select("#ex1").select("svg").select("#Months").append("line").attr("x1",rah).attr("y1","0").attr("x2",rah).attr("y2",graph.height-40).attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.2;");
 			d3.select("#ex1").select("svg").select("#Months").append("text").text(month_name).attr("x",rah - month_name.width("20px Lucida Sans Unicode")/2).attr("y",graph.height-20).attr("font-size",20).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
 		}
 	}
@@ -1161,4 +1169,11 @@ function addWatermark(){
 
 	d3.select("#ex1").select("svg").append("text").text(watermark).attr("x",graph.width-watermark_width).attr("y",graph.height).attr("font-size",watermark_height).attr("fill","#000").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif").transition().style("opacity", 0.5);
 
+}
+
+function artist_data(){
+	var this.name = "";
+	var this.data = [];
+	var this.crit_points = [];
+	
 }
