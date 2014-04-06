@@ -76,7 +76,7 @@ See here for online demo:
 			<option value="expand">Expand</option>
 			<option value="zero">Zero</option>
 		</select><br/><br/>
-		<center><input type="submit" value="Create Wave!" onclick="CreateWave()"></center>
+		<center><input type="submit" value="Create Wave!" onclick="submitWave()"></center>
 	</div>
 	<div id="box_2" class="center_block">
 		<br/>
@@ -93,7 +93,7 @@ See here for online demo:
 </div>
 
 <!-- ########### The Drawing Section ####### -->
-<div class='chart' id='ex1'></div>
+<div class='chart' id='lastwave'></div>
 
 <!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
      The form is populated and submitted by the JavaScript below. -->
