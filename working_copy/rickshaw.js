@@ -4073,6 +4073,8 @@ Rickshaw.Graph.Renderer.Area = Rickshaw.Class.create( Rickshaw.Graph.Renderer, {
 		var graph = this.graph;
 		var series = args.series || graph.series;
 
+		series.push(series[series.length-1]);
+
 		var vis = args.vis || graph.vis;
 		vis.selectAll('*').remove();
 
@@ -4082,6 +4084,7 @@ Rickshaw.Graph.Renderer.Area = Rickshaw.Class.create( Rickshaw.Graph.Renderer, {
 		var data = series
 			.filter(function(s) { return !s.disabled })
 			.map(function(s) { return s.stack });
+
 
 		var nodes = vis.selectAll("path")
 			.data(data)

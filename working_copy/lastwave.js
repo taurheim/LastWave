@@ -53,14 +53,15 @@ var graph_options = {
 	"graph_width": 3000,
 	"normalize": false,
 	"show_months": true,
-	"font_color": "black",
+	"font_color": "#000000",
 	"font_name": "Arial",
 	"graph_type": "Wiggle",
 	"time_start": 0,
 	"time_end": 0,
 	"min_playcount": 0,
 	"total_weeks": 0,
-	"palette": 0
+	"palette": 0,
+	"bgcolor": ""
 };
 
 //Calculated
@@ -74,7 +75,7 @@ var graph_data = {
 
 
 //For testing purposes
-var test_artist = "Cage the Elephant";
+var test_artist = "---";
 
 
 //Initialize datepickers, convert buttons
@@ -130,6 +131,7 @@ function Crit_Point(){
 	this.btmleft = new Point();
 	this.btmright = new Point();
 	this.origin = new Point();
+	this.type = "";
 }
 
 
@@ -155,6 +157,8 @@ function submitWave(){
 	graph_options.showartistnames = document.getElementById("artist_names").checked;
 	graph_options.show_months = document.getElementById("show_months").checked
 	graph_options.normalize = document.getElementById("normalize").checked;
+	graph_options.bgcolor = document.getElementById("bgcolor").value;
+	graph_options.font_color = document.getElementById("font_color").value;
 
 	//End Time
 	var rawdate = document.getElementById("end_date").value.split("/");
@@ -329,6 +333,10 @@ function calculate_critical_points(){
 	// Remove all weeks that are within a certain bound
 	// Repeat until there are no remaining weeks to be maxes
 
+	//Remove all weeks within a threshold of the critical point
+	var threshold = 4;//parseInt(300/(graph_options.graph_width/graph_options.total_weeks));
+	//alert(threshold);
+
 	for(artist in graph_data.userdata){
 		graph_data.userdata[artist].crit_points = [];
 		var full_weeks = [];
@@ -345,9 +353,6 @@ function calculate_critical_points(){
 				}
 			}
 			graph_data.userdata[artist].crit_points.push(graph_data.userdata[artist].data[max_point[0]]);
-
-			//Remove all weeks within 2 of the critical point
-			var threshold = 6;
 			for(w=max_point[0]-threshold;w<=max_point[0]+threshold;w++){
 				var index = full_weeks.indexOf(w);
 				if(index>-1){
@@ -383,6 +388,11 @@ function drawLastWave(){
 
 	graph.render();
 
+	d3.select("#lastwave").select("svg").select("g").append("rect")
+    .attr("width", "100%")
+    .attr("height", "100%")
+    .attr("fill", graph_options.bgcolor);
+
 	if(graph_options.show_months){
 		drawMonths();
 	}
@@ -401,6 +411,7 @@ function drawLastWave(){
 function populateWave(){
 	var series_data = [];
 	$('#loading').html("Populating Wave...");
+
 	//Order the artists
 	for(artist in graph_data.userdata){
 		graph_data.artists_order.push(graph_data.userdata[artist].name);
@@ -504,6 +515,7 @@ function drawNames(){
 				((cp.A.m<=0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0))
 			){
 				//Type "W"
+				cp.type = "W";
 				label = draw_W(cp,artist_name);
 				//console.log(artist_name+" - W");
 			}
@@ -512,6 +524,7 @@ function drawNames(){
 				((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m>=0)&&(cp.D.m>0))
 			){
 				//Type "X"
+				cp.type = "X";
 				label = draw_X(cp,artist_name);
 				//console.log(artist_name+" - X");
 			}
@@ -522,6 +535,7 @@ function drawNames(){
 				(cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)
 			){
 				//Type "Y"
+				cp.type = "Y";
 				label = draw_Y(cp,artist_name);
 				//console.log(artist_name+" - Y");
 			}
@@ -529,6 +543,7 @@ function drawNames(){
 				(cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)
 			){
 				//Type "Z"
+				cp.type = "Z";
 				label = draw_Z(cp,artist_name);
 				//console.log(artist_name+" - Z");
 			} else {
@@ -540,7 +555,7 @@ function drawNames(){
 
 			if(!label || label.fontsize<8){
 				//console.log(artist_name +" failed with a font size of "+fontsize);
-				continue;
+				//continue;
 			}
 			d3.select("#lastwave").select("svg").append("text").text(artist_name).attr("x",label.x).attr("y",label.y).attr("font-size",label.fontsize).attr("fill",graph_options.font_color).attr("font-family",graph_options.font_name);
 		
@@ -638,22 +653,32 @@ function populate_lines(){
 }
 
 function draw_W(cp,artist_name){
+	// TYPE: w
+	// DESCRIPTION: One set facing inwards, one set facing outwards
+	// APPROACH: Assume that the text box's side must touch one of the points, and is then bounded by the left and right by the inward facing lines
+	
 	//cp is the critical point, should contain all information necessary.
 	var fontsize = 5;
 	if(cp.A.m>0){ // w2
 		var btm_bound = cp.r.y;
 		while(true){
 			//Find the bottom bound of our textbox
-			btm_bound = cp.r.y + fontsize;
+			top_bound = cp.r.y + fontsize;
 
-			var coll_left = (btm_bound - cp.A.b)/cp.A.m;
+			//Left bound of the bottom bound
+			var coll_left = (top_bound - cp.A.b)/cp.A.m;
 			if(coll_left<cp.topleft.x) coll_left=cp.topleft.x;
 
-			var coll_right = (btm_bound - cp.B.b)/cp.B.m;
+			//Where the bottom bound hits line B
+			var coll_right = (top_bound - cp.B.b)/cp.B.m;
 			if(coll_right>cp.topright.x) coll_right=cp.topright.x;
 
+			//Find out what the width of the box would be if we had the current fontsize
 			var boxWidth = artist_name.width(fontsize+"px "+graph_options.font_name);
+
+			//Does it fit?
 			if((coll_right-coll_left)>(cp.topright.x-cp.topleft.x)){
+				//If the size of the box is larger than the size of the space, max it out.
 				coll_left = cp.topleft.x;
 				fontsize = cp.topleft.y - coll_left.y;
 				break;
@@ -663,13 +688,14 @@ function draw_W(cp,artist_name){
 				break;
 			}
 		}
-		if(artist_name.height(fontsize+"px "+font_name)>cp.q.y-cp.r.y){
+		/*if(artist_name.height(fontsize+"px "+font_name)>cp.q.y-cp.r.y){
 			//TODO
 			//Change this so that it will keep subtracting font sizes until it fits
+			alert(artist_name);
 			fontsize = cp.q.y-cp.r.y;
-		}
+		}*/
 		fontsize*=0.75;
-		y_value_for_max_point = graph_options.graph_height - btm_bound + artist_name.height(fontsize+"px "+graph_options.font_name)/2;
+		y_value_for_max_point = graph_options.graph_height - top_bound + artist_name.height(fontsize+"px "+graph_options.font_name)/2;
 	} else { //w1
 		//console.log("\\\/"+artist_name);
 		var top_bound = cp.q.y;
@@ -698,7 +724,7 @@ function draw_W(cp,artist_name){
 		if(artist_name.height(fontsize+"px "+graph_options.font_name)>cp.q.y-cp.r.y){
 			fontsize = cp.q.y-cp.r.y;
 		}
-		fontsize*=0.9;
+		fontsize*=0.75;
 		y_value_for_max_point = graph_options.graph_height - top_bound + artist_name.height(fontsize+"px "+graph_options.font_name);
 	}
 	boxWidth = artist_name.width(fontsize+"px "+graph_options.font_name);
@@ -797,8 +823,8 @@ function draw_X(cp,artist_name){
 	
 	//Which x/y values we pick is based on whether we have the graph getting steeper/shallower after a&b
 
-	//Steeper
-	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m){
+	//If it gets a lot steeper after the center points, then adjust.
+	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4){
 		console.log("trigger "+ artist_name)
 		x_value_for_max_point = Math.max(top_collision.x,btm_collision.x) - boxWidth;
 		y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
@@ -806,6 +832,7 @@ function draw_X(cp,artist_name){
 		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x);//ctrpt.x - boxWidth/2;
 		y_value_for_max_point = graph_options.graph_height-btm_collision.y;//graph.height - maxWidth[1] + boxHeight/2;
 	}
+
 	//There's no way I can make an estimate for this
 	if((Math.abs(cp.A.m+cp.C.m)<0.25 && Math.abs(cp.B.m+cp.D.m)>2) || (Math.abs(cp.B.m+cp.D.m)<0.25 && Math.abs(cp.A.m+cp.C.m)>2) ){
 		console.log("Impossible to estimate "+artist_name);
@@ -868,7 +895,7 @@ function draw_Y(cp,artist_name){
 			mU = cp.B.m;
 			bU = cp.B.b;
 		}
-	} else if(cp.C.m<=0 && cp.D.m<0 || cp.C.m>=0 && cp.D.m>0) {
+	} else if(cp.C.m<=0 && cp.D.m<=0 || cp.C.m>=0 && cp.D.m>0) {
 		start_point = cp.r;
 		offset_sign = 1;
 		if(cp.C.m>=0){ //Opposite line: A -> B ^ D
@@ -937,16 +964,16 @@ function draw_Y(cp,artist_name){
 		//First check if Q intersects with V
 		if(
 			//y1
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topright.y)
+			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topright.y)
 			||
 			//y2
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topleft.y)
+			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topleft.y)
 			||
 			//y3
-			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmright.y)
+			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmright.y)
 			||
 			//y4
-			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < a.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmleft.y)
+			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmleft.y)
 		 ) {
 			start_point = previous_start_point;
 			break;
@@ -967,16 +994,16 @@ function draw_Y(cp,artist_name){
 		//First check if X collides with line U before it collides with V
 		if(
 			//y1
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topright.y)
+			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topright.y)
 			||
 			//y2
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topleft.y)
+			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topleft.y)
 			||
 			//y3
-			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > a.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmright.y)
+			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmright.y)
 			||
 			//y4
-			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < a.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmleft.y)
+			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmleft.y)
 		 ) {
 			intersect2 = { "x": (bU - bX)/(mX - mU), "y": ((mU)*(bU - bX)/(mX - mU))+bU};
 		 } else {
