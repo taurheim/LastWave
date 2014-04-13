@@ -85,6 +85,9 @@ $(document).ready(function() {
 	$("#save_as_png").click(function() { pngconvert(); });
 	$("#start_date").datepicker();
 	$("#end_date").datepicker();
+	$("#scheme").imagepicker({
+		show_label  : true
+	});
 });
 
 function artist_data(){
@@ -145,20 +148,15 @@ function submitWave(){
 	}
 
 	//Graph Dimensions
-	graph_options.graph_height = parseInt(document.getElementById("height").value);
+	graph_options.graph_height = parseInt(document.getElementById("height").value) * 0.90;
 	graph_options.graph_width = parseInt(document.getElementById("width").value);
 	if(graph_options.graph_width>25000 || graph_options.graph_height>10000){
 		alert("Caution: Choosing a graph this size may cause browser problems");
 	}
 
 	//Other options
-	graph_options.font_name = document.getElementById("font_name").value;
-	graph_options.graph_type = document.getElementById("graph_type").value;
-	graph_options.showartistnames = document.getElementById("artist_names").checked;
-	graph_options.show_months = document.getElementById("show_months").checked
-	graph_options.normalize = document.getElementById("normalize").checked;
-	graph_options.bgcolor = document.getElementById("bgcolor").value;
-	graph_options.font_color = document.getElementById("font_color").value;
+
+	loadScheme();
 
 	//End Time
 	var rawdate = document.getElementById("end_date").value.split("/");
@@ -185,6 +183,7 @@ function submitWave(){
 		return false;
 	}
 
+
 	graph_options.total_weeks = total_weeks;
 
 	//If the data set hasn't changed, then simply re-parse the data and re-draw the graph
@@ -204,6 +203,60 @@ function submitWave(){
 	//Hide settings box
 
 	$('#box_1').css("display","none");
+}
+
+
+function loadScheme(){
+	if(false || document.getElementById("scheme").value == "custom"){
+		graph_options.font_name = document.getElementById("font_name").value;
+		graph_options.graph_type = document.getElementById("graph_type").value;
+		graph_options.showartistnames = document.getElementById("artist_names").checked;
+		graph_options.show_months = document.getElementById("show_months").checked
+		graph_options.normalize = document.getElementById("normalize").checked;
+		graph_options.bgcolor = document.getElementById("bgcolor").value;
+		graph_options.font_color = document.getElementById("font_color").value;
+		console.log(graph_options);
+	}else {
+		graph_options.font_name = "Arial";
+		graph_options.graph_type = "silhouette";
+		graph_options.showartistnames = true;
+		graph_options.show_months = true;
+		graph_options.normalize = true;
+		
+		switch(document.getElementById("scheme").value){
+			case "lastwave":
+				graph_options.bgcolor = "#ffffff";
+				graph_options.font_color = "#000000";
+				break;
+			case "forest":
+				graph_options.bgcolor = "#444444";
+				graph_options.font_color = "#ffffff";
+				break;
+			case "neon":
+				graph_options.bgcolor = "#000000";
+				graph_options.font_color = "#ffffff";
+				break;
+			case "fire":
+				graph_options.bgcolor = "#000000";
+				graph_options.font_color = "#000000";
+				break;
+			case "carpet":
+				graph_options.bgcolor = "#999999";
+				graph_options.font_color = "#000000";
+				break;
+			case "assault":
+				graph_options.bgcolor = "#444444";
+				graph_options.font_color = "#000000";
+				break;
+			default:
+				alert("Scheme not found!");
+		}
+
+	}
+	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
+	if(scheme.value=="custom"){
+		generateHue();
+	}
 }
 
 function resetXML(){
@@ -249,10 +302,21 @@ function get_week(user, weeknum){
 }
 
 function xmlwait() {
-	$.when.apply(null,graph_data.week_XML).done(function() {
+	$('#loading').html("Waiting");
+
+	/*$.when.apply(null,graph_data.week_XML).done(function() {
 		$('#loading').append("All weeks loaded!");
 		parseXML();
-	})
+	});*/
+
+	$.when.apply($, $.map(graph_data.week_XML, function(d) {
+	    var wrapDeferred = $.Deferred();
+	    // you can add .done and .fail if you want to keep track of each results individualy
+	    d.always(function() { wrapDeferred.resolve(); });
+	    return wrapDeferred.promise();
+	})).done(function(){
+		parseXML();
+	});
 }
 
 function parseXML(){
@@ -323,7 +387,12 @@ function parseXML(){
 	/**/
 	//Now that we've got all of our data, draw the wave
 	$('#loading').html("Finished parsing XML...");
-	drawLastWave();
+
+	if(isEmpty(graph_data.userdata)){
+		alert("No data could be found for the specified timespan. Try changing your boundaries.")
+	} else {
+		drawLastWave();
+	}
 }
 
 function calculate_critical_points(){
@@ -367,11 +436,10 @@ function drawLastWave(){
 	//Mother function, this is where it all happens
 
 	$('#loading').html("Drawing Wave...");
+
 	document.getElementById("lastwave").innerHTML = "";
 
-	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
 	graph_options.palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
-	if(scheme.value=="spectrum2001") font_color = "white";
 
 	graph_data.series_data = populateWave();
 
@@ -383,24 +451,36 @@ function drawLastWave(){
 		offset: graph_options.graph_type,
 		stroke: true,
 		preserve: true,
-		series: graph_data.series_data
+		series: graph_data.series_data,
+		fill: "#000"
 	});
 
 	graph.render();
 
+    d3.select("#lastwave").select("svg").attr("height",parseInt(graph_options.graph_height/0.90));
+    //d3.select("#lastwave").select("svg").attr("transform","translate("+0+","+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
+    console.log(graph_options.graph_height);
+
+
+	if(graph_options.showartistnames){
+		d3.select("#lastwave").select("svg").append("g").attr("id","graph_names");
+		drawNames();
+	}
+	
+
+	d3.select("#lastwave").select("svg").selectAll("g").attr("transform","translate(0,50)");
+	
 	d3.select("#lastwave").select("svg").select("g").append("rect")
-    .attr("width", "100%")
-    .attr("height", "100%")
-    .attr("fill", graph_options.bgcolor);
+    .attr("width", graph_options.graph_width)
+    .attr("height", graph_options.graph_height/0.90)
+    .attr("fill", graph_options.bgcolor)
+    .attr("x","0")
+    .attr("y",-1*(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2);
 
 	if(graph_options.show_months){
 		drawMonths();
 	}
 
-	if(graph_options.showartistnames){
-		drawNames();
-	}
-	
 	$('#loading').html("Wave Complete!");
 	$('#box_2').css("display","block");
 	$('#loading').css("display","none");
@@ -553,11 +633,11 @@ function drawNames(){
 			
 
 
-			if(!label || label.fontsize<8){
+			if(!label){// || label.fontsize<8){
 				//console.log(artist_name +" failed with a font size of "+fontsize);
-				//continue;
+				continue;
 			}
-			d3.select("#lastwave").select("svg").append("text").text(artist_name).attr("x",label.x).attr("y",label.y).attr("font-size",label.fontsize).attr("fill",graph_options.font_color).attr("font-family",graph_options.font_name);
+			d3.select("#lastwave").select("svg").select("#graph_names").append("text").text(artist_name).attr("x",label.x).attr("y",label.y).attr("font-size",label.fontsize).attr("fill",graph_options.font_color).attr("font-family",graph_options.font_name);
 		
 		}
 	}
@@ -641,10 +721,10 @@ function populate_lines(){
 			graph_data.userdata[artist_name].crit_points[pt] = crit;
 
 			if(artist_name==test_artist){
-				d3.select("#lastwave").select("svg").append("line").attr("x1",crit.topleft.x).attr("y1",graph_options.graph_height-crit.topleft.y).attr("x2",crit.q.x).attr("y2",graph_options.graph_height-crit.q.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#lastwave").select("svg").append("line").attr("x1",crit.btmleft.x).attr("y1",graph_options.graph_height-crit.btmleft.y).attr("x2",crit.r.x).attr("y2",graph_options.graph_height-crit.r.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#lastwave").select("svg").append("line").attr("x1",crit.q.x).attr("y1",graph_options.graph_height-crit.q.y).attr("x2",crit.topright.x).attr("y2",graph_options.graph_height-crit.topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
-				d3.select("#lastwave").select("svg").append("line").attr("x1",crit.r.x).attr("y1",graph_options.graph_height-crit.r.y).attr("x2",crit.btmright.x).attr("y2",graph_options.graph_height-crit.btmright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.topleft.x).attr("y1",graph_options.graph_height-crit.topleft.y).attr("x2",crit.q.x).attr("y2",graph_options.graph_height-crit.q.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.btmleft.x).attr("y1",graph_options.graph_height-crit.btmleft.y).attr("x2",crit.r.x).attr("y2",graph_options.graph_height-crit.r.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.q.x).attr("y1",graph_options.graph_height-crit.q.y).attr("x2",crit.topright.x).attr("y2",graph_options.graph_height-crit.topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
+				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.r.x).attr("y1",graph_options.graph_height-crit.r.y).attr("x2",crit.btmright.x).attr("y2",graph_options.graph_height-crit.btmright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 				//d3.select("#lastwave").select("svg").append("circle").attr("cx",crit.q.x).attr("cy",graph_options.graph_height-crit.q.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
 				
 			}
@@ -818,13 +898,13 @@ function draw_X(cp,artist_name){
 	}
 	
 	fontsize*=0.9;
-	var boxHeight = artist_name.height(fontsize+"px "+font_name);
-	var boxWidth = artist_name.width(fontsize+"px "+font_name);
+	var boxHeight = artist_name.height(fontsize+"px "+graph_options.font_name);
+	var boxWidth = artist_name.width(fontsize+"px "+graph_options.font_name);
 	
 	//Which x/y values we pick is based on whether we have the graph getting steeper/shallower after a&b
 
 	//If it gets a lot steeper after the center points, then adjust.
-	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4){
+	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
 		console.log("trigger "+ artist_name)
 		x_value_for_max_point = Math.max(top_collision.x,btm_collision.x) - boxWidth;
 		y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
@@ -836,15 +916,16 @@ function draw_X(cp,artist_name){
 	//There's no way I can make an estimate for this
 	if((Math.abs(cp.A.m+cp.C.m)<0.25 && Math.abs(cp.B.m+cp.D.m)>2) || (Math.abs(cp.B.m+cp.D.m)<0.25 && Math.abs(cp.A.m+cp.C.m)>2) ){
 		console.log("Impossible to estimate "+artist_name);
+		return false;
 	}
 	if(artist_name==test_artist){
 		console.log(coll_right);
 		console.log(maxWidth);
 		//Green line
-		d3.select("#lastwave").select("svg").append("line").attr("x1",maxWidth[2]).attr("y1",graph_options.graph_height-maxWidth[1]).attr("x2",maxWidth[2]+maxWidth[0]).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
-		d3.select("#lastwave").select("svg").append("circle").attr("cx",top_collision.x).attr("cy",graph_options.graph_height - top_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
-		d3.select("#lastwave").select("svg").append("circle").attr("cx",btm_collision.x).attr("cy",graph_options.graph_height - btm_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
-		d3.select("#lastwave").select("svg").append("circle").attr("cx",ctrpt.x).attr("cy",graph_options.graph_height - ctrpt.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
+		d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",maxWidth[2]).attr("y1",graph_options.graph_height-maxWidth[1]).attr("x2",maxWidth[2]+maxWidth[0]).attr("y2",graph.height-maxWidth[1]).attr("style","stroke:rgb(0,255,0);stroke-width:1");
+		d3.select("#lastwave").select("svg").select("#graph_names").append("circle").attr("cx",top_collision.x).attr("cy",graph_options.graph_height - top_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
+		d3.select("#lastwave").select("svg").select("#graph_names").append("circle").attr("cx",btm_collision.x).attr("cy",graph_options.graph_height - btm_collision.y).attr("r",3).attr("stroke-width",5).attr("fill","black");
+		d3.select("#lastwave").select("svg").select("#graph_names").append("circle").attr("cx",ctrpt.x).attr("cy",graph_options.graph_height - ctrpt.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
 	
 	}
 	return {
@@ -1012,12 +1093,12 @@ function draw_Y(cp,artist_name){
 		}
 		if(artist_name==test_artist){
 			//green line (start_point -> intersect1)
-			d3.select("#lastwave").select("svg").append("line").attr("x1",start_point.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect1.x).attr("y2",graph_options.graph_height-intersect1.y).attr("style","stroke:rgb(0,255,0);stroke-width:1");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",start_point.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect1.x).attr("y2",graph_options.graph_height-intersect1.y).attr("style","stroke:rgb(0,255,0);stroke-width:1");
 			//blue line  (intersect1 -> intersect2) (X)
-			d3.select("#lastwave").select("svg").append("line").attr("x1",intersect1.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect2.x).attr("y2",graph_options.graph_height-intersect2.y).attr("style","stroke:rgb(0,0,255);stroke-width:1");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",intersect1.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect2.x).attr("y2",graph_options.graph_height-intersect2.y).attr("style","stroke:rgb(0,0,255);stroke-width:1");
 			
 			//intersect2
-			d3.select("#lastwave").select("svg").append("circle").attr("cx",intersect2.x).attr("cy",graph_options.graph_height-intersect2.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("circle").attr("cx",intersect2.x).attr("cy",graph_options.graph_height-intersect2.y).attr("r",3).attr("stroke-width",5).attr("fill","red");
 		}
 		
 		//Check if we're out of our bounds
@@ -1073,11 +1154,11 @@ function draw_Y(cp,artist_name){
 	
 	if(artist_name==test_artist){
 			//black line (start_point -> intersect1)
-			d3.select("#lastwave").select("svg").append("line").attr("x1",start_point.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect1.x).attr("y2",graph_options.graph_height-intersect1.y).attr("style","stroke:rgb(0,0,0);stroke-width:1");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",start_point.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect1.x).attr("y2",graph_options.graph_height-intersect1.y).attr("style","stroke:rgb(0,0,0);stroke-width:1");
 			//white line  (intersect1 -> intersect2)
-			d3.select("#lastwave").select("svg").append("line").attr("x1",intersect1.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect2.x).attr("y2",graph_options.graph_height-intersect2.y).attr("style","stroke:rgb(255,255,255);stroke-width:1");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",intersect1.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect2.x).attr("y2",graph_options.graph_height-intersect2.y).attr("style","stroke:rgb(255,255,255);stroke-width:1");
 			//black dot - final resting point
-			d3.select("#lastwave").select("svg").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
+			d3.select("#lastwave").select("svg").select("#graph_names").append("circle").attr("cx",x_value_for_max_point).attr("cy",y_value_for_max_point).attr("r",3).attr("stroke-width",5).attr("fill","black");
 	}
 	//Curve fixes
 
@@ -1164,6 +1245,7 @@ function draw_Z(cp,artist_name){
 	};
 }
 
+
 function submit_download_form(output_format)
 {
 	// Get the d3js SVG element
@@ -1202,12 +1284,34 @@ function show_options(){
 	$('#box_2').css("display","none");
 }
 
+function switchlayout(){
+	if(graph_options.normalize){
+		graph_options.normalize = false;
+	} else {
+		graph_options.normalize = true;
+	}
+	parseXML();
+}
+
 function addWatermark(){
 	var watermark = "savas.ca/lastwave";
-	var watermark_height = graph.height*0.03;
+	var watermark_height = graph.height*0.03/0.90;
 	var watermark_width = watermark.width(watermark_height+"px Lucida Sans Unicode");
 
-	d3.select("#lastwave").select("svg").append("text").text(watermark).attr("x",graph.width-watermark_width).attr("y",graph.height).attr("font-size",watermark_height).attr("fill","#000").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif").transition().style("opacity", 0.5);
+	d3.select("#lastwave").select("svg").append("text").text(watermark).attr("x",graph.width-watermark_width).attr("y",graph.height/0.90).attr("font-size",watermark_height).attr("fill","#888").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif").transition().style("opacity", 0.5);
+
+}
+
+function generateHue(){
+	var r1 = 200;
+	var g1 = 100;
+	var b1 = 255;
+	var r2 = 50;
+	var g2 = 50;
+	var b2 = 255;
+
+	var dr = r1-r2
+
 
 }
 
@@ -1282,4 +1386,29 @@ String.prototype.slope = function(font) {
   o.remove();
 
   return f.split("px")[0]/w;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function isEmpty(map) {
+   for(var key in map) {
+      if (map.hasOwnProperty(key)) {
+         return false;
+      }
+   }
+   return true;
+}
+
+function shuffle(o){ //v1.0
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+
+function inputFocus(i){
+    if(i.value==i.defaultValue){ i.value="";}
+}
+function inputBlur(i){
+    if(i.value==""){ i.value=i.defaultValue;}
 }

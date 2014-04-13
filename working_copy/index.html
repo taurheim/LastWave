@@ -28,6 +28,8 @@ See here for online demo:
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
 <script type="text/javascript" src="jquery-ui-1.10.4.custom.min.js"></script>
 <script type="text/javascript" src="lastwave.js"></script>
+<script type="text/javascript" src="image-picker.min.js"></script>
+<link rel="stylesheet" href="image-picker.css">
 
 <!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
      Original version is here: http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css -->
@@ -39,17 +41,34 @@ See here for online demo:
 <body>
 
 <div class="titlebar">
-	<img class="center_block" src="logo.png"/>
-	<div id ="loading"></div>
+	<img class="center_block" src="logo.png">
+	<div id="menu" class="center_block">
+			<a href="index.html">Home</a>
+			<a href="gallery.html">Gallery</a>
+			<a href="donate.html">Donate!</a>
+			<a href="about.html">About</a>
+	</div>
+</div>
+	<div id="loading"></div>
 	<div id="errors"></div>
 	<div id="box_1" class="center_block">
-		Last.fm Username:<input type="text" name="user" id="user" value="Taurheim"><br/><br/>
-		Data Range : <br/>
-		<input type="text" id="start_date"/> to 
-		<input type="text" id="end_date"/>
-		<br/><br/>
-		Colour Scheme: 
+		Last.fm Username:<!--<input type="text" name="user" title="user" style="color:#888;" 
+    						value="Last.fm Username" onfocus="inputFocus(this)" onblur="inputBlur(this)" />-->
+    						<input name="user" id="user" value="Taurheim" type="text">
+    						<br><br>
+		Data Range : <br>
+		<input id="start_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"> to 
+		<input id="end_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text">
+		<br><br>
+		Choose a layout (or create your own):<br>
 		<select id="scheme">
+		<option value="lastwave" data-img-src='images/examples/lastwave.png'>LastWave</option>
+		<option value="forest" data-img-src='images/examples/forest.png'>Forest</option>
+		<option value="neon" data-img-src='images/examples/neon.png'>Neon</option>
+		<option value="fire" data-img-src='images/examples/fire.png'>Fire</option>
+		<option value="carpet" data-img-src='images/examples/carpet.png'>Carpet</option>
+		<option value="assault" data-img-src='images/examples/assault.png'>Assault</option>
+		<!--
 			<option value="bluegreen">BlueGreen</option>
 			<option value="pinkorange">PinkOrange</option>
 			<option value="spectrum14">Spectrum 14</option>
@@ -61,38 +80,41 @@ See here for online demo:
 			<option value="colorwheel">Color Wheel</option>
 			<option value="cool">Cool</option>
 			<option value="munin">Munin</option>
-		</select><br/><br/>
-		Number of plays to be included: <input type="text" name="plays" id="plays" value="10"/><br/><br/>
-		Dimensions: <input type="text" name="width" id="width" value="2000"/> x <input type="text" name="height" id="height" value="1000"/><br/><br/>
-		Artist Names?: <input type="checkbox" name="artist_names" id="artist_names" checked /><br/><br/>
-		Show Months?: <input type="checkbox" name="show_months" id="show_months" checked /><br/><br/>
-		Normalize?: <input type="checkbox" name="normalize" id="normalize" />
-		<br/><br/>
-		Font Name: <input type="text" name="font_name" id="font_name" value="Arial"/><br/><br/>
-		Font Color: <input type="text" name="font_color" id="font_color" value="#000000"/><br/><br/>
-		Background Color: <input type="text" name="bgcolor" id="bgcolor" value="#ffffff"/><br/><br/>
+			<option value="custom">Custom</option>
+		-->
+		</select>
+
+		<input value="Create Wave!" onclick="submitWave()" type="submit">
+	</div>
+	<div id="graph_options" class="center_block">
+<br><br>
+		Number of plays to be included: <input name="plays" id="plays" value="10" type="text"><br><br>
+		Dimensions: <input name="width" id="width" value="2000" type="text"> x <input name="height" id="height" value="1000" type="text"><br><br>
+		Artist Names?: <input name="artist_names" id="artist_names" checked="" type="checkbox"><br><br>
+		Show Months?: <input name="show_months" id="show_months" checked="" type="checkbox"><br><br>
+		Normalize?: <input name="normalize" id="normalize" type="checkbox">
+		<br><br>
+		Font Name: <input name="font_name" id="font_name" value="Arial" type="text"><br><br>
+		Font Color: <input name="font_color" id="font_color" value="#000000" type="text"><br><br>
+		Background Color: <input name="bgcolor" id="bgcolor" value="#ffffff" type="text"><br><br>
 		Graph:
 		<select id="graph_type">
 			<option value="silhouette">Silhouette</option>
 			<option value="wiggle">Wiggle</option>
 			<option value="expand">Expand</option>
 			<option value="zero">Zero</option>
-		</select><br/><br/>
-		<center><input type="submit" value="Create Wave!" onclick="submitWave()"></center>
+		</select><br><br>
 	</div>
 	<div id="box_2" class="center_block">
-		<br/>
-		<center>
-		<button class="btn btn-success" onclick="show_options()">Change Settings</button>
-		<br/><br/>
+		<button class="btn btn-success" onclick="show_options()">Change Settings</button><br/><br/>
+		<button class="btn btn-success" onclick="switchlayout()">Click here if the curves look odd</button>
+		<br><br>
 		<button class="btn btn-success" id="save_as_svg" value="">
 			Save as SVG</button>
 		<button class="btn btn-success" id="save_as_png" value="">
 			Convert to PNG</button>
-			</center>
 	</div>
 
-</div>
 
 <!-- ########### The Drawing Section ####### -->
 <div class='chart' id='lastwave'></div>

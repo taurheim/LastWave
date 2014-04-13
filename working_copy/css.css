@@ -27,20 +27,26 @@
 	margin-right:auto;
 }
 
-#box_1 {
-	width: 500px;
-	padding-top: 10px;
-	padding-bottom: 10px;
+#box_1, #graph_options{
+	width: 800px;
+	padding: 10px 50px;
 	border: 1px solid #000;
 	font: 18px sans-serif;
+	text-align: center;
+}
+
+#graph_options {
+	margin-top:50px;
+	display:none;
 }
 
 #box_2 {
-	height: 120px;
 	width: 500px;
 	border: 1px solid #000;
 	font: 18px sans-serif;
 	display: none;
+	padding: 25px 0px;
+	text-align: center;
 }
 
 #plays {
@@ -99,4 +105,32 @@
 	color: #35586C;
     font-family: "Lucida Sans Unicode";
     text-align: center;
+}
+
+#menu{
+	list-style-type: none;
+	width:800px;
+	display: block;
+	text-align: justify;
+	margin-top:15px;
+	margin-bottom: 50px;
+}
+
+#menu:after {
+  content: "";
+  display: inline-block;
+  width: 100%;
+}
+
+#menu a{
+	font-family: "Lucida Sans Unicode";
+	font-size: 25px;
+}
+
+#svg{
+	background-color: #000;
+}
+
+ul.thumbnails {
+	width:800px;
 }

@@ -732,7 +732,7 @@ Rickshaw.Fixtures.Color = function() {
 		'#31082b'
 	];
 
-	this.schemes.spectrum2001 = [
+	this.schemes.carpet = [
 		'#2f243f',
 		'#3c2c55',
 		'#4a3768',
@@ -986,7 +986,7 @@ Rickshaw.Fixtures.Color = function() {
 	
 	];
 
-	this.schemes.pinkorange = [
+	this.schemes.fire = [
 '#FFFFFF',
 '#FFFFEE',
 '#FFFFDD',
@@ -1246,7 +1246,7 @@ Rickshaw.Fixtures.Color = function() {
 
 	];
 
-	this.schemes.bluegreen = [
+	this.schemes.neon = [
 '#00FFFF',
 '#00FFEE',
 '#00FFDD',
@@ -1555,7 +1555,7 @@ Rickshaw.Fixtures.Color = function() {
 		'#cb513a'
 	].reverse();
 
-	this.schemes.cool = [
+	this.schemes.forest = [
 		'#5e9d2f',
 		'#73c03a',
 		'#4682b4',
@@ -1566,7 +1566,7 @@ Rickshaw.Fixtures.Color = function() {
 		'#c09fb5'
 	];
 
-	this.schemes.munin = [
+	this.schemes.assault = [
 		'#00cc00',
 		'#0066b3',
 		'#ff8000',
