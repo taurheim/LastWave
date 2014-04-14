@@ -1,3 +1,7 @@
+body {
+	
+}
+
 .artist_label {
 	height: 30px;
 	width: 500px;
@@ -27,69 +31,36 @@
 	margin-right:auto;
 }
 
-#box_1, #graph_options{
-	width: 800px;
-	padding: 10px 50px;
-	border: 1px solid #000;
-	font: 18px sans-serif;
+#box_1{
+	width: 1100px;
+	padding: 10px 20px;
 	text-align: center;
 }
 
 #graph_options {
-	margin-top:50px;
-	display:none;
+	width:1100px;
+	text-align:left;
+}
+
+#graph_options, #box_1, #loading, #box_2, #edit_canvas {
+	-webkit-transition:all 0.6s ease-in-out;  
+    -moz-transition:all 0.6s ease-in-out;
+    transition:all 0.6s ease-in-out;
+    overflow:hidden;
 }
 
 #box_2 {
 	width: 500px;
-	border: 1px solid #000;
 	font: 18px sans-serif;
-	display: none;
 	padding: 25px 0px;
 	text-align: center;
 }
 
 #plays {
-	width: 25px;
+	width: 35px;
 }
 #width, #height {
-	width: 40px;
-}
-
-.size_8 {
-	font: 8px Secrcode, arial;
-}
-.size_10 {
-	font: 30px Secrcode, arial;
-}
-.size_12{
-	font: px Secrcode, arial;
-}
-.size_14 {
-	font: px Secrcode, arial;
-}
-.size_16 {
-	font: px Secrcode, arial;
-}
-.size_18 {
-	font: px Secrcode, arial;
-}.size_20 {
-	font: px Secrcode, arial;
-}
-.size_22 {
-	font: px Secrcode, arial;
-}
-.size_24 {
-	font: px Secrcode, arial;
-}
-.size_26 {
-	font: px Secrcode, arial;
-}
-.size_28 {
-	font: px Secrcode, arial;
-}
-.size_30 {
-	font: px Secrcode, arial;
+	width: 55px;
 }
 
 #ex1 img {
@@ -105,6 +76,7 @@
 	color: #35586C;
     font-family: "Lucida Sans Unicode";
     text-align: center;
+    width: 1100px;
 }
 
 #menu{
@@ -132,5 +104,29 @@
 }
 
 ul.thumbnails {
-	width:800px;
+	width:1100px;
+}
+
+#data, #display, #aesthetics {
+	height:326px;
+	width:326px;
+	float:left;
+	margin-left:20px;
+	margin-right: 2px;
+}
+#data, #display {
+	border-right: 1px solid #000;
+}
+
+div.unshown {
+	max-height:0px !important;
+	padding: 0 !important;
+}
+div.shown {
+    max-height: 1000px;
+}
+
+#progressbar {
+	width: 600px;
+	margin: 0 auto;
 }

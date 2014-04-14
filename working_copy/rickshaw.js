@@ -986,6 +986,17 @@ Rickshaw.Fixtures.Color = function() {
 	
 	];
 
+	this.schemes.shades = [
+'#191919',
+'#333333',
+'#4D4D4D',
+'#666666',
+'#808080',
+'#999999',
+'#B2B2B2',
+'#CCCCCC',
+	];
+
 	this.schemes.fire = [
 '#FFFFFF',
 '#FFFFEE',

@@ -156,7 +156,9 @@ function submitWave(){
 
 	//Other options
 
-	loadScheme();
+	if (!loadScheme()){
+		return false;
+	}
 
 	//End Time
 	var rawdate = document.getElementById("end_date").value.split("/");
@@ -193,7 +195,15 @@ function submitWave(){
 	{
 		graph_options.time_start = time_start;
 		graph_options.time_end = time_end;
-		parseXML();
+		togglediv("#loading","true");
+		$('#xml_loading').css("width", "90%");
+		$('#graph_loading').css("width", "0%");
+		$("#progresstext").html("Waiting...");
+		setTimeout(function(){
+			$("#progresstext").html("Parsing XML...");
+			$('#graph_loading').css("width", "5%");
+		},1000)
+		setTimeout(parseXML,1500)
 	} else {
 		graph_options.time_start = time_start;
 		graph_options.time_end = time_end;
@@ -202,12 +212,13 @@ function submitWave(){
 
 	//Hide settings box
 
-	$('#box_1').css("display","none");
+	togglediv("#box_1",false);
+	//$('#box_1').css("display","none");
 }
 
 
 function loadScheme(){
-	if(false || document.getElementById("scheme").value == "custom"){
+	if(document.getElementById("scheme").value == "custom"){
 		graph_options.font_name = document.getElementById("font_name").value;
 		graph_options.graph_type = document.getElementById("graph_type").value;
 		graph_options.showartistnames = document.getElementById("artist_names").checked;
@@ -215,7 +226,8 @@ function loadScheme(){
 		graph_options.normalize = document.getElementById("normalize").checked;
 		graph_options.bgcolor = document.getElementById("bgcolor").value;
 		graph_options.font_color = document.getElementById("font_color").value;
-		console.log(graph_options);
+		scheme = "lastwave";
+		return true;
 	}else {
 		graph_options.font_name = "Arial";
 		graph_options.graph_type = "silhouette";
@@ -240,6 +252,9 @@ function loadScheme(){
 				graph_options.bgcolor = "#000000";
 				graph_options.font_color = "#000000";
 				break;
+			case "shades":
+				graph_options.bgcolor = "#ffffff";
+				graph_options.font_color = "#000000";
 			case "carpet":
 				graph_options.bgcolor = "#999999";
 				graph_options.font_color = "#000000";
@@ -250,7 +265,9 @@ function loadScheme(){
 				break;
 			default:
 				alert("Scheme not found!");
+				return false
 		}
+		return true;
 
 	}
 	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
@@ -265,7 +282,7 @@ function resetXML(){
 	graph_data.time_span = [];
 	graph_data.series_data = [];
 	graph_data.artists_order = [];
-	$('#loading').css("display","block");
+	togglediv("#loading",true);
 }
 
 function loadXML(selected_user) {
@@ -289,12 +306,14 @@ function get_week(user, weeknum){
 		);
 
 
-		$('#loading').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
+		$('#progresstext').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
+		$('#xml_loading').css("width", parseInt(90*weeknum/total_weeks)+"%");
 
 
 		//If it's the last week, wait for the rest of them
 		if(weeknum==graph_options.total_weeks){
-				xmlwait();
+			$('#progresstext').html("Waiting...");
+			setTimeout(xmlwait,750);
 		}
 
 	}, 250*(weeknum-1));
@@ -302,7 +321,6 @@ function get_week(user, weeknum){
 }
 
 function xmlwait() {
-	$('#loading').html("Waiting");
 
 	/*$.when.apply(null,graph_data.week_XML).done(function() {
 		$('#loading').append("All weeks loaded!");
@@ -315,7 +333,9 @@ function xmlwait() {
 	    d.always(function() { wrapDeferred.resolve(); });
 	    return wrapDeferred.promise();
 	})).done(function(){
-		parseXML();
+		$('#progresstext').html("Parsing XML...");
+		$("#graph_loading").css("width","5%");
+		setTimeout(parseXML,500);
 	});
 }
 
@@ -328,7 +348,6 @@ function parseXML(){
 	graph_data.artists_order = [];
 
 	//Run through every week, adding artists as we go
-	$('#loading').html("Parsing XML...");
 
 	for(w=1;w<=graph_options.total_weeks;w++){
 
@@ -386,12 +405,14 @@ function parseXML(){
 	calculate_critical_points();
 	/**/
 	//Now that we've got all of our data, draw the wave
-	$('#loading').html("Finished parsing XML...");
+	$('#progresstext').html("Finished parsing XML...");
 
 	if(isEmpty(graph_data.userdata)){
 		alert("No data could be found for the specified timespan. Try changing your boundaries.")
 	} else {
-		drawLastWave();
+		$("#graph_loading").css("width","10%");
+		$('#progresstext').html("Drawing Wave...");
+		setTimeout(drawLastWave,500)
 	}
 }
 
@@ -435,8 +456,6 @@ function calculate_critical_points(){
 function drawLastWave(){
 	//Mother function, this is where it all happens
 
-	$('#loading').html("Drawing Wave...");
-
 	document.getElementById("lastwave").innerHTML = "";
 
 	graph_options.palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
@@ -456,6 +475,7 @@ function drawLastWave(){
 	});
 
 	graph.render();
+
 
     d3.select("#lastwave").select("svg").attr("height",parseInt(graph_options.graph_height/0.90));
     //d3.select("#lastwave").select("svg").attr("transform","translate("+0+","+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
@@ -481,16 +501,19 @@ function drawLastWave(){
 		drawMonths();
 	}
 
-	$('#loading').html("Wave Complete!");
-	$('#box_2').css("display","block");
-	$('#loading').css("display","none");
+	$('#progresstext').html("Wave Complete!");
+	$("#xml_loading").css("width","0%");
+	$("#graph_loading").css("width","0%");
+    togglediv("#edit_canvas",true);
+	togglediv("#box_2",true);
+	togglediv("#loading",false);
 	addWatermark();
 
 }
 
 function populateWave(){
 	var series_data = [];
-	$('#loading').html("Populating Wave...");
+	$('#progresstext').html("Populating Wave...");
 
 	//Order the artists
 	for(artist in graph_data.userdata){
@@ -570,7 +593,7 @@ function drawMonths(){
 }
 
 function drawNames(){
-	$('#loading').html("Drawing Artist Names...");
+	$('#progresstext').html("Drawing Artist Names...");
 	console.log("Drawing Names...");
 
 
@@ -947,6 +970,9 @@ function draw_Y(cp,artist_name){
 	var mV; //This line is horizontally opposite to O
 	var bV;
 	var mU; //This line is vertically opposite to V
+	var bU;
+	var bX;
+	var bQ;
 	var x_value_for_max_point;
 	var y_value_for_max_point;
 	var intersect1;
@@ -1185,7 +1211,7 @@ function draw_Z(cp,artist_name){
 	var rightMP = {"x": (cp.topright.x+cp.btmright.x)/2, "y" : (cp.topright.y+cp.btmright.y)/2};
 	var leftMP = {"x": (cp.topleft.x+cp.btmleft.x)/2, "y" : (cp.topleft.y+cp.btmleft.y)/2};
 	var middleMP = {"x": (leftMP.x+rightMP.x)/2, "y" : (leftMP.y+rightMP.y)/2};
-	
+	var boxBottom,boxBtmWidth,boxHeight,boxWidth,boxTopWidth,boxTop;
 
 	
 	//Base font size
@@ -1275,13 +1301,21 @@ function pngconvert(){
     var theImage = canvas.toDataURL('image/png');
 	$('#lastwave').html('<img id="svg-img" />');
     $('#svg-img').attr('src', theImage);
-	$('#box_1').css("display","none");
+    togglediv("#edit_canvas",false);
 	
 }
 
+function swapScheme(s){
+	if(s == "Custom"){
+		togglediv("#graph_options",true);
+	} else {
+		togglediv("#graph_options",false);
+	}
+}
+
 function show_options(){
-	$('#box_1').css("display","block");
-	$('#box_2').css("display","none");
+	togglediv("#box_1",true);
+	togglediv("#box_2",false);
 }
 
 function switchlayout(){
@@ -1411,4 +1445,12 @@ function inputFocus(i){
 }
 function inputBlur(i){
     if(i.value==""){ i.value=i.defaultValue;}
+}
+
+function togglediv(id,state) {
+	if ($(id).hasClass('shown') && state && id=="#graph_options" || !state) {
+    	$(id).removeClass('shown').addClass('unshown');
+	} else if(state){
+    	$(id).removeClass('unshown').addClass('shown');
+    }
 }
