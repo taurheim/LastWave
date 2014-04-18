@@ -1346,7 +1346,7 @@ function draw_Z(cp,artist_name){
 
 
 
-function share_preload(type){
+function share_preload(){
 	// Options:
 	// 	- Imgur link
 	// 	- Tweet
@@ -1365,11 +1365,12 @@ function share_preload(type){
 	var svg = document.getElementById("lastwave").getElementsByTagName("svg")[0];
 	//Update graph_data
 	//if(type=="imgur"){
-		graph_data.data_uri = canvas.toDataURL('image/png');
+	graph_data.data_uri = canvas.toDataURL('image/png');
 	//} else if(type=="svg"){
-		graph_data.svg_data = (new XMLSerializer).serializeToString(svg);
+	graph_data.svg_data = (new XMLSerializer).serializeToString(svg);
 	//}
 	togglediv("#sharing_options",true);
+	togglediv("#share_preload",false);
 }
 
 /*function pngconvert(){

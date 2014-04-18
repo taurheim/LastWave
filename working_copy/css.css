@@ -50,7 +50,7 @@
 	text-align:left;
 }
 
-#graph_options, #box_1, #loading, #box_2, #edit_canvas, #errors, #sharing_options{
+#graph_options, #box_1, #loading, #box_2, #edit_canvas, #errors, #sharing_options, #share_preload{
 	-webkit-transition:all 0.6s ease-in-out;  
     -moz-transition:all 0.6s ease-in-out;
     transition:all 0.6s ease-in-out;
