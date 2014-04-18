@@ -70,7 +70,10 @@ var graph_data = {
 	"week_XML": [],
 	"time_span": [],
 	"series_data": [],
-	"artists_order": []
+	"artists_order": [],
+	"svg_data": "",
+	"data_uri": "",
+	"imgur_link": ""
 }
 
 
@@ -81,12 +84,27 @@ var test_artist = "---";
 //Initialize datepickers, convert buttons
   
 $(document).ready(function() {
-	$("#save_as_svg").click(function() { submit_download_form("svg"); });
-	$("#save_as_png").click(function() { pngconvert(); });
+	//$("#save_as_svg").click(function() { submit_download_form("svg"); });
+	//$("#save_as_png").click(function() { pngconvert(); });
+	$("#share").click(function(){
+		share();
+	});
 	$("#start_date").datepicker();
 	$("#end_date").datepicker();
 	$("#scheme").imagepicker({
 		show_label  : true
+	});
+	$("#font_color").minicolors({
+		position: 'bottom left'
+	});
+	$("#bgcolor").minicolors({
+		position: 'bottom left'
+	});
+	$("#wave_color_start").minicolors({
+		position: 'top left'
+	});
+	$("#wave_color_end").minicolors({
+		position: 'top right'
 	});
 });
 
@@ -226,10 +244,9 @@ function loadScheme(){
 		graph_options.normalize = document.getElementById("normalize").checked;
 		graph_options.bgcolor = document.getElementById("bgcolor").value;
 		graph_options.font_color = document.getElementById("font_color").value;
-		scheme = "lastwave";
 		return true;
 	}else {
-		graph_options.font_name = "Arial";
+		graph_options.font_name = "Roboto";
 		graph_options.graph_type = "silhouette";
 		graph_options.showartistnames = true;
 		graph_options.show_months = true;
@@ -255,6 +272,7 @@ function loadScheme(){
 			case "shades":
 				graph_options.bgcolor = "#ffffff";
 				graph_options.font_color = "#000000";
+				break;
 			case "carpet":
 				graph_options.bgcolor = "#999999";
 				graph_options.font_color = "#000000";
@@ -269,10 +287,6 @@ function loadScheme(){
 		}
 		return true;
 
-	}
-	//Palette is the scheme (selected in the dropdown). We use this to make the graph itself.
-	if(scheme.value=="custom"){
-		generateHue();
 	}
 }
 
@@ -302,7 +316,16 @@ function get_week(user, weeknum){
 
 		//Get the data
 		graph_data.week_XML.push(
-			$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end).fail(function() {$('#errors').append("Error loading Week "+weeknum+"<br/>")})
+			$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
+			.fail(function() {
+				if(($('#errors').hasClass("unshown"))){
+					togglediv("#errors",true);
+					$('#err_weeks').append(weeknum);
+				} else {
+					$('#err_weeks').append(","+weeknum);
+
+				}
+			})
 		);
 
 
@@ -342,6 +365,7 @@ function xmlwait() {
 function parseXML(){
 	var artist_plays = 0;
 	var artist_name = "";
+	var artist_count = 0;
 	//Populates "userdata"
 	graph_data.userdata= [];
 	graph_data.series_data = [];
@@ -375,6 +399,10 @@ function parseXML(){
 			continue;
 		}
 
+		if(week_data == undefined){
+			console.log("Unexpectedly unable to parse week "+w)
+			continue;
+		}
 		//Run through every artist, adding to "userdata" as we go
 		for(i=0;i<artist_count;i++){
 			
@@ -454,11 +482,10 @@ function calculate_critical_points(){
 }
 
 function drawLastWave(){
+	$("#lastwave").css("display","block");
 	//Mother function, this is where it all happens
 
 	document.getElementById("lastwave").innerHTML = "";
-
-	graph_options.palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
 
 	graph_data.series_data = populateWave();
 
@@ -479,7 +506,6 @@ function drawLastWave(){
 
     d3.select("#lastwave").select("svg").attr("height",parseInt(graph_options.graph_height/0.90));
     //d3.select("#lastwave").select("svg").attr("transform","translate("+0+","+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
-    console.log(graph_options.graph_height);
 
 
 	if(graph_options.showartistnames){
@@ -488,7 +514,7 @@ function drawLastWave(){
 	}
 	
 
-	d3.select("#lastwave").select("svg").selectAll("g").attr("transform","translate(0,50)");
+	d3.select("#lastwave").select("svg").selectAll("g").attr("transform","translate(0,"+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
 	
 	d3.select("#lastwave").select("svg").select("g").append("rect")
     .attr("width", graph_options.graph_width)
@@ -497,9 +523,17 @@ function drawLastWave(){
     .attr("x","0")
     .attr("y",-1*(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2);
 
+    $("#lastwave").css("width",graph_options.graph_width+8);
+
 	if(graph_options.show_months){
 		drawMonths();
 	}
+
+	addWatermark();
+
+
+	//Preload data for sharing
+	//share_preload();
 
 	$('#progresstext').html("Wave Complete!");
 	$("#xml_loading").css("width","0%");
@@ -507,18 +541,30 @@ function drawLastWave(){
     togglediv("#edit_canvas",true);
 	togglediv("#box_2",true);
 	togglediv("#loading",false);
-	addWatermark();
 
 }
 
 function populateWave(){
 	var series_data = [];
+	var colorscheme;
 	$('#progresstext').html("Populating Wave...");
+
 
 	//Order the artists
 	for(artist in graph_data.userdata){
 		graph_data.artists_order.push(graph_data.userdata[artist].name);
 	}
+
+	//Generate Colour Scheme
+
+	if(scheme.value=="custom"){
+		graph_options.palette = generateHue($("#wave_color_start").attr("value"),$("#wave_color_end").attr("value"),graph_data.artists_order.length,document.getElementById("cont_shade").checked);
+	} else {
+		graph_options.palette = new Rickshaw.Color.Palette( { scheme: scheme.value } );
+	}
+
+
+
 
 	//If "normalize" has been selected, order them so that the largest playcount is in the center
 	if(graph_options.normalize){
@@ -549,14 +595,26 @@ function populateWave(){
 			}
 		}
 		
+		//Color Scheme
+		if(Object.prototype.toString.call(graph_options.palette) === '[object Array]'){
+			colorscheme = graph_options.palette.pop();
+		} else {
+			colorscheme = graph_options.palette.color();
+		}
+
 		//Populate series_data (each part is an artist)
-		series_data[a]= {color:graph_options.palette.color(),name: selected_artist,data: tempdata};
+		series_data[a]= {
+			color: colorscheme,
+			name: selected_artist,
+			data: tempdata
+		};
 		
 		}
 	return series_data;
 }
 
 function drawMonths(){
+	var month_name;
 		//x ratio
 		var xratio = graph.width/(graph.series[0].stack.length-1);
 
@@ -570,7 +628,7 @@ function drawMonths(){
 
 
 		//If our rounded month is behind our start time, skip it
-		for(t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
+		for(var t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
 			var month = round_month(t);
 			month_name = months[new Date((month*1000)+604800000).getMonth()];
 
@@ -711,7 +769,7 @@ function populate_lines(){
 				crit.btmleft.y = (graph_data.series_data[i].stack[x_point-2].y0)*yratio;
 			}
 			
-			if((x_point)==total_weeks){
+			if((x_point)==(graph_options.total_weeks)){
 				crit.topright.x = ((x_point-1)*xratio)+5;
 				crit.topright.y = (crit.r.y)+((crit.q.y-crit.r.y)/2);
 				crit.btmright.x = ((x_point-1)*xratio)+5
@@ -744,6 +802,7 @@ function populate_lines(){
 			graph_data.userdata[artist_name].crit_points[pt] = crit;
 
 			if(artist_name==test_artist){
+				console.log(crit);
 				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.topleft.x).attr("y1",graph_options.graph_height-crit.topleft.y).attr("x2",crit.q.x).attr("y2",graph_options.graph_height-crit.q.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.btmleft.x).attr("y1",graph_options.graph_height-crit.btmleft.y).attr("x2",crit.r.x).attr("y2",graph_options.graph_height-crit.r.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.q.x).attr("y1",graph_options.graph_height-crit.q.y).attr("x2",crit.topright.x).attr("y2",graph_options.graph_height-crit.topright.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
@@ -912,7 +971,7 @@ function draw_X(cp,artist_name){
 	//if(diag_A.y < diag_B.y) {top_collision = diag_A;} else {top_collision = diag_B;}
 	//if(diag_C.y > diag_D.y) {btm_collision = diag_C;} else {btm_collision = diag_D;}
 	if(typeof top_collision === 'undefined'){
-		console.log("Error labelling "+artist_name);
+		console.log("[x] Error labelling "+artist_name);
 		return false;
 	}
 	fontsize = Math.abs(parseInt((top_collision.x-btm_collision.x)*artist_name.slope()));
@@ -928,17 +987,25 @@ function draw_X(cp,artist_name){
 
 	//If it gets a lot steeper after the center points, then adjust.
 	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
-		console.log("trigger "+ artist_name)
+		console.log("[x] trigger "+ artist_name)
 		x_value_for_max_point = Math.max(top_collision.x,btm_collision.x) - boxWidth;
 		y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
+	} else if(cp.A.m>0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
+		console.log("[x] trigger 2 "+artist_name);
+		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x) - boxWidth;
+		y_value_for_max_point = graph.height - top_collision.y - boxHeight*0.3;
 	} else {
 		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x);//ctrpt.x - boxWidth/2;
 		y_value_for_max_point = graph_options.graph_height-btm_collision.y;//graph.height - maxWidth[1] + boxHeight/2;
 	}
 
+	//If it's a lot less steep after the center points, then adjust
+
+
+
 	//There's no way I can make an estimate for this
 	if((Math.abs(cp.A.m+cp.C.m)<0.25 && Math.abs(cp.B.m+cp.D.m)>2) || (Math.abs(cp.B.m+cp.D.m)<0.25 && Math.abs(cp.A.m+cp.C.m)>2) ){
-		console.log("Impossible to estimate "+artist_name);
+		console.log("[x] Impossible to estimate "+artist_name);
 		return false;
 	}
 	if(artist_name==test_artist){
@@ -973,6 +1040,7 @@ function draw_Y(cp,artist_name){
 	var bU;
 	var bX;
 	var bQ;
+	var mQ,mX;
 	var x_value_for_max_point;
 	var y_value_for_max_point;
 	var intersect1;
@@ -1211,8 +1279,12 @@ function draw_Z(cp,artist_name){
 	var rightMP = {"x": (cp.topright.x+cp.btmright.x)/2, "y" : (cp.topright.y+cp.btmright.y)/2};
 	var leftMP = {"x": (cp.topleft.x+cp.btmleft.x)/2, "y" : (cp.topleft.y+cp.btmleft.y)/2};
 	var middleMP = {"x": (leftMP.x+rightMP.x)/2, "y" : (leftMP.y+rightMP.y)/2};
-	var boxBottom,boxBtmWidth,boxHeight,boxWidth,boxTopWidth,boxTop;
+	var boxBottom,boxBtmWidth,boxHeight,boxWidth,boxTopWidth,boxTop,coll_A,coll_B,coll_C,coll_D,coll_btmleft,coll_topright,coll_btmright,coll_topleft;
 
+	if(Math.abs(cp.A.m - cp.B.m)<0.1 || Math.abs(cp.C.m - cp.D.m)<0.1 ){
+		middleMP = {"x": cp.q.x, "y": (cp.q.y+cp.r.y)/2};
+		console.log("Replacing midpoint for "+artist_name);
+	}
 	
 	//Base font size
 	fontsize = 6;
@@ -1272,23 +1344,35 @@ function draw_Z(cp,artist_name){
 }
 
 
-function submit_download_form(output_format)
-{
-	// Get the d3js SVG element
-	var tmp = document.getElementById("lastwave");
-	var svg = tmp.getElementsByTagName("svg")[0];
-	// Extract the data as SVG text string
-	var svg_xml = (new XMLSerializer).serializeToString(svg);
 
-	// Submit the <FORM> to the server.
-	// The result will be an attachment file to download.
-	var form = document.getElementById("svgform");
-	form['output_format'].value = output_format;
-	form['data'].value = svg_xml ;
-	form.submit();
+
+function share_preload(type){
+	// Options:
+	// 	- Imgur link
+	// 	- Tweet
+	// 	- Save as SVG
+
+	//Get canvas info
+	var $container = $('#lastwave'),
+        // Canvg requires trimmed content
+        content = $container.html().trim(),
+        canvas = document.getElementById('svg-canvas');
+
+    // Draw svg on canvas
+    canvg(canvas, content);
+	$('svg-canvas').empty();
+
+	var svg = document.getElementById("lastwave").getElementsByTagName("svg")[0];
+	//Update graph_data
+	//if(type=="imgur"){
+		graph_data.data_uri = canvas.toDataURL('image/png');
+	//} else if(type=="svg"){
+		graph_data.svg_data = (new XMLSerializer).serializeToString(svg);
+	//}
+	togglediv("#sharing_options",true);
 }
 
-function pngconvert(){
+/*function pngconvert(){
     var $container = $('#lastwave'),
         // Canvg requires trimmed content
         content = $container.html().trim(),
@@ -1299,10 +1383,93 @@ function pngconvert(){
 	$('svg-canvas').empty();
     // Change img be SVG representation
     var theImage = canvas.toDataURL('image/png');
+
 	$('#lastwave').html('<img id="svg-img" />');
-    $('#svg-img').attr('src', theImage);
-    togglediv("#edit_canvas",false);
 	
+    togglediv("#edit_canvas",false);
+    
+    $('#svg-img').attr('src', theImage);
+}*/
+
+function download_svg() {
+
+	// Submit the <FORM> to the server.
+	// The result will be an attachment file to download.
+	var form = document.getElementById("svgform");
+	form['output_format'].value = "svg";
+	form['data'].value = graph_data.svg_data ;
+	form.submit();
+}
+
+function imgur_upload(){
+	togglediv("#loading",true);
+	$("#progresstext").html("Uploading to imgur...");
+	$("#imgur_upload").css("width","100%");
+
+
+	// upload to imgur using jquery/CORS
+    // https://developer.mozilla.org/En/HTTP_access_control
+    $.ajax({
+        url: 'https://api.imgur.com/3/image',
+        type: 'POST',
+        headers: {
+        	'Authorization': 'Client-ID cb42de2f8034d3c'
+    	},
+        data: {
+            type: 'base64',
+            name: 'wave.png',
+            title: graph_options.user+'\'s LastWave',
+            description: 'Make your own at savas.ca/lastwave!',
+            image: graph_data.data_uri.split(',')[1]
+        },
+        dataType: 'json'
+    }).success(function(data) {
+    	togglediv("#loading",false);
+    	graph_options.imgur_link = data.data.link;
+    	$("#imgur_upload").css("width","0%");
+    	$('#svg-img').attr('src', data.data.link);
+    	$("#imgur_data").html("<br/><br/><input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
+    }).error(function() {
+        alert('Unable to reach Imgur, Sorry :(');
+    	$('#svg-img').attr('src', theImage);
+    });
+}
+
+function twitter_share(){
+	togglediv("#loading",true);
+	$("#progresstext").html("Uploading to imgur...");
+	$("#imgur_upload").css("width","100%");
+
+
+	// upload to imgur using jquery/CORS
+    // https://developer.mozilla.org/En/HTTP_access_control
+    $.ajax({
+        url: 'https://api.imgur.com/3/image',
+        type: 'POST',
+        headers: {
+        	'Authorization': 'Client-ID cb42de2f8034d3c'
+    	},
+        data: {
+            type: 'base64',
+            name: 'wave.png',
+            title: graph_options.user+'\'s LastWave',
+            description: 'Make your own at savas.ca/lastwave!',
+            image: graph_data.data_uri.split(',')[1]
+        },
+        dataType: 'json'
+    }).success(function(data) {		
+    	togglediv("#loading",false);
+    	graph_options.imgur_link = data.data.link;
+    	$("#imgur_upload").css("width","0%");
+    	$('#svg-img').attr('src', data.data.link);
+    	$("#imgur_data").html("<input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
+		var msg_text = "Check out my Listening History!"+graph_options.imgur_link+" Made with #lastwave savas.ca/lastwave";
+		window.open("https://twitter.com/intent/tweet?text="+msg_text);
+    }).error(function() {
+        alert('Unable to reach Imgur, Sorry :(');
+    	$('#svg-img').attr('src', theImage);
+    });
+
 }
 
 function swapScheme(s){
@@ -1336,15 +1503,27 @@ function addWatermark(){
 
 }
 
-function generateHue(){
-	var r1 = 200;
-	var g1 = 100;
-	var b1 = 255;
-	var r2 = 50;
-	var g2 = 50;
-	var b2 = 255;
+function generateHue(hex1,hex2,colorcount,continuous){
 
-	var dr = r1-r2
+	var c1 = hexToRgb(hex1);
+	var c2 = hexToRgb(hex2);
+
+	var dr = (c2.r-c1.r)/colorcount;
+	var dg = (c2.g-c1.g)/colorcount;
+	var db = (c2.b-c1.b)/colorcount;
+
+	var colorscheme = [];
+
+	for(var c=0;c<colorcount;c++){
+		colorscheme.push(rgbToHex(parseInt(c1.r+(dr*c)),parseInt(c1.g+(dg*c)),parseInt(c1.b+(db*c))));
+	}
+
+
+	if(!continuous){
+		return shuffle_array(colorscheme);
+	} else {
+		return colorscheme
+	}
 
 
 }
@@ -1426,6 +1605,21 @@ function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
+function hexToRgb(hex) {
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+    var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
+
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
 function isEmpty(map) {
    for(var key in map) {
       if (map.hasOwnProperty(key)) {
@@ -1435,7 +1629,7 @@ function isEmpty(map) {
    return true;
 }
 
-function shuffle(o){ //v1.0
+function shuffle_array(o){ //v1.0
     for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
 };
@@ -1454,3 +1648,4 @@ function togglediv(id,state) {
     	$(id).removeClass('unshown').addClass('shown');
     }
 }
+

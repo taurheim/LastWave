@@ -16,6 +16,13 @@ See here for online demo:
 -->
 <head>
 <title>LastWave v5.0</title>
+
+<meta name="twitter:card" content="photo">
+<meta name="twitter:title" content="My LastWave">
+<meta name="twitter:image:src" content="http://i.imgur.com/4NBC7Rh.png">
+<meta name="twitter:domain" content="http://savas.ca/lastwave">
+
+
 <link type="text/css" rel="stylesheet" href="rickshaw.min.css">
 <link type="text/css" rel="stylesheet" href="css.css">
 <link type="text/css" rel="stylesheet" href="jquery-ui-1.10.4.custom.min.css">
@@ -23,10 +30,12 @@ See here for online demo:
 <script src="rickshaw.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
-<script src="http://netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/rgbcolor.js"></script> 
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
 <script type="text/javascript" src="jquery-ui-1.10.4.custom.min.js"></script>
+	<script src="jquery.minicolors.min.js"></script>
+	<link rel="stylesheet" href="jquery.minicolors.css">
+<script type="text/javascript" src="bootstrap.min.js"></script>
 <script type="text/javascript" src="lastwave.js"></script>
 <script type="text/javascript" src="image-picker.min.js"></script>
 <link rel="stylesheet" href="image-picker.css">
@@ -56,10 +65,11 @@ See here for online demo:
 		<div id="progressbar" class="progress progress-striped active">
 			<div id="xml_loading" class="progress-bar" style="width: 0%"></div>
 			<div id="graph_loading" class="progress-bar progress-bar-success" style="width: 0%"></div>
+			<div id="imgur_upload" class="progress-bar progress-bar-warning" style="width: 0%"></div>
 		</div>
 
 	</div>
-	<div id="errors"></div>
+	<div id="errors" class="center_block unshown"><span class="label label-danger">Danger</span>&nbsp;&nbsp;&nbsp;<span class="text-danger">Errors Loading weeks: <span id="err_weeks"></span></span></div>
 	<div id="box_1" class="center_block jumbotron shown">
 		<div id="main_options">
 			Last.fm Username:<!--<input type="text" name="user" title="user" style="color:#888;" 
@@ -77,7 +87,7 @@ See here for online demo:
 			<option value="forest" data-img-src='images/examples/forest.png'>Forest</option>
 			<option value="neon" data-img-src='images/examples/neon.png'>Neon</option>
 			<option value="fire" data-img-src='images/examples/fire.png'>Fire</option>
-			<option value="shades" data-img-src="images/examples/custom.png">Shades</option>
+			<option value="shades" data-img-src="images/examples/shades.png">Shades</option>
 			<option value="carpet" data-img-src='images/examples/carpet.png'>Carpet</option>
 			<option value="assault" data-img-src='images/examples/assault.png'>Assault</option>
 			<option value="custom" data-img-src='images/examples/custom.png'>Custom</option>
@@ -138,34 +148,57 @@ See here for online demo:
 				<div class="panel-body">
 
 					Font Name: 
-						<input name="font_name" id="font_name" value="Arial" type="text"><br><br>
+						<input name="font_name" id="font_name" value="Roboto" type="text"><br><br>
 					Font Color: 
-						<input name="font_color" id="font_color" value="#000000" type="text"><br><br>
-					Background Color: 
-						<input name="bgcolor" id="bgcolor" value="#ffffff" type="text"><br><br>
+						<input type="text" id="font_color" data-control="hue" value="#000000"><br/><br/>
+					Background Color:
+						<input type="text" id="bgcolor" data-control="hue" value="#ffffff"><br/><br/>
+					Wave:
+						<input type="text" id="wave_color_start" data-control="hue" value="#ffffff">
+						 to 
+						<input type="text" id="wave_color_end" data-control="hue" value="#000000">
+						<br/><br/>
+					Continuous Shade
+						<input name="cont_shade" id="cont_shade" checked="" type="checkbox">
 				</div>
 
 			</div>
 			
 		</div>
+		<div class="checkbox center_block" style="width: 120px;">
+          <label>
+            <input id="imgur_toggle" type="checkbox"> Upload to imgur
+          </label>
+        </div>
 		<input class="submit btn btn-primary" value="Create Wave!" onclick="submitWave()" type="submit">
 	</div>
 
 	<div id="box_2" class="center_block unshown">
-		<button class="btn btn-primary" onclick="show_options()">Change Settings</button><br/><br/>
+
+		<button class="btn btn-danger" onclick="share_preload()">Load Sharing Options</button>
+		<br/><br/>
+		<div id="sharing_options" class="unshown">
+			<button class="btn btn-primary" onclick="imgur_upload()">Upload to imgur</button>
+			<button class="btn btn-primary" onclick="download_svg()">Download vectorized SVG</button>
+			<button class="btn btn-primary" onclick="twitter_share()">Share on Twitter!</button>
+		</div>
+		<div id="imgur_data"></div>
+		<br/><br/>
+		<button class="btn btn-info" onclick="show_options()">Change Settings</button><br/><br/>
 		<div id="edit_canvas">
-			<button class="btn btn-primary" onclick="switchlayout()">Click here if the curves look odd</button>
+			<button class="btn btn-info" onclick="switchlayout()">Swap Artist Distribution</button>
 			<br><br>
+			<!--
 			<button class="btn btn-primary" id="save_as_svg" value="">
-				Save as SVG</button>
-			<button class="btn btn-primary" id="save_as_png" value="">
-				Convert to PNG</button>
+				Save as SVG</button>-->
+
+
 		</div>
 	</div>
 
 
 <!-- ########### The Drawing Section ####### -->
-<div class='chart' id='lastwave'></div>
+<div class='chart' id='lastwave' style="display:none;"></div>
 
 <!-- Hidden <FORM> to submit the SVG data to the server, which will convert it to SVG/PDF/PNG downloadable file.
      The form is populated and submitted by the JavaScript below. -->
