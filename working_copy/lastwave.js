@@ -322,7 +322,7 @@ function get_week(user, weeknum){
 					togglediv("#errors",true);
 					$('#err_weeks').append(weeknum);
 				} else {
-					$('#err_weeks').append(","+weeknum);
+					$('#err_weeks').append(" ,"+weeknum);
 
 				}
 			})
@@ -572,10 +572,20 @@ function populateWave(){
 		var secondhalf = graph_data.artists_order.slice(graph_data.artists_order.length/2,graph_data.artists_order.length);
 
 		firsthalf.sort(function (a,b){
-			return graph_data.userdata[a].crit_points[0][1]-graph_data.userdata[b].crit_points[0][1];
+			if(graph_data.userdata[a].crit_points[0][1]==graph_data.userdata[b].crit_points[0][1]){
+				if(a>b) return -1; //This had to be added in so that browsers deal with the normalize in the same way. Otherwise if the two max values are equal, it's inconsistent across browsers
+				return 1;
+			} else {
+				return graph_data.userdata[a].crit_points[0][1]-graph_data.userdata[b].crit_points[0][1];
+			}
 		});
 		secondhalf.sort(function (a,b){
-			return graph_data.userdata[b].crit_points[0][1]-graph_data.userdata[a].crit_points[0][1];
+			if(graph_data.userdata[b].crit_points[0][1]==graph_data.userdata[a].crit_points[0][1]){
+				if(b>a) return -1;
+				return 1;
+			} else {
+				return graph_data.userdata[b].crit_points[0][1]-graph_data.userdata[a].crit_points[0][1];
+			}
 		});
 		graph_data.artists_order = firsthalf.concat(secondhalf);
 	}
@@ -992,8 +1002,8 @@ function draw_X(cp,artist_name){
 		y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
 	} else if(cp.A.m>0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
 		console.log("[x] trigger 2 "+artist_name);
-		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x) - boxWidth;
-		y_value_for_max_point = graph.height - top_collision.y - boxHeight*0.3;
+		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x) - boxWidth/1.2;
+		y_value_for_max_point = graph.height - btm_collision.y - boxHeight*0.3;
 	} else {
 		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x);//ctrpt.x - boxWidth/2;
 		y_value_for_max_point = graph_options.graph_height-btm_collision.y;//graph.height - maxWidth[1] + boxHeight/2;
@@ -1426,7 +1436,7 @@ function imgur_upload(){
         dataType: 'json'
     }).success(function(data) {
     	togglediv("#loading",false);
-    	graph_options.imgur_link = data.data.link;
+    	graph_data.imgur_link = data.data.link;
     	$("#imgur_upload").css("width","0%");
     	$('#svg-img').attr('src', data.data.link);
     	$("#imgur_data").html("<br/><br/><input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
@@ -1460,12 +1470,12 @@ function twitter_share(){
         dataType: 'json'
     }).success(function(data) {		
     	togglediv("#loading",false);
-    	graph_options.imgur_link = data.data.link;
+    	graph_data.imgur_link = data.data.link;
     	$("#imgur_upload").css("width","0%");
     	$('#svg-img').attr('src', data.data.link);
     	$("#imgur_data").html("<input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
-		var msg_text = "Check out my Listening History!"+graph_options.imgur_link+" Made with #lastwave savas.ca/lastwave";
-		window.open("https://twitter.com/intent/tweet?text="+msg_text);
+		var msg_text = "Check out my Listening History! "+graph_data.imgur_link+" Made with LastWave at savas.ca/lastwave";
+		window.open("https://twitter.com/intent/tweet?text="+msg_text+"&hashtags=lastwave");
     }).error(function() {
         alert('Unable to reach Imgur, Sorry :(');
     	$('#svg-img').attr('src', theImage);

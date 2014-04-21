@@ -1,27 +1,11 @@
-<?php
-    require 'library/tmhOAuth.php';
-    require 'library/tmhUtilities.php';
- 
-   $tmhOAuth = new tmhOAuth(array(
-      'consumer_key'    => 'aDpMTsgqo6nBuUmkVDglTMMnx',
-      'consumer_secret' => 'GztSjUZZm6fGxTWzDyYJGevOQtwTXijrKFtuRXBJQeHeMVvyVB',
-      'user_token'      => '624231854-Km5v5bZMT2PwF2bQEHe9eSMVguPuDgcknn5JmPMs',
-      'user_secret'     => 'qSJFvyobQmUsL6wFNnGNnHg99WC3ljjRPnfzBKWfTl5yG',
-        ));
- 
-   $image = $_POST['url'];
- 
-   if (isset($_POST['msg'])) {
-      $tweetmsg = $_POST['msg'];
-       $response = $tmhOAuth->request('POST', 'https://upload.twitter.com/1/statuses/update_with_media.json', array('media[]'  => "@{$image}",'status'   => "This is a status"), true, true);
- 
-       if($tmhOAuth) {
-            echo $response;
-        } else {
-           echo "Your message has not been sent to Twitter.";
-       }
- 
-   } else {
-       echo "Your message has not been sent to Twitter.";
-   }
-?>
+<!-- Twitter Card -->
+<?php if(true) {?> <meta name="twitter:card" value="summary">
+<meta name="twitter:creator" value="@ajkohn">
+<meta name="twitter:url" value="<?php echo get_permalink(); ?>">
+<meta name="twitter:title" value="<?php echo get_the_title(); ?>">
+<meta name="twitter:description" value="<?php echo get_post_meta($post->ID, '_aioseop_description', $single = true); ?>">
+<?php if(get_post_meta($post->ID, 'og_img')){ ?>
+<meta name="twitter:image" value="<?php echo get_post_meta($post->ID, 'og_img', $single = true); ?>" />
+<?php } else { ?>
+<meta name="twitter:image" value="http://www.blindfiveyearold.com/wp-content/uploads/2008/09/blind-five-year-old-150x150.png" />
+<?php } ?> <?php }?>
