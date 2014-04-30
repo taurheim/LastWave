@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<!--
+This is a proof-of-concept demo for saving d3js graphics as PDF/PNG/SVG files.
+
+Copyright (C) 2012 by A. Gordon (gordon at cshl dot edu)
+All code written by me is released under BSD license: http://opensource.org/licenses/BSD-3-Clause
+(also uses several other libraries that have their own licenses).
+
+See here for more details:
+	https://github.com/agordon/d3export_demo
+
+See here for online demo:
+	http://d3export.cancan.cshl.edu/
+
+-->
+<head>
+<title>LastWave Gallery</title>
+<link type="text/css" rel="stylesheet" href="css.css">
+<link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="titlebar">
+	<img class="center_block" src="logo.png">
+	<div id="menu" class="center_block">
+			<a href="index.html">Home</a>
+			<a href="gallery.php">Gallery</a>
+			<a href="donate.html">Donate!</a>
+			<a href="about.html">About</a>
+	</div>
+</div>
+<div id="page_content" class="center_block">
+Any money donated is much appreciated, it will go to the hosting costs of the site so that I can keep all of the features of LastWave completely free!
+	<h2>Donate with Paypal:
+	</h2>
+	<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+<input type="hidden" name="cmd" value="_s-xclick">
+<input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----MIIHJwYJKoZIhvcNAQcEoIIHGDCCBxQCAQExggEwMIIBLAIBADCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwDQYJKoZIhvcNAQEBBQAEgYBC1LeAj7kjX2w62FmL2qDYSRSWF10TSsyJq3pyRcBAk9CLRrKKOJ96tH8m3Tu0XSa7sGqnrQGObUZ4Es+VJqS7GZQ9DTivKaX9hlI+oM21x1/ta7YQyDUuV4twPPv+4xt07kCThL9k1cNGAs5Hg2lsgzShuj/CNTExjA/LikeMNTELMAkGBSsOAwIaBQAwgaQGCSqGSIb3DQEHATAUBggqhkiG9w0DBwQIL8H3UqAIfwOAgYDP/zuzn+wrVuyCUUYoEK8iQrva6Zj5x5y83Yue5R73cjPHy7JbWOdoccjxchIpfPehNaLcnuCCFoP1InEu5yvETTbrq+6UJfXOq3VVn0qfhBFYoYP6MSINso+fCI6GeEGdl1njpnVSm+N6p6MdZjxmOiF8niC3mNj1uIytxLck1aCCA4cwggODMIIC7KADAgECAgEAMA0GCSqGSIb3DQEBBQUAMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbTAeFw0wNDAyMTMxMDEzMTVaFw0zNTAyMTMxMDEzMTVaMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAwUdO3fxEzEtcnI7ZKZL412XvZPugoni7i7D7prCe0AtaHTc97CYgm7NsAtJyxNLixmhLV8pyIEaiHXWAh8fPKW+R017+EmXrr9EaquPmsVvTywAAE1PMNOKqo2kl4Gxiz9zZqIajOm1fZGWcGS0f5JQ2kBqNbvbg2/Za+GJ/qwUCAwEAAaOB7jCB6zAdBgNVHQ4EFgQUlp98u8ZvF71ZP1LXChvsENZklGswgbsGA1UdIwSBszCBsIAUlp98u8ZvF71ZP1LXChvsENZklGuhgZSkgZEwgY4xCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEUMBIGA1UEChMLUGF5UGFsIEluYy4xEzARBgNVBAsUCmxpdmVfY2VydHMxETAPBgNVBAMUCGxpdmVfYXBpMRwwGgYJKoZIhvcNAQkBFg1yZUBwYXlwYWwuY29tggEAMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADgYEAgV86VpqAWuXvX6Oro4qJ1tYVIT5DgWpE692Ag422H7yRIr/9j/iKG4Thia/Oflx4TdL+IFJBAyPK9v6zZNZtBgPBynXb048hsP16l2vi0k5Q2JKiPDsEfBhGI+HnxLXEaUWAcVfCsQFvd2A1sxRr67ip5y2wwBelUecP3AjJ+YcxggGaMIIBlgIBATCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwCQYFKw4DAhoFAKBdMBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTE0MDQyNzAzMTE1OFowIwYJKoZIhvcNAQkEMRYEFLnliW/V3MkIsjmks3U1lcGYTWT1MA0GCSqGSIb3DQEBAQUABIGAMweak+pv9VFF5SX7pMWvgfniJnXqjHy09QUAdgadudQKe4PlbRAlkGpLo8yah1MDb/iLYeLPWbGYvPfQag8nojIKhMEaJtDElf3yEb/BKM/fp+PK5PrnySkbVY4NeZU6K643G5DtHnjxGBnerv9tff7c8N7+33tlldEg24IlnuI=-----END PKCS7-----
+">
+<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+<img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
+</form>
+<br/>
+	<h2>Donate BTC:</h2>
+	<script src="http://coinwidget.com/widget/coin.js"></script>
+<script>
+CoinWidgetCom.go({
+	wallet_address: "16qyS8WNferivY5GX6KtkcWuy3rxYKDXnE"
+	, currency: "bitcoin"
+	, counter: "hide"
+	, alignment: "bc"
+	, qrcode: true
+	, auto_show: false
+	, lbl_button: "Donate BTC"
+	, lbl_address: "My Bitcoin Address:"
+	, lbl_count: "donations"
+	, lbl_amount: "BTC"
+});
+</script>
+</div>
+
+</body>
+</html>

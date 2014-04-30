@@ -33,7 +33,7 @@ In a proper application, you'll want to replace those with proper error handling
 
 
 # Limit the size of the POST'd data - might need to increase it for hudge d3js drawings.
-$CGI::POST_MAX = 1024 * 5000;
+$CGI::POST_MAX = 1024 * 10000;
 
 ##
 ## Input validation
@@ -57,38 +57,15 @@ die "Invalid data value"
 
 ## SVG output
 if ($output_format eq "svg") {
+
 	## If both input & output are SVG, simply return the submitted SVG
 	## data to the user.
 	## The only reason to use a server side script is to be able to offer
 	## the user a friendly way to "download" a file as an attachment.
+	my $ref = $ENV{'HTTP_REFERER'};
+	$ref .= ".svg";
 	print header(-type=>"image/svg+xml",
-		     -attachment=>"d3js_export_demo.svg");
+		     -attachment=>$ref);
 	print $data;
 	exit(0);
 }
-## PDF/PNG output
-elsif ($output_format eq "pdf" || $output_format eq "png") {
-	# Create temporary files (will be used with 'rsvg-convert')
-	my (undef, $input_file) = tempfile("d3export.svg.XXXXXXX", OPEN=>0, TMPDIR=>1, UNLINK=>1);
-	my (undef, $output_file) = tempfile("d3export.out.XXXXXXX", OPEN=>0, TMPDIR=>1, UNLINK=>1);
-
-	# Write  the SVG data to a temporary file
-	write_file( $input_file, $data );
-
-	my $zoom = ($output_format eq "png")?10:1;
-
-	# Run "rsvg-convert", create the PNG/PDF file.
-	system("rsvg-convert -o '$output_file' -z '$zoom' -f '$output_format' '$input_file'");
-
-	# Read the binary output (PDF/PNG) file.
-	my $pdf_data = read_file( $output_file, {binmode=>':raw'});
-
-	## All is fine, send the data back to the user
-	my $mime_type = ($output_format eq "pdf")?"application/x-pdf":"image/png";
-	print header(-type=>$mime_type,
-		     -attachment=>"d3js_export_demo.$output_format");
-	print $pdf_data;
-
-	exit(0);
-}
-
