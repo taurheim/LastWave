@@ -240,7 +240,6 @@ function loadScheme(){
 		graph_options.font_name = document.getElementById("font_name").value;
 		graph_options.graph_type = document.getElementById("graph_type").value;
 		graph_options.showartistnames = document.getElementById("artist_names").checked;
-		graph_options.show_months = document.getElementById("show_months").checked
 		graph_options.normalize = document.getElementById("normalize").checked;
 		graph_options.bgcolor = document.getElementById("bgcolor").value;
 		graph_options.font_color = document.getElementById("font_color").value;
@@ -248,9 +247,9 @@ function loadScheme(){
 	}else {
 		graph_options.font_name = "Roboto";
 		graph_options.graph_type = "silhouette";
-		graph_options.showartistnames = true;
-		graph_options.show_months = true;
-		graph_options.normalize = true;
+		graph_options.normalize = document.getElementById("normalize").checked;
+		graph_options.showartistnames = document.getElementById("artist_names").checked;
+		graph_options.show_months = document.getElementById("show_months").checked;
 		
 		switch(document.getElementById("scheme").value){
 			case "lastwave":
@@ -632,6 +631,7 @@ function populateWave(){
 
 function drawMonths(){
 	var month_name;
+	var year_name;
 		//x ratio
 		var xratio = graph.width/(graph.series[0].stack.length-1);
 
@@ -648,6 +648,8 @@ function drawMonths(){
 		for(var t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
 			var month = round_month(t);
 			month_name = months[new Date((month*1000)+604800000).getMonth()];
+			year_name = new Date((month*1000)+604800000).getFullYear();
+			year_name = year_name.toString();
 
 			if(month<graph_options.time_start){
 				month+=2629743;
@@ -664,6 +666,9 @@ function drawMonths(){
 
 			d3.select("#lastwave").select("svg").select("#Months").append("line").attr("x1",rah).attr("y1","0").attr("x2",rah).attr("y2",graph.height-40).attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.2;");
 			d3.select("#lastwave").select("svg").select("#Months").append("text").text(month_name).attr("x",rah - month_name.width("20px Lucida Sans Unicode")/2).attr("y",graph.height-20).attr("font-size",20).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
+			if(month_name == "January"){
+				d3.select("#lastwave").select("svg").select("#Months").append("text").text(year_name).attr("x",rah - year_name.width("30px Lucida Sans Unicode")/2).attr("y",graph.height+10).attr("font-size",30).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
+			}
 		}
 }
 
@@ -1516,6 +1521,9 @@ function swapScheme(s){
 function show_options(){
 	togglediv("#box_1",true);
 	togglediv("#box_2",false);
+	togglediv("#share_preload",true);
+	togglediv("#sharing_options",false);
+	togglediv("#imgur_data",false);
 }
 
 function switchlayout(){

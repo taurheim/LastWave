@@ -1,5 +1,8 @@
 <?php
 	require 'mysql_connect.php';
+	$page = $_GET['page'];
+	if(!isset($_GET['page'])) $page = 0; 
+	else $page = $_GET['page'];
 
 	$query = "SELECT * FROM wave_db";
 	$result = @mysqli_query($con,$query);
@@ -21,6 +24,8 @@
 	    	$users[] = $row[0];
 		}
 	}
+
+	$urls = array_chunk($urls, 9);
 ?>
 
 <!DOCTYPE html>
@@ -40,21 +45,42 @@ See here for online demo:
 
 -->
 <head>
-<title>LastWave Gallery</title>
+<title>LastWave - Gallery</title>
 <link type="text/css" rel="stylesheet" href="css.css">
 <link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script src="lastwave_gallery.js"></script>
 <script src="lightbox.min.js"></script>
 <link href="lightbox.css" rel="stylesheet" />
+<link rel="icon" 
+      type="image/png" 
+      href="http://savas.ca/lastwave/favicon.ico">
 <script>
-var jsonarray = <?php echo json_encode($urls); ?>
+	var jsonarray = <?php echo json_encode($urls); ?>;
+	var current_page = <?php echo $page;?>;
 
 $(document).ready(function() {
-	for(img in jsonarray){
-		document.getElementById("gallery").innerHTML += "<span><a href='"+jsonarray[img]+"' data-title='<a href=\""+jsonarray[img]+"\">View Full Size</a>' data-lightbox='image-"+img+"'><img src='"+jsonarray[img]+"'/></a></span>";
-	}
+	load_page(<?php echo $page;?>);
 });
+
+function load_page(page){
+	document.getElementById("gallery").innerHTML = "";
+	current_page = page;
+	for(img in jsonarray[page]){
+		document.getElementById("gallery").innerHTML += "<span><a href='"+jsonarray[page][img]+"' data-title='<a href=\""+jsonarray[page][img]+"\">View Full Size</a>' data-lightbox='image-"+img+"'><img src='"+jsonarray[page][img]+"'/></a></span>";
+	}
+}
+
+function back(){
+	if(current_page!=0){
+		load_page(current_page-1);
+	}
+}
+function next(){
+	if(current_page!= (jsonarray.length-1)){
+		load_page(current_page+1);
+	}
+}
 </script>
 </head>
 <body>
@@ -68,8 +94,16 @@ $(document).ready(function() {
 			<a href="about.html">About</a>
 	</div>
 </div>
+<div id="gallery_container" class="center_block">
+<div id="gallery_nav_left">
+<img src="images/left-arrow.png" onclick="back()"/>
+</div>
 <div id="gallery" class="center_block">
 
+</div>
+<div id="gallery_nav_right">
+<img src="images/right-arrow.png" onclick="next()"/>
+</div>
 </div>
 </body>
 </html>

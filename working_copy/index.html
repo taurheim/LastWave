@@ -15,7 +15,7 @@ See here for online demo:
 
 -->
 <head>
-<title>LastWave v5.0</title>
+<title>LastWave</title>
 
 <link type="text/css" rel="stylesheet" href="rickshaw.min.css">
 <link type="text/css" rel="stylesheet" href="css.css">
@@ -33,6 +33,9 @@ See here for online demo:
 <script type="text/javascript" src="lastwave.js"></script>
 <script type="text/javascript" src="image-picker.min.js"></script>
 <link rel="stylesheet" href="image-picker.css">
+<link rel="icon" 
+      type="image/png" 
+      href="http://savas.ca/lastwave/favicon.ico">
 
 <!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
      Original version is here: http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css -->
@@ -63,12 +66,12 @@ See here for online demo:
 		</div>
 
 	</div>
-	<div id="errors" class="center_block unshown"><span class="label label-danger">Danger</span>&nbsp;&nbsp;&nbsp;<span class="text-danger">Errors Loading weeks: <span id="err_weeks"></span></span></div>
+	<div id="errors" class="center_block unshown"><span class="label label-danger">Error</span>&nbsp;&nbsp;&nbsp;<span class="text-danger">Errors Loading weeks: <span id="err_weeks"></span></span></div>
 	<div id="box_1" class="center_block jumbotron shown">
 		<div id="main_options">
 			Last.fm Username:<!--<input type="text" name="user" title="user" style="color:#888;" 
 	    						value="Last.fm Username" onfocus="inputFocus(this)" onblur="inputBlur(this)" />-->
-	    						<input name="user" id="user" value="Taurheim" type="text">
+	    						<input name="user" id="user" value="" type="text">
 	    						<br><br>
 			Data Range : <br>
 			<input id="start_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"> to 

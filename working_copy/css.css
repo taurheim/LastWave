@@ -192,14 +192,43 @@ div.shown {
 
 #gallery {
     text-align:justify;
-    position:relative;
+    position:absolute;
+    left:100px;
     width:900px;
+    display:inline-block;
+    height:500px;
 }
 
-#gallery:after {
-    display:inline-block;
-    width:100%;
-    content:"";
+#gallery_nav_left,#gallery_nav_right {
+	display:inline-block;
+	width:100px;
+	position:absolute;
+	top:140px;
+}
+
+#gallery_nav_left img,#gallery_nav_right img {
+	opacity:0.5;
+	-webkit-transition:all 0.3s ease-in-out;  
+    -moz-transition:all 0.3s ease-in-out;
+    transition:all 0.3s ease-in-out;
+}
+
+#gallery_nav_left img:hover, #gallery_nav_right img:hover{
+	cursor: pointer;
+	opacity:1;
+}
+
+#gallery_nav_left {
+	left:0px;
+}
+
+#gallery_nav_right {
+	right:0px;
+}
+
+#gallery_container {
+	width:1100px;
+	position:relative;
 }
 
 #page_content {
