@@ -67,7 +67,7 @@ function load_page(page){
 	document.getElementById("gallery").innerHTML = "";
 	current_page = page;
 	for(img in jsonarray[page]){
-		document.getElementById("gallery").innerHTML += "<span><a href='"+jsonarray[page][img]+"' data-title='<a href=\""+jsonarray[page][img]+"\">View Full Size</a>' data-lightbox='image-"+img+"'><img src='"+jsonarray[page][img]+"'/></a></span>";
+		document.getElementById("gallery").innerHTML += "<span><a href='"+jsonarray[page][img]+"' data-title='<a href=\""+jsonarray[page][img]+"\">View Full Size</a>' data-lightbox='image-"+img+"'><img src='"+jsonarray[page][img].replace(".jpg","m.jpg")+"'/></a></span>";
 	}
 }
 

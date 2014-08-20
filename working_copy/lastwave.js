@@ -1,5 +1,12 @@
 //Created by Nikolai Savas 2014
 /*
+TODO:
+ - Clean up code (general)
+ - Add callbacks to functions instead of the weird flow that is currently happening
+ - Download SVG
+ - Add Point, Line, etc.
+ - Custom error messages
+
 Functions: 
 
 submitWave()
@@ -108,6 +115,7 @@ $(document).ready(function() {
 	});
 });
 
+//Data structure, holds an artist's data
 function artist_data(){
 	this.name = "";
 	this.data = [];
@@ -115,53 +123,13 @@ function artist_data(){
 	this.fontsize = 100;
 }
 
-function line(m,b){
-	//Slope
-	this.m = m;
-
-	//y-intercept
-	this.b = b;
-}
-
-function Point(x,y){
-	this.x = x;
-	this.y = y;
-}
-
-function Crit_Point(){
-	//topleft		topright
-	//     \     /
-	//    A \ q / B
-	//        o
-	//       			A,B,C,D are equations of lines
-	//					a,b are the upper and lower points
-	//					all calculations will be done in pixels, so we need to convert it all using our ratios.
-	//					all calculations also done with bottom being down (at the end we need to convert graph.height-y values)
-	//        o
-	//    C / r  \ D
-	//    /       \
-	//btmleft		btmright
-	this.q = new Point();
-	this.r = new Point();
-	this.A = new line();
-	this.B = new line();
-	this.C = new line();
-	this.D = new line();
-	this.topleft = new Point();
-	this.topright = new Point();
-	this.btmleft = new Point();
-	this.btmright = new Point();
-	this.origin = new Point();
-	this.type = "";
-}
-
 
 //On the submit button being clicked
 function submitWave(){
 	//Number of minimum Plays
 	graph_options.min_playcount = document.getElementById('plays').value;
-	if(graph_options.min_playcount < 5){
-		alert("Minimum number of plays to count is 5");
+	if(graph_options.min_playcount < 1){
+		alert("Minimum number of plays to count is 1");
 		return false;
 	}
 
@@ -203,6 +171,12 @@ function submitWave(){
 		return false;
 	}
 
+	//Make sure they've entered a username
+	if(document.getElementById('user').value == ""){
+		alert("Please enter a username");
+		return false;
+	}
+
 
 	graph_options.total_weeks = total_weeks;
 
@@ -211,18 +185,20 @@ function submitWave(){
 		time_end == graph_options.time_end && 
 		document.getElementById('user').value == graph_options.user)
 	{
-		graph_options.time_start = time_start;
-		graph_options.time_end = time_end;
+		//Set loading bar to 90% completion
 		togglediv("#loading","true");
 		$('#xml_loading').css("width", "90%");
 		$('#graph_loading').css("width", "0%");
 		$("#progresstext").html("Waiting...");
+
+		//Parse XML
 		setTimeout(function(){
 			$("#progresstext").html("Parsing XML...");
 			$('#graph_loading').css("width", "5%");
 		},1000)
 		setTimeout(parseXML,1500)
 	} else {
+		//Load the XML before moving on
 		graph_options.time_start = time_start;
 		graph_options.time_end = time_end;
 		loadXML(document.getElementById('user').value);
@@ -235,6 +211,8 @@ function submitWave(){
 }
 
 
+//Load Scheme data (font color/background color)
+// The data for custom schemes is in rickshaw.js
 function loadScheme(){
 	if(document.getElementById("scheme").value == "custom"){
 		graph_options.font_name = document.getElementById("font_name").value;
@@ -289,6 +267,7 @@ function loadScheme(){
 	}
 }
 
+//When a user changes the weeks of data being loaded, all the loaded data must be reset
 function resetXML(){
 	graph_data.userdata = {};
 	graph_data.week_XML = [];
@@ -298,6 +277,7 @@ function resetXML(){
 	togglediv("#loading",true);
 }
 
+//Load XML
 function loadXML(selected_user) {
 	resetXML();
 	graph_options.user = selected_user;
@@ -306,17 +286,22 @@ function loadXML(selected_user) {
 	}
 }
 
+//Grab a specific week's data
 function get_week(user, weeknum){
+
 	setTimeout( function() { 
-		//Add a week to timer
+		//This is where the requests are all sent to the server.
+
+		//Calculate the unix time start & unix time end of the week
 		var week_start=graph_options.time_start+ (604800*(weeknum-1));
 		var week_end=week_start + 604800;
 		graph_data.time_span.push(week_start);
 
-		//Get the data
+		//AJAX request
 		graph_data.week_XML.push(
 			$.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
 			.fail(function() {
+				//If there is a problem, show the 'errors div' and print the number of the week
 				if(($('#errors').hasClass("unshown"))){
 					togglediv("#errors",true);
 					$('#err_weeks').append(weeknum);
@@ -327,31 +312,31 @@ function get_week(user, weeknum){
 			})
 		);
 
-
+		//Update the progress of the bar and the text
 		$('#progresstext').html("Loading week "+weeknum+" of "+total_weeks+"...<br/>");
 		$('#xml_loading').css("width", parseInt(90*weeknum/total_weeks)+"%");
 
 
-		//If it's the last week, wait for the rest of them
+		//If it's the last week, wait for the rest of them to complete before drawing the graph
 		if(weeknum==graph_options.total_weeks){
 			$('#progresstext').html("Waiting...");
-			setTimeout(xmlwait,750);
+			setTimeout(xmlwait,500);
 		}
 
-	}, 250*(weeknum-1));
+	}, 500*(weeknum-1));
+	/* ^^^^ Change this value to speed up/slow down data loading. 
+			Last.fm's API  only  allows a request per second  for 
+			each API key, but I figure I can probably send double
+			that without getting them too angry.
+	*/
 	
 }
 
+//Some code I found online that will use deferred() and promise()s to make sure that everything is complete, THEN parse the XML.
 function xmlwait() {
-
-	/*$.when.apply(null,graph_data.week_XML).done(function() {
-		$('#loading').append("All weeks loaded!");
-		parseXML();
-	});*/
 
 	$.when.apply($, $.map(graph_data.week_XML, function(d) {
 	    var wrapDeferred = $.Deferred();
-	    // you can add .done and .fail if you want to keep track of each results individualy
 	    d.always(function() { wrapDeferred.resolve(); });
 	    return wrapDeferred.promise();
 	})).done(function(){
@@ -361,6 +346,7 @@ function xmlwait() {
 	});
 }
 
+//Now that we've been returned some XML data, actually turn it into something useful
 function parseXML(){
 	var artist_plays = 0;
 	var artist_name = "";
@@ -402,14 +388,14 @@ function parseXML(){
 			console.log("Unexpectedly unable to parse week "+w)
 			continue;
 		}
+
 		//Run through every artist, adding to "userdata" as we go
 		for(i=0;i<artist_count;i++){
-			
 			//Get each artist name,playcount
 			artist_name = week_data.getElementsByTagName("name")[i].childNodes[0].nodeValue;
 			artist_plays = week_data.getElementsByTagName("playcount")[i].childNodes[0].nodeValue;
 
-			//If our artist has enough plays
+			//If our artist has more plays than the minimum playcount (set in the custom options)
 			if((graph_data.userdata[artist_name]!=undefined) && parseInt(artist_plays)>=graph_options.min_playcount || (parseInt(artist_plays)>=graph_options.min_playcount)){
 				if(graph_data.userdata[artist_name] == undefined){
 					//Add an artist if the artist didn't previously exist, fill all previous values with 0s
@@ -430,7 +416,7 @@ function parseXML(){
 	}
 
 	calculate_critical_points();
-	/**/
+
 	//Now that we've got all of our data, draw the wave
 	$('#progresstext').html("Finished parsing XML...");
 
@@ -451,25 +437,38 @@ function calculate_critical_points(){
 	// Repeat until there are no remaining weeks to be maxes
 
 	//Remove all weeks within a threshold of the critical point
-	var threshold = 4;//parseInt(300/(graph_options.graph_width/graph_options.total_weeks));
-	//alert(threshold);
+	var threshold = 4;
+	//This could be an algorithm that decides how far apart the artist names should be based on the pixel width and number of weeks (see comment below)
+	//	parseInt(300/(graph_options.graph_width/graph_options.total_weeks));
 
 	for(artist in graph_data.userdata){
+		//Empty the critical points of the artist (array of Points)
 		graph_data.userdata[artist].crit_points = [];
 		var full_weeks = [];
+
+		//Populate "full weeks" - At the start this will just be a list of 1 to ___ total weeks
 		for(i=0;i<graph_options.total_weeks;i++){
 			if(graph_data.userdata[artist].data[i+1][1]>0){
 				full_weeks.push(i+1);
 			}
 		}
+
+		//Keep removing weeks from the list until we have no weeks left
 		while(full_weeks.length>0){
+			//max_point : [week number, number of plays]
 			var max_point = [0,0];
+
+			//Find the maximum value
 			for(week in full_weeks){
 				if(max_point[1]<graph_data.userdata[artist].data[full_weeks[week]][1]){
 					max_point = graph_data.userdata[artist].data[full_weeks[week]];
 				}
 			}
+
+			//Push the position and size of the point (e.g. [4,121]) to the crit_points array. This number will then be calculated into an actual Crit_Point in the populateWave() function
 			graph_data.userdata[artist].crit_points.push(graph_data.userdata[artist].data[max_point[0]]);
+
+			//Remove all surrounding weeks from full_weeks
 			for(w=max_point[0]-threshold;w<=max_point[0]+threshold;w++){
 				var index = full_weeks.indexOf(w);
 				if(index>-1){
@@ -480,6 +479,9 @@ function calculate_critical_points(){
 	}
 }
 
+//Here's where all the setup happens. The graph is created and drawn. 
+// If all we wanted was a pretty graph (no artist names, no month names, etc.) 
+// then we could just end the app here.
 function drawLastWave(){
 
 	//Since we're drawing a new graph, we won't be needing this:
@@ -489,10 +491,10 @@ function drawLastWave(){
 
 
 	$("#lastwave").css("display","block");
-	//Mother function, this is where it all happens
 
 	document.getElementById("lastwave").innerHTML = "";
 
+	//Populate the data for the wave from our XML
 	graph_data.series_data = populateWave();
 
 	graph = new Rickshaw.Graph( {
@@ -511,36 +513,37 @@ function drawLastWave(){
 
 
     d3.select("#lastwave").select("svg").attr("height",parseInt(graph_options.graph_height/0.90));
-    //d3.select("#lastwave").select("svg").attr("transform","translate("+0+","+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
 
-
+    //Draw the artist names?
 	if(graph_options.showartistnames){
+		//Make a new <g> to add the names to (at the end of the <svg> so that the text is always at the highest layer)
 		d3.select("#lastwave").select("svg").append("g").attr("id","graph_names");
 		drawNames();
 	}
 	
+	//we want some space above and below the graph, so we actually need to translate pretty much everything a bit.
+	d3.select("#lastwave").select("svg").selectAll("g")
+		.attr("transform","translate(0,"+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
 
-	d3.select("#lastwave").select("svg").selectAll("g").attr("transform","translate(0,"+(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2+")");
-	
+	//Draw the background
 	d3.select("#lastwave").select("svg").select("g").append("rect")
-    .attr("width", graph_options.graph_width)
-    .attr("height", graph_options.graph_height/0.90)
-    .attr("fill", graph_options.bgcolor)
-    .attr("x","0")
-    .attr("y",-1*(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2);
+	    .attr("width", graph_options.graph_width)
+	    .attr("height", graph_options.graph_height/0.90)
+	    .attr("fill", graph_options.bgcolor)
+	    .attr("x","0")
+	    .attr("y",-1*(parseInt(graph_options.graph_height/0.90)-graph_options.graph_height)/2);
 
     $("#lastwave").css("width",graph_options.graph_width+8);
 
+    //Draw the month names?
 	if(graph_options.show_months){
 		drawMonths();
 	}
 
+	//savas.ca/lastwave in the bottom right corner
 	addWatermark();
 
-
-	//Preload data for sharing
-	//share_preload();
-
+	//Update progress, clean up ui
 	$('#progresstext').html("Wave Complete!");
 	$("#xml_loading").css("width","0%");
 	$("#graph_loading").css("width","0%");
@@ -550,6 +553,7 @@ function drawLastWave(){
 
 }
 
+//This function is called at the start of drawLastWave(). Most of the data management is done here.
 function populateWave(){
 	var series_data = [];
 	var colorscheme;
@@ -562,7 +566,6 @@ function populateWave(){
 	}
 
 	//Generate Colour Scheme
-
 	if(scheme.value=="custom"){
 		graph_options.palette = generateHue($("#wave_color_start").attr("value"),$("#wave_color_end").attr("value"),graph_data.artists_order.length,document.getElementById("cont_shade").checked);
 	} else {
@@ -573,6 +576,7 @@ function populateWave(){
 
 
 	//If "normalize" has been selected, order them so that the largest playcount is in the center
+	// Since normalized graphs look nicer, I've made this setting default
 	if(graph_options.normalize){
 		var firsthalf = graph_data.artists_order.slice(0, graph_data.artists_order.length /2);
 		var secondhalf = graph_data.artists_order.slice(graph_data.artists_order.length/2,graph_data.artists_order.length);
@@ -597,7 +601,7 @@ function populateWave(){
 	}
 
 	//Populate series data
-	for(a=0;a<graph_data.artists_order.length;a++){
+	for(var a=0;a<graph_data.artists_order.length;a++){
 		//Artist name
 		var selected_artist = graph_data.artists_order[a];
 		
@@ -607,7 +611,7 @@ function populateWave(){
 		//Populate tempdata
 		for(i=1;i<=graph_options.total_weeks;i++){
 			if(graph_data.userdata[selected_artist].data[i] != undefined){
-				tempdata[i-1] = { x: graph_data.userdata[selected_artist].data[i][0], y: graph_data.userdata[selected_artist].data[i][1]}
+				tempdata[i-1] = new Point(graph_data.userdata[selected_artist].data[i][0],graph_data.userdata[selected_artist].data[i][1]);
 			}
 		}
 		
@@ -629,49 +633,64 @@ function populateWave(){
 	return series_data;
 }
 
+//If we want to have months shown in behind the graph
 function drawMonths(){
 	var month_name;
 	var year_name;
-		//x ratio
-		var xratio = graph.width/(graph.series[0].stack.length-1);
 
-		d3.select("#lastwave").select("svg").select("g").append("g").attr("id", "Months");
-		//Push all months to background
+	//Find the first <g> and add the month <g> to it. This makes sure that the month names 
+	// and the line will be behind all of the wave lines. There is no prepend() for <svg>,
+	// so this is the best option.
+	d3.select("#lastwave").select("svg").select("g").append("g").attr("id", "Months");
 
-		//Set up background
-		var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+	var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-		//console.log("Total Distance:"+(graph_options.time_end-graph_options.time_start));
+	//If our rounded month is behind our start time, skip it
+	for(var t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
+		var month = round_month(t);
+		month_name = months[new Date((month*1000)+604800000).getMonth()];
+		year_name = new Date((month*1000)+604800000).getFullYear();
+		year_name = year_name.toString();
 
-
-		//If our rounded month is behind our start time, skip it
-		for(var t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
-			var month = round_month(t);
-			month_name = months[new Date((month*1000)+604800000).getMonth()];
-			year_name = new Date((month*1000)+604800000).getFullYear();
-			year_name = year_name.toString();
-
-			if(month<graph_options.time_start){
-				month+=2629743;
-			}
-			if(month>graph_options.time_end){
-				break;
-			}
-
-			var rah = (month-graph_options.time_start)/(graph_options.time_end-graph_options.time_start);
-			rah*= graph.width;
-			/*
-			console.log(month_name + " " + rah);
-			console.log(new Date(month*1000));*/
-
-			d3.select("#lastwave").select("svg").select("#Months").append("line").attr("x1",rah).attr("y1","0").attr("x2",rah).attr("y2",graph.height-40).attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.2;");
-			d3.select("#lastwave").select("svg").select("#Months").append("text").text(month_name).attr("x",rah - month_name.width("20px Lucida Sans Unicode")/2).attr("y",graph.height-20).attr("font-size",20).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
-			if(month_name == "January"){
-				d3.select("#lastwave").select("svg").select("#Months").append("text").text(year_name).attr("x",rah - year_name.width("30px Lucida Sans Unicode")/2).attr("y",graph.height+10).attr("font-size",30).attr("fill","#AAA").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
-			}
+		if(month<graph_options.time_start){
+			month+=2629743;
 		}
+		if(month>graph_options.time_end){
+			break;
+		}
+
+		var month_line_x = (month-graph_options.time_start)/(graph_options.time_end-graph_options.time_start);
+		month_line_x*= graph.width;
+
+		//Draw month line
+		d3.select("#lastwave").select("svg").select("#Months").append("line")
+			.attr("x1",month_line_x)
+			.attr("y1","0")
+			.attr("x2",month_line_x)
+			.attr("y2",graph.height-40)
+			.attr("style","stroke:rgb(100,100,100);stroke-width:5;stroke-opacity: 0.2;");
+
+		//Draw month text
+		d3.select("#lastwave").select("svg").select("#Months").append("text")
+			.text(month_name)
+			.attr("x",month_line_x - month_name.width("20px Lucida Sans Unicode")/2)
+			.attr("y",graph.height-20).attr("font-size",20)
+			.attr("fill","#AAA")
+			.attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
+
+		if(month_name == "January"){
+			//If it's January, show the year as well.
+			d3.select("#lastwave").select("svg").select("#Months").append("text")
+				.text(year_name)
+				.attr("x",month_line_x - year_name.width("30px Lucida Sans Unicode")/2)
+				.attr("y",graph.height+10).attr("font-size",30)
+				.attr("fill","#AAA")
+				.attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif");
+		}
+	}
 }
 
+//Collectively, this was the hardest part of LastWave. See my blog post on the making of LastWave (savas.ca/blog)
 function drawNames(){
 	$('#progresstext').html("Drawing Artist Names...");
 	console.log("Drawing Names...");
@@ -694,8 +713,8 @@ function drawNames(){
 			var label = false;
 			//Now we need to figure out which type to draw.
 			if(
-				((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m<=0)) ||
-				((cp.A.m<=0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0))
+				((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope<=0)) ||
+				((cp.A.slope<=0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0))
 			){
 				//Type "W"
 				cp.type = "W";
@@ -703,8 +722,8 @@ function drawNames(){
 				//console.log(artist_name+" - W");
 			}
 			else if(
-				((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0))||
-				((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m>=0)&&(cp.D.m>0))
+				((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0))||
+				((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope>=0)&&(cp.D.slope>0))
 			){
 				//Type "X"
 				cp.type = "X";
@@ -712,10 +731,10 @@ function drawNames(){
 				//console.log(artist_name+" - X");
 			}
 			else if(
-				(cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)||
-				(cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)||
-				(cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)||
-				(cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)
+				(cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)||
+				(cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)||
+				(cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)||
+				(cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)
 			){
 				//Type "Y"
 				cp.type = "Y";
@@ -723,7 +742,7 @@ function drawNames(){
 				//console.log(artist_name+" - Y");
 			}
 			else if(
-				(cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)
+				(cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)
 			){
 				//Type "Z"
 				cp.type = "Z";
@@ -740,18 +759,31 @@ function drawNames(){
 				//console.log(artist_name +" failed with a font size of "+fontsize);
 				continue;
 			}
-			d3.select("#lastwave").select("svg").select("#graph_names").append("text").text(artist_name).attr("x",label.x).attr("y",label.y).attr("font-size",label.fontsize).attr("fill",graph_options.font_color).attr("font-family",graph_options.font_name);
+			d3.select("#lastwave").select("svg").select("#graph_names").append("text")
+				.text(artist_name)
+				.attr("x",label.x)
+				.attr("y",label.y)
+				.attr("font-size",label.fontsize)
+				.attr("fill",graph_options.font_color)
+				.attr("font-family",graph_options.font_name);
 		
 		}
 	}
 }
 
+//Called at the start of drawNames(). Each critical point will need some 
+// data about the surrounding lines before we can place the artist name.
 function populate_lines(){
 
-	var crit = new Crit_Point();
-	for(i=0;i<graph_data.artists_order.length;i++){
+	var crit;
+	
+	for(i=0;i<graph_data.artists_order.length;i++){ //Run through each artist
+
+		//Get Artist's name
 		var artist_name = graph_data.artists_order[i];
-		for(pt in graph_data.userdata[artist_name].crit_points){
+		
+
+		for(pt in graph_data.userdata[artist_name].crit_points){ //Run through each data point in the artist's data
 			crit = new Crit_Point();
 			//Find critical points for each of these points
 			//console.log(graph_data.userdata[artist_name].crit_points[point]);
@@ -767,7 +799,8 @@ function populate_lines(){
 			//    C / r  \ D
 			//    /       \
 			//
-			crit.origin = graph_data.userdata[artist_name].crit_points[pt];
+			crit.origin = new Point();//graph_data.userdata[artist_name].crit_points[pt];
+			
 			var x_point = graph_data.userdata[artist_name].crit_points[pt][0];
 			var xratio = getRatio(0);
 			var yratio = getRatio(1);
@@ -841,20 +874,20 @@ function draw_W(cp,artist_name){
 	// DESCRIPTION: One set facing inwards, one set facing outwards
 	// APPROACH: Assume that the text box's side must touch one of the points, and is then bounded by the left and right by the inward facing lines
 	
-	//cp is the critical point, should contain all information necessary.
+	//cp is a Crit_Point
 	var fontsize = 5;
-	if(cp.A.m>0){ // w2
+	if(cp.A.slope>0){ // w2
 		var btm_bound = cp.r.y;
 		while(true){
 			//Find the bottom bound of our textbox
 			top_bound = cp.r.y + fontsize;
 
 			//Left bound of the bottom bound
-			var coll_left = (top_bound - cp.A.b)/cp.A.m;
+			var coll_left = (top_bound - cp.A.y_int)/cp.A.slope;
 			if(coll_left<cp.topleft.x) coll_left=cp.topleft.x;
 
 			//Where the bottom bound hits line B
-			var coll_right = (top_bound - cp.B.b)/cp.B.m;
+			var coll_right = (top_bound - cp.B.y_int)/cp.B.slope;
 			if(coll_right>cp.topright.x) coll_right=cp.topright.x;
 
 			//Find out what the width of the box would be if we had the current fontsize
@@ -887,10 +920,10 @@ function draw_W(cp,artist_name){
 			//Find the bottom bound of our textbox
 			var btm_bound = cp.q.y - fontsize;
 
-			var coll_left = (btm_bound - cp.C.b)/cp.C.m;
+			var coll_left = (btm_bound - cp.C.y_int)/cp.C.slope;
 			if(coll_left<cp.topleft.x) coll_left=cp.topleft.x;
 
-			var coll_right = (btm_bound - cp.D.b)/cp.D.m;
+			var coll_right = (btm_bound - cp.D.y_int)/cp.D.slope;
 			if(coll_right>cp.topright.x) coll_right=cp.topright.x;
 
 			var boxWidth = artist_name.width(fontsize+"px "+graph_options.font_name);
@@ -918,7 +951,7 @@ function draw_W(cp,artist_name){
 		continue;
 	}*/
 	//Extra positioning to make up for curves
-	if(cp.C.m<0.5 && cp.C.m>0 && cp.D.m<-1.5){
+	if(cp.C.slope<0.5 && cp.C.slope>0 && cp.D.slope<-1.5){
 		y_value_for_max_point -= artist_name.height(fontsize+"px "+graph_options.font_name)/2;
 		console.log("[w]Correcting "+artist_name);
 	}
@@ -939,12 +972,12 @@ function draw_X(cp,artist_name){
 	var top_collision;
 	var btm_collision;
 	for (v=(cp.r.y+1);v<cp.q.y;v++){
-		if(cp.A.m>=0){
-			coll_left = (v-cp.A.b)/cp.A.m;
-			coll_right = (v-cp.D.b)/cp.D.m;
+		if(cp.A.slope>=0){
+			coll_left = (v-cp.A.y_int)/cp.A.slope;
+			coll_right = (v-cp.D.y_int)/cp.D.slope;
 		} else {
-			coll_left = (v-cp.C.b)/cp.C.m;
-			coll_right = (v-cp.B.b)/cp.B.m;
+			coll_left = (v-cp.C.y_int)/cp.C.slope;
+			coll_right = (v-cp.B.y_int)/cp.B.slope;
 		}
 		//If either of our collisions are outside of the bounds, then (FOR NOW) we will just cut it off there, but later we could add it so that it looks at the surrounding area to maximize the font further.
 		if(coll_left<cp.topleft.x) coll_left = cp.topleft.x;
@@ -961,20 +994,22 @@ function draw_X(cp,artist_name){
 	
 	//Find out the slope of the box from the topleft corner to the bottomleft corner (height/width)
 	//From now on, this diagonal is referred to as "diag"
-	var ctrpt = {"x": maxWidth[2] + maxWidth[0]/2, "y": maxWidth[1]};
+	var ctrpt = new Point(maxWidth[2]+maxWidth[0]/2,maxWidth[1]);
+
+	//Since we actually don't know the start and end points, we can keep mDiag and bDiag (slope and y intercept)
 	var mDiag = artist_name.slope(graph_options.font_name);
-	if(cp.A.m>0) mDiag*=-1;
+	if(cp.A.slope>0) mDiag*=-1;
 	var bDiag = ctrpt.y - mDiag*ctrpt.x;
 	
 	//Now find the points of intersection of diag with all of the other lines x = b2 - b1/m1 - m2
 	//A
-	var diag_A = {"x" : (bDiag-cp.A.b)/(cp.A.m - mDiag), "y" : mDiag*((bDiag-cp.A.b)/(cp.A.m - mDiag)) + bDiag};
+	var diag_A = new Point((bDiag-cp.A.y_int)/(cp.A.slope - mDiag),mDiag*((bDiag-cp.A.y_int)/(cp.A.slope - mDiag)) + bDiag);
 	//B
-	var diag_B = {"x" : (bDiag-cp.B.b)/(cp.B.m - mDiag), "y" : mDiag*((bDiag-cp.B.b)/(cp.B.m - mDiag)) + bDiag};
+	var diag_B = new Point((bDiag-cp.B.y_int)/(cp.B.slope - mDiag),mDiag*((bDiag-cp.B.y_int)/(cp.B.slope - mDiag)) + bDiag);
 	//C
-	var diag_C = {"x" : (bDiag-cp.C.b)/(cp.C.m - mDiag), "y" : mDiag*((bDiag-cp.C.b)/(cp.C.m - mDiag)) + bDiag};
+	var diag_C = new Point((bDiag-cp.C.y_int)/(cp.C.slope - mDiag),mDiag*((bDiag-cp.C.y_int)/(cp.C.slope - mDiag)) + bDiag);
 	//D
-	var diag_D = {"x" : (bDiag-cp.D.b)/(cp.D.m - mDiag), "y" : mDiag*((bDiag-cp.D.b)/(cp.D.m - mDiag)) + bDiag};
+	var diag_D = new Point((bDiag-cp.D.y_int)/(cp.D.slope - mDiag),mDiag*((bDiag-cp.D.y_int)/(cp.D.slope - mDiag)) + bDiag);
 	
 	//Now we have a bunch of intersection points, but don't know which one is the "real" border, so we're going to find a top and bottom collision
 	//Top collision
@@ -1008,11 +1043,11 @@ function draw_X(cp,artist_name){
 	//Which x/y values we pick is based on whether we have the graph getting steeper/shallower after a&b
 
 	//If it gets a lot steeper after the center points, then adjust.
-	if(cp.A.m<0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
+	if(cp.A.slope<0 && cp.B.slope<cp.A.slope && cp.D.slope<cp.C.slope && Math.abs(cp.D.slope-cp.C.slope)>0.4 && cp.topleft.y == cp.btmleft.y){
 		console.log("[x] trigger "+ artist_name)
 		x_value_for_max_point = Math.max(top_collision.x,btm_collision.x) - boxWidth;
 		y_value_for_max_point = graph.height - top_collision.y + boxHeight*0.3;
-	} else if(cp.A.m>0 && cp.B.m<cp.A.m && cp.D.m<cp.C.m && Math.abs(cp.D.m-cp.C.m)>0.4 && cp.topleft.y == cp.btmleft.y){
+	} else if(cp.A.slope>0 && cp.B.slope<cp.A.slope && cp.D.slope<cp.C.slope && Math.abs(cp.D.slope-cp.C.slope)>0.4 && cp.topleft.y == cp.btmleft.y){
 		console.log("[x] trigger 2 "+artist_name);
 		x_value_for_max_point = Math.min(top_collision.x,btm_collision.x) - boxWidth/1.2;
 		y_value_for_max_point = graph.height - btm_collision.y - boxHeight*0.3;
@@ -1026,7 +1061,7 @@ function draw_X(cp,artist_name){
 
 
 	//There's no way I can make an estimate for this
-	if((Math.abs(cp.A.m+cp.C.m)<0.25 && Math.abs(cp.B.m+cp.D.m)>2) || (Math.abs(cp.B.m+cp.D.m)<0.25 && Math.abs(cp.A.m+cp.C.m)>2) ){
+	if((Math.abs(cp.A.slope+cp.C.slope)<0.25 && Math.abs(cp.B.slope+cp.D.slope)>2) || (Math.abs(cp.B.slope+cp.D.slope)<0.25 && Math.abs(cp.A.slope+cp.C.slope)>2) ){
 		console.log("[x] Impossible to estimate "+artist_name);
 		return false;
 	}
@@ -1054,76 +1089,70 @@ function draw_Y(cp,artist_name){
 	var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
 	var slope_sign; //1 or -1
 	var slope = artist_name.slope(); //slope of initial line
-	var mO; //This is the opposite side line
-	var bO;
-	var mV; //This line is horizontally opposite to O
-	var bV;
-	var mU; //This line is vertically opposite to V
-	var bU;
-	var bX;
-	var bQ;
-	var mQ,mX;
+	
+	var O; //Opposite side line
+	var V; //Horizontally opposite to O
+	var U; //Vertically opposite to V
+	var Q; //First line
+	var X; //Second line
+
 	var x_value_for_max_point;
 	var y_value_for_max_point;
 	var intersect1;
 	var intersect2;
-	//var bU;
+	//var U.y_int;
 	var offset = 0; //This variable is helpful to move the text to give room for curved edges (we pretend like we're only dealing with flat in all the calculations)
-	if(cp.A.m<=0 && cp.B.m<0 || cp.A.m>=0 && cp.B.m>=0) {
+	if(cp.A.slope<=0 && cp.B.slope<0 || cp.A.slope>=0 && cp.B.slope>=0) {
 		start_point = cp.q;
 		offset_sign = -1;
-		if(cp.A.m>0 || cp.A.m==0 && cp.B.m>0){ //Opposite line: D -> C ^ A
+		if(cp.A.slope>0 || cp.A.slope==0 && cp.B.slope>0){ //Opposite line: D -> C ^ A
 			//console.log("a");
 			slope_sign = -1;
-			mO = cp.D.m;
-			bO = cp.D.b;
-			mV = cp.C.m;
-			bV = cp.C.b;
-			mU = cp.A.m;
-			bU = cp.A.b;
+
+			O = new Line(cp.D.start_point,cp.D.end_point);
+			V = new Line(cp.C.start_point,cp.C.end_point);
+			U = new Line(cp.A.start_point,cp.A.end_point);
+		
 		}
-		if(cp.A.m<0 || cp.A.m==0 && cp.B.m<0){ //Opposite line: C -> D ^ B
+		if(cp.A.slope<0 || cp.A.slope==0 && cp.B.slope<0){ //Opposite line: C -> D ^ B
 			//console.log("b");
 			slope_sign = 1;
-			mO = cp.C.m;
-			bO = cp.C.b;
-			mV = cp.D.m;
-			bV = cp.D.b;
-			mU = cp.B.m;
-			bU = cp.B.b;
+
+			O = new Line(cp.C.start_point,cp.C.end_point);
+			V = new Line(cp.D.start_point,cp.D.end_point);
+			U = new Line(cp.B.start_point,cp.B.end_point);
+
 		}
-	} else if(cp.C.m<=0 && cp.D.m<=0 || cp.C.m>=0 && cp.D.m>0) {
+	} else if(cp.C.slope<=0 && cp.D.slope<=0 || cp.C.slope>=0 && cp.D.slope>0) {
 		start_point = cp.r;
 		offset_sign = 1;
-		if(cp.C.m>=0){ //Opposite line: A -> B ^ D
+		if(cp.C.slope>=0){ //Opposite line: A -> B ^ D
 			//console.log("c");
 			slope_sign = -1;
-			mO = cp.A.m;
-			bO = cp.A.b;
-			mV = cp.B.m;
-			bV = cp.B.b;
-			mU = cp.D.m;
-			bU = cp.D.b;
-			if(cp.C.m<0.2 && cp.D.m>1){
+
+			O = new Line(cp.A.start_point,cp.A.end_point);
+			V = new Line(cp.B.start_point,cp.B.end_point);
+			U = new Line(cp.D.start_point,cp.D.end_point);
+
+			if(cp.C.slope<0.2 && cp.D.slope>1){
 				offset=1;
 			}
 		}
-		if(cp.C.m<0){ //Opposite line: B -> A ^ C
+		if(cp.C.slopeslope<0){ //Opposite line: B -> A ^ C
 			//console.log("d");
 			slope_sign = 1;
-			mO = cp.B.m;
-			bO = cp.B.b;
-			mV = cp.A.m;
-			bV = cp.A.b;
-			mU = cp.C.m;
-			bU = cp.C.b;
-			if(cp.C.m>-0.2 && cp.D.m<-1){
+
+			O = new Line(cp.B.start_point,cp.B.end_point);
+			V = new Line(cp.A.start_point,cp.A.end_point);
+			U = new Line(cp.C.start_point,cp.C.end_point);
+
+			if(cp.C.slope>-0.2 && cp.D.slope<-1){
 				offset=1;
 			}
 		}
 	} else {
 		console.log("Really weird error - "+artist_name);
-		console.log(artist_name + " - y" + " - " + cp.A.m + "," + cp.B.m + "," + cp.C.m + "," + cp.D.m);
+		console.log(artist_name + " - y" + " - " + cp.A.slope + "," + cp.B.slope + "," + cp.C.slope + "," + cp.D.slope);
 		return false;
 	}
 	
@@ -1155,23 +1184,22 @@ function draw_Y(cp,artist_name){
 		   
 		*/
 		count++;
-		mQ = slope*slope_sign;
-		bQ = start_point.y - mQ*start_point.x;
-		
+		Q = new Line(start_point,end_point);
+
 		//First check if Q intersects with V
 		if(
 			//y1
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topright.y)
+			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.topright.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int > cp.topright.y)
 			||
 			//y2
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV > cp.topleft.y)
+			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.topleft.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int > cp.topleft.y)
 			||
 			//y3
-			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) < cp.topright.x) && (bV-bQ)/(mQ-mV) > cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmright.y)
+			(((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.topright.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int < cp.btmright.y)
 			||
 			//y4
-			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bV-bQ)/(mQ-mV) > cp.topleft.x) && (bV-bQ)/(mQ-mV) < cp.q.x && ((mV)*(bV-bQ)/(mQ-mV))+bV < cp.btmleft.y)
-		 ) {
+			(((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.topleft.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int < cp.btmleft.y)
+		 ) 
 			start_point = previous_start_point;
 			break;
 		 } else {
@@ -1183,29 +1211,29 @@ function draw_Y(cp,artist_name){
 		
 		
 		//New line going cp.A.cp.C.bkwards (from now on referred to as X)
-		mX = slope*slope_sign*-1;
-		bX = start_point.y - mX*intersect1.x;
+		X.slope = slope*slope_sign*-1;
+		X.y_int = start_point.y - X.slope*intersect1.x;
 		
 		//Find intersection between X and V
 		
 		//First check if X collides with line U before it collides with V
 		if(
 			//y1
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topright.y)
+			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) < cp.topright.x) && (U.y_int-X.y_int)/(X.slope-U.slope) > cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int < cp.topright.y)
 			||
 			//y2
-			(((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU < cp.topleft.y)
+			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) > cp.topleft.x) && (U.y_int-X.y_int)/(X.slope-U.slope) < cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int < cp.topleft.y)
 			||
 			//y3
-			(((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) < cp.topright.x) && (bU-bX)/(mX-mU) > cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmright.y)
+			(((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) < cp.topright.x) && (U.y_int-X.y_int)/(X.slope-U.slope) > cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int > cp.btmright.y)
 			||
 			//y4
-			(((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)) && ((bU-bX)/(mX-mU) > cp.topleft.x) && (bU-bX)/(mX-mU) < cp.q.x && ((mU)*(bU-bX)/(mX-mU))+bU > cp.btmleft.y)
+			(((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) > cp.topleft.x) && (U.y_int-X.y_int)/(X.slope-U.slope) < cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int > cp.btmleft.y)
 		 ) {
-			intersect2 = { "x": (bU - bX)/(mX - mU), "y": ((mU)*(bU - bX)/(mX - mU))+bU};
+			intersect2 = { "x": (U.y_int - X.y_int)/(X.slope - U.slope), "y": ((U.slope)*(U.y_int - X.y_int)/(X.slope - U.slope))+U.y_int};
 		 } else {
 			//Intersection x = (b2-b1)/(m1-m2). line 1 = X, line 2 = V
-			intersect2 = {"x": (bV - bX)/(mX - mV), "y": ((mV)*(bV - bX)/(mX - mV))+bV};
+			intersect2 = {"x": (V.y_int - X.y_int)/(X.slope - V.slope), "y": ((V.slope)*(V.y_int - X.y_int)/(X.slope - V.slope))+V.y_int};
 		}
 		if(artist_name==test_artist){
 			//green line (start_point -> intersect1)
@@ -1219,7 +1247,7 @@ function draw_Y(cp,artist_name){
 		
 		//Check if we're out of our bounds
 		if(intersect2.x < cp.topleft.x || intersect2.x > cp.topright.x){
-			intersect2.x = (intersect2.y - bU)/mU;
+			intersect2.x = (intersect2.y - U.y_int)/U.slope;
 		}
 		
 		previous_start_point = start_point;
@@ -1231,7 +1259,7 @@ function draw_Y(cp,artist_name){
 			intersect2.x = cp.topright.x;
 		}
 
-		start_point = {"x": intersect2.x, "y": mU*intersect2.x + bU};
+		start_point = {"x": intersect2.x, "y": U.slope*intersect2.x + U.y_int};
 		
 		//Check for bounces
 		if(Math.round(intersect1.y-previous_start_point.y) == last_last_fontsize || Math.round(intersect1.y-previous_start_point.y) == last_last_last_fontsize){
@@ -1257,16 +1285,16 @@ function draw_Y(cp,artist_name){
 	//Pick value cp.A.bsed on type
 						 
 	//y1
-	if((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m>=0)&&(cp.D.m>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - start_point.y;}
+	if((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - start_point.y;}
 	//y2
-	if((cp.A.m>0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m<=0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - previous_start_point.y;}
+	if((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - previous_start_point.y;}
 	//y3
-	if((cp.A.m<=0)&&(cp.B.m<0)&&(cp.C.m<0)&&(cp.D.m>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
+	if((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
 	//y4
-	if((cp.A.m>0)&&(cp.B.m>=0)&&(cp.C.m<0)&&(cp.D.m>0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
-	//x_value_for_max_point = cp.A.mth.min(start_point.x,intersect1.x,intersect2.x);
+	if((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
+	//x_value_for_max_point = cp.A.slopeth.min(start_point.x,intersect1.x,intersect2.x);
 	
-	//y_value_for_max_point = graph_options.graph_height - cp.A.mth.min(start_point.y,intersect1.y,intersect2.y);// - cp.A.mth.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+graph_options.font_name) )/2);// - fontsize*offset;
+	//y_value_for_max_point = graph_options.graph_height - cp.A.slopeth.min(start_point.y,intersect1.y,intersect2.y);// - cp.A.slopeth.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+graph_options.font_name) )/2);// - fontsize*offset;
 	
 	if(artist_name==test_artist){
 			//black line (start_point -> intersect1)
@@ -1279,7 +1307,7 @@ function draw_Y(cp,artist_name){
 	//Curve fixes
 
 	//if C is flat and D is steep
-	if(cp.C.m>-0.5 && cp.C.m<0.5 && cp.D.m<-0.9 && (y_value_for_max_point<(cp.r.y-Math.abs(cp.r.y-cp.q.y)))){
+	if(cp.C.slope>-0.5 && cp.C.slope<0.5 && cp.D.slope<-0.9 && (y_value_for_max_point<(cp.r.y-Math.abs(cp.r.y-cp.q.y)))){
 		//x_value_for_max_point += "W".width(fontsize+"px "+graph_options.font_name);
 		y_value_for_max_point -= (.5*artist_name.height(fontsize+"px "+graph_options.font_name));
 		//if(artist_name ==test_artist){
@@ -1303,8 +1331,8 @@ function draw_Z(cp,artist_name){
 	var middleMP = {"x": (leftMP.x+rightMP.x)/2, "y" : (leftMP.y+rightMP.y)/2};
 	var boxBottom,boxBtmWidth,boxHeight,boxWidth,boxTopWidth,boxTop,coll_A,coll_B,coll_C,coll_D,coll_btmleft,coll_topright,coll_btmright,coll_topleft;
 
-	if(Math.abs(cp.A.m - cp.B.m)<0.1 || Math.abs(cp.C.m - cp.D.m)<0.1 ){
-		middleMP = {"x": cp.q.x, "y": (cp.q.y+cp.r.y)/2};
+	if(Math.abs(cp.A.slope - cp.B.slope)<0.1 || Math.abs(cp.C.slope - cp.D.slope)<0.1 ){
+		middleMP = new Point(cp.q.x,(cp.q.y+cp.r.y)/2);
 		console.log("Replacing midpoint for "+artist_name);
 	}
 	
@@ -1320,26 +1348,26 @@ function draw_Z(cp,artist_name){
 		boxBottom = middleMP.y - boxHeight/2;
 		//Check left and right collisions, distance between them
 		//Top
-		coll_A = (boxTop-cp.A.b)/cp.A.m;
-		coll_C = (boxTop-cp.C.b)/cp.C.m;
+		coll_A = (boxTop-cp.A.y_int)/cp.A.slope;
+		coll_C = (boxTop-cp.C.y_int)/cp.C.slope;
 		coll_topleft = Math.max(coll_A,coll_C);
 		if(coll_topleft<cp.topleft.x) coll_topleft = cp.topleft.x;
 		
-		coll_B = (boxTop-cp.B.b)/cp.B.m;
-		coll_D = (boxTop-cp.D.b)/cp.D.m;
+		coll_B = (boxTop-cp.B.y_int)/cp.B.slope;
+		coll_D = (boxTop-cp.D.y_int)/cp.D.slope;
 		coll_topright = Math.min(coll_B,coll_D);
 		if(coll_topright>cp.topright.x) coll_topright = cp.topright.x;
 		
 		boxTopWidth = coll_topright-coll_topleft;
 		
 		//Bottom
-		coll_A = (boxBottom-cp.A.b)/cp.A.m;
-		coll_C = (boxBottom-cp.C.b)/cp.C.m;
+		coll_A = (boxBottom-cp.A.y_int)/cp.A.slope;
+		coll_C = (boxBottom-cp.C.y_int)/cp.C.slope;
 		coll_btmleft = Math.max(coll_A,coll_C);
 		if(coll_btmleft<cp.topleft.x) coll_btmleft = cp.topleft.x;
 		
-		coll_B = (boxBottom-cp.B.b)/cp.B.m;
-		coll_D = (boxBottom-cp.D.b)/cp.D.m;
+		coll_B = (boxBottom-cp.B.y_int)/cp.B.slope;
+		coll_D = (boxBottom-cp.D.y_int)/cp.D.slope;
 		coll_btmright = Math.min(coll_B,coll_D);
 		if(coll_btmright>cp.topright.x) coll_btmright = cp.topright.x;
 		
@@ -1366,6 +1394,75 @@ function draw_Z(cp,artist_name){
 }
 
 
+/* Structs */
+
+function Line(start_point, end_point) {
+	this.start_point = start_point;
+	this.end_point = end_point;
+
+	//Slope = Rise/Run
+	this.slope = (end_point.y - start_point.y)/(end_point.x - start_point.x);
+
+	//Y-intercept b = y-mx
+	this.y_int = start_point.y - this.slope*start_point.x;
+}
+
+function Point(x,y) {
+	this.x = x;
+	this.y = y;
+}
+
+
+function Crit_Point(){
+	//topleft		topright
+	//     \     /
+	//    A \ q / B
+	//        o
+	//       			A,B,C,D are equations of lines
+	//					a,b are the upper and lower points
+	//					all calculations will be done in pixels, so we need to convert it all using our ratios.
+	//					all calculations also done with bottom being down (at the end we need to convert graph.height-y values)
+	//        o
+	//    C / r  \ D
+	//    /       \
+	//btmleft		btmright
+	this.q = new Point();
+	this.r = new Point();
+	this.A = new Line();
+	this.B = new Line();
+	this.C = new Line();
+	this.D = new Line();
+	this.topleft = new Point();
+	this.topright = new Point();
+	this.btmleft = new Point();
+	this.btmright = new Point();
+	this.origin = new Point();
+	this.type = "";
+}
+
+/* Line & Point functions */
+
+function get_intersect(line1, line2) {
+	var x = (line2.y_int - line1.y_int)/(line1.slope - line2.slope);
+	var y = ((line2.slope)*(line2.y_int - line1.y_int)/(line1.slope - line2.slope))+line2.y_int;
+
+	var intersection = new Point(x,y);
+	
+	return intersection;
+}
+
+
+function get_midpoint(line) {
+	var x = line.end_point.x - line.start_point.x;
+	var y = line.end_point.y - line.start_point.y;
+
+	var midpoint = new Point(x,y);
+
+	return midpoint;
+}
+
+
+/*Other functions*/
 
 
 function share_preload(){
@@ -1540,7 +1637,14 @@ function addWatermark(){
 	var watermark_height = graph.height*0.03/0.90;
 	var watermark_width = watermark.width(watermark_height+"px Lucida Sans Unicode");
 
-	d3.select("#lastwave").select("svg").append("text").text(watermark).attr("x",graph.width-watermark_width).attr("y",graph.height/0.90).attr("font-size",watermark_height).attr("fill","#888").attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif").transition().style("opacity", 0.5);
+	d3.select("#lastwave").select("svg").append("text")
+		.text(watermark)
+		.attr("x",graph.width-watermark_width)
+		.attr("y",graph.height/0.90)
+		.attr("font-size",watermark_height)
+		.attr("fill","#888")
+		.attr("font-family","Lucida Sans Unicode, Lucida Grande, sans-serif")
+		.transition().style("opacity", 0.5);
 
 }
 
@@ -1675,6 +1779,7 @@ function shuffle_array(o){ //v1.0
     return o;
 };
 
+//Bootstrap functionality
 function inputFocus(i){
     if(i.value==i.defaultValue){ i.value="";}
 }
@@ -1682,6 +1787,7 @@ function inputBlur(i){
     if(i.value==""){ i.value=i.defaultValue;}
 }
 
+//Shows/hides divs
 function togglediv(id,state) {
 	if ($(id).hasClass('shown') && state && id=="#graph_options" || !state) {
     	$(id).removeClass('shown').addClass('unshown');
@@ -1690,6 +1796,8 @@ function togglediv(id,state) {
     }
 }
 
+
+//Adds the imgur link to our SQL database so that it will be displayed in the gallery. Future improvements could be saving the actual SVG so it can be displayed in high def
 function add_to_gallery(){
 	$.ajax({
 	  type: "POST",

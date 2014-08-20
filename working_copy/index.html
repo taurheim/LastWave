@@ -75,7 +75,11 @@ See here for online demo:
 	    						<br><br>
 			Data Range : <br>
 			<input id="start_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"> to 
-			<input id="end_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text">
+			<input id="end_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"><br/><br/>
+			Dimensions: <br/>
+						<input name="width" id="width" value="2000" type="text"> 
+						x 
+						<input name="height" id="height" value="1000" type="text"><br/><span style="font-size:11px">(Recommended: 1000px per 3 months)</span>
 			<br><br>
 			Choose a layout (or create your own):<br>
 			<select id="scheme">
@@ -113,7 +117,7 @@ See here for online demo:
 					Number of plays to be included: 
 						<input name="plays" id="plays" value="10" type="text"><br><br>
 					Normalize artist order?:
-						<input name="normalize" id="normalize" type="checkbox"><br/><br/>
+						<input name="normalize" id="normalize" type="checkbox" checked=""><br/><br/>
 					Graph type:
 						<select id="graph_type">
 							<option value="silhouette">Silhouette</option>
@@ -128,10 +132,6 @@ See here for online demo:
 					<h3 class="panel-title">Display</h3>
 				</div>
 				<div class="panel-body">
-					Dimensions: 
-						<input name="width" id="width" value="2000" type="text"> 
-						x 
-						<input name="height" id="height" value="1000" type="text"><br><br>
 					Artist Names?: 
 						<input name="artist_names" id="artist_names" checked="" type="checkbox"><br><br>
 					Show Months?: 
@@ -196,6 +196,7 @@ CoinWidgetCom.go({
 			<br/><br/>
 		</div>
 		<div id="sharing_options" class="unshown">
+			<span style="font-size:11px;" class="text-danger">If you're having problems downloading the .svg, try <a href="http://nytimes.github.io/svg-crowbar/">this</a><br/><br/>
 			<button class="btn btn-primary" onclick="imgur_upload()">Upload to imgur</button>
 			<button class="btn btn-primary" onclick="download_svg()">Download vectorized SVG</button>
 			<button class="btn btn-primary" onclick="twitter_share()">Share on Twitter!</button>
