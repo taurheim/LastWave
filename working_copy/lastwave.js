@@ -323,7 +323,7 @@ function get_week(user, weeknum){
 			setTimeout(xmlwait,500);
 		}
 
-	}, 500*(weeknum-1));
+	}, 250*(weeknum-1));
 	/* ^^^^ Change this value to speed up/slow down data loading. 
 			Last.fm's API  only  allows a request per second  for 
 			each API key, but I figure I can probably send double
@@ -836,23 +836,16 @@ function populate_lines(){
 				crit.btmright.y = (graph_data.series_data[i].stack[x_point].y0)*yratio;
 			}
 
-			//Slopes
-			crit.A.m = (crit.q.y - crit.topleft.y)/(crit.q.x - crit.topleft.x);
-			crit.B.m = (crit.topright.y - crit.q.y)/(crit.topright.x - crit.q.x);
-			crit.C.m = (crit.r.y - crit.btmleft.y)/(crit.r.x - crit.btmleft.x);
-			crit.D.m = (crit.btmright.y - crit.r.y)/(crit.btmright.x - crit.r.x);
-
-			//Y-intercepts
-			crit.A.b = crit.q.y - crit.A.m*crit.q.x;
-			crit.B.b = crit.q.y - crit.B.m*crit.q.x;
-			crit.C.b = crit.r.y - crit.C.m*crit.r.x;
-			crit.D.b = crit.r.y - crit.D.m*crit.r.x;
-
+			crit.A = new Line(crit.topleft,crit.q);
+			crit.B = new Line(crit.q,crit.topright);
+			crit.C = new Line(crit.btmleft,crit.r);
+			crit.D = new Line(crit.r,crit.btmright);
+			
 			//Round
-			crit.A.m = parseInt(crit.A.m*10000000000)/10000000000;
-			crit.B.m = parseInt(crit.B.m*10000000000)/10000000000;
-			crit.C.m = parseInt(crit.C.m*10000000000)/10000000000;
-			crit.D.m = parseInt(crit.D.m*10000000000)/10000000000;
+			crit.A.slope = parseInt(crit.A.slope*10000000000)/10000000000;
+			crit.B.slope = parseInt(crit.B.slope*10000000000)/10000000000;
+			crit.C.slope = parseInt(crit.C.slope*10000000000)/10000000000;
+			crit.D.slope = parseInt(crit.D.slope*10000000000)/10000000000;
 
 			graph_data.userdata[artist_name].crit_points[pt] = crit;
 
@@ -1086,10 +1079,13 @@ function draw_Y(cp,artist_name){
 	//Let's get our starting point, and figure out the sign of our first line.
 	var fontsize = 8;
 	var start_point; //a or b
+	var end_point;
 	var offset_sign; //In step 3, we need to offset. If our start point is a, we offset downwards (-1), if it is b, we offset upwards (1)
 	var slope_sign; //1 or -1
-	var slope = artist_name.slope(); //slope of initial line
-	
+
+	var ray_slope = artist_name.slope(); //slope of initial line
+	var ray_direction;
+
 	var O; //Opposite side line
 	var V; //Horizontally opposite to O
 	var U; //Vertically opposite to V
@@ -1106,6 +1102,7 @@ function draw_Y(cp,artist_name){
 		start_point = cp.q;
 		offset_sign = -1;
 		if(cp.A.slope>0 || cp.A.slope==0 && cp.B.slope>0){ //Opposite line: D -> C ^ A
+			ray_direction = "r";
 			//console.log("a");
 			slope_sign = -1;
 
@@ -1115,6 +1112,7 @@ function draw_Y(cp,artist_name){
 		
 		}
 		if(cp.A.slope<0 || cp.A.slope==0 && cp.B.slope<0){ //Opposite line: C -> D ^ B
+			ray_direction = "l";	
 			//console.log("b");
 			slope_sign = 1;
 
@@ -1127,6 +1125,7 @@ function draw_Y(cp,artist_name){
 		start_point = cp.r;
 		offset_sign = 1;
 		if(cp.C.slope>=0){ //Opposite line: A -> B ^ D
+			ray_direction = "l";
 			//console.log("c");
 			slope_sign = -1;
 
@@ -1138,7 +1137,8 @@ function draw_Y(cp,artist_name){
 				offset=1;
 			}
 		}
-		if(cp.C.slopeslope<0){ //Opposite line: B -> A ^ C
+		if(cp.C.slope<0){ //Opposite line: B -> A ^ C
+			ray_direction = "r";
 			//console.log("d");
 			slope_sign = 1;
 
@@ -1179,62 +1179,58 @@ function draw_Y(cp,artist_name){
 		/	   Q	    /    |
 		|	  (	 )	 /	line U
 		|	(	   o		 |
-		| (  ____ /			 |
-		|  /				 |
+		| (  ____ /	start_po |
+		|  /		   int   |
 		   
 		*/
 		count++;
-		Q = new Line(start_point,end_point);
 
-		//First check if Q intersects with V
-		if(
-			//y1
-			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.topright.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int > cp.topright.y)
-			||
-			//y2
-			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.topleft.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int > cp.topleft.y)
-			||
-			//y3
-			(((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.topright.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int < cp.btmright.y)
-			||
-			//y4
-			(((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((V.y_int-Q.y_int)/(Q.slope-V.slope) > cp.topleft.x) && (V.y_int-Q.y_int)/(Q.slope-V.slope) < cp.q.x && ((V.slope)*(V.y_int-Q.y_int)/(Q.slope-V.slope))+V.y_int < cp.btmleft.y)
-		 ) 
+		//First we're going to cast a ray going from the start point to the opposing line. Check for collisions with all sides. Since the ray always starts on the same side as "U", just check O and V
+		Q = new Ray(start_point,ray_slope*slope_sign,ray_direction,[O,V]);
+
+		//If we collided with line V first, then break the loop
+		if(!Q.collidedWith){
+			//If we didn't collide with anything
+			if(O.start_point == V.end_point){ //  V/ \O
+				intersect1 = O.end_point;
+			} else { // O/ \V
+				intersect1 = O.start_point;
+			}
+		} else if(Q.collidedWith == 1){
+			//Collision with V
 			start_point = previous_start_point;
+			intersect1 = Q.end_point;
 			break;
-		 } else {
-		
-			//Find intersection between Q and O
-			//Intersection: x = (b2-b1)/(m1-m2). line 1 = Q, line 2 = O
-			intersect1 = {"x": (bO - bQ)/(mQ - mO), "y": ((mO)*(bO - bQ)/(mQ - mO))+bO};
+		} else { 
+			//Collision with O
+			intersect1 = Q.end_point;
 		}
-		
-		
-		//New line going cp.A.cp.C.bkwards (from now on referred to as X)
-		X.slope = slope*slope_sign*-1;
-		X.y_int = start_point.y - X.slope*intersect1.x;
-		
-		//Find intersection between X and V
-		
-		//First check if X collides with line U before it collides with V
-		if(
-			//y1
-			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope>=0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) < cp.topright.x) && (U.y_int-X.y_int)/(X.slope-U.slope) > cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int < cp.topright.y)
-			||
-			//y2
-			(((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) > cp.topleft.x) && (U.y_int-X.y_int)/(X.slope-U.slope) < cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int < cp.topleft.y)
-			||
-			//y3
-			(((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) < cp.topright.x) && (U.y_int-X.y_int)/(X.slope-U.slope) > cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int > cp.btmright.y)
-			||
-			//y4
-			(((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)) && ((U.y_int-X.y_int)/(X.slope-U.slope) > cp.topleft.x) && (U.y_int-X.y_int)/(X.slope-U.slope) < cp.q.x && ((U.slope)*(U.y_int-X.y_int)/(X.slope-U.slope))+U.y_int > cp.btmleft.y)
-		 ) {
-			intersect2 = { "x": (U.y_int - X.y_int)/(X.slope - U.slope), "y": ((U.slope)*(U.y_int - X.y_int)/(X.slope - U.slope))+U.y_int};
-		 } else {
-			//Intersection x = (b2-b1)/(m1-m2). line 1 = X, line 2 = V
-			intersect2 = {"x": (V.y_int - X.y_int)/(X.slope - V.slope), "y": ((V.slope)*(V.y_int - X.y_int)/(X.slope - V.slope))+V.y_int};
+
+		//Now draw another line vertically opposite to intersect1 and up in the other direction
+		var Xstart = new Point(intersect1.x, start_point.y);
+		var Xdirection;
+			if(ray_direction == "l"){
+				Xdirection = "r";
+			} else {
+				Xdirection = "l";
+			}
+
+		//Draw Ray
+		var X = new Ray(Xstart,ray_slope*slope_sign*-1,Xdirection,[U,V]);
+
+		//Check if we didn't make a collision
+		if(!X.collidedWith){ //http://i.imgur.com/61YmgJt.png Just misses V
+			if(O.start_point == V.end_point){
+				intersect2 = V.start_point;
+			} else {
+				intersect2 = V.end_point;
+			}
+		} else{
+			intersect2 = X.end_point;
 		}
+
+		
+
 		if(artist_name==test_artist){
 			//green line (start_point -> intersect1)
 			d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",start_point.x).attr("y1",graph_options.graph_height-start_point.y).attr("x2",intersect1.x).attr("y2",graph_options.graph_height-intersect1.y).attr("style","stroke:rgb(0,255,0);stroke-width:1");
@@ -1272,7 +1268,7 @@ function draw_Y(cp,artist_name){
 		last_fontsize = Math.round(intersect1.y-previous_start_point.y);
 		if(count==100){
 			//console.log("FINAL VALUE: "+(intersect1.y-previous_start_point.y));
-			console.log("Ran into problems trying to place label for "+artist_name+", Current font size at: "+Math.round(Math.abs(intersect1.y-previous_start_point.y))+"px");
+			console.log("[y] Ran into problems trying to place label for "+artist_name+", Current font size at: "+Math.round(Math.abs(intersect1.y-previous_start_point.y))+"px");
 			break;
 		} else {
 			//console.log(intersect1.y-previous_start_point.y);
@@ -1428,10 +1424,10 @@ function Crit_Point(){
 	//btmleft		btmright
 	this.q = new Point();
 	this.r = new Point();
-	this.A = new Line();
-	this.B = new Line();
-	this.C = new Line();
-	this.D = new Line();
+	this.A;
+	this.B;
+	this.C;
+	this.D;
 	this.topleft = new Point();
 	this.topright = new Point();
 	this.btmleft = new Point();
@@ -1440,15 +1436,66 @@ function Crit_Point(){
 	this.type = "";
 }
 
+function Ray(start_point,slope,direction,lineArray){
+	/*
+		@start_point The beginning point of the ray
+		@slope Slope of the ray (positive or negative number)
+		@direction "r" or "l" to represent left or right. The other way to do this would be using polar coordinates but I don't think it makes sense to add that layer of complexity
+		@lineArray List of lines to check. The function will find the closest one (where the ray stops)
+	*/
+	this.start_point = start_point;
+	this.slope = slope;
+	this.collidedWith = false;
+	var minlen = false;
+	var currentlen;
+	var intersectpt = false;
+	var y_int = start_point.y - slope*start_point.x;
+	var testline;
+
+	//Pretty much just pretend it's a huge line
+	if(direction == "l"){
+		testLine = new Line(start_point,new Point(start_point.x - 1000000000,this.slope*(start_point.x - 1000000000) + y_int,start_point));
+	} else {
+		testLine = new Line(start_point,new Point(start_point.x + 1000000000,this.slope*(start_point.x + 1000000000) + y_int,start_point));
+	}
+
+	for(line in lineArray){
+		//intersectpt is the intersection of the ray and the line
+		intersectpt = get_intersect(lineArray[line],testLine);
+		if(intersectpt){
+			//if they do interesect, check with minlen
+			if(!minlen || point_distance(start_point,intersectpt) < minlen){
+				minlen = point_distance(start_point,intersectpt);
+				this.collidedWith = line; //give our object the id of the collided
+				this.end_point = intersectpt;
+			}
+		}
+	}
+	this.length = minlen;
+
+}
+
 /* Line & Point functions */
+
 
 function get_intersect(line1, line2) {
 	var x = (line2.y_int - line1.y_int)/(line1.slope - line2.slope);
 	var y = ((line2.slope)*(line2.y_int - line1.y_int)/(line1.slope - line2.slope))+line2.y_int;
 
 	var intersection = new Point(x,y);
-	
-	return intersection;
+
+	if(x.isBetween(line1.start_point.x,line1.end_point.x) && y.isBetween(line1.start_point.y,line1.end_point.y)
+	&& x.isBetween(line2.start_point.x,line2.end_point.x) && y.isBetween(line2.start_point.y,line2.end_point.y)){
+		return intersection;
+	} else {
+		return false;
+	}
+}
+
+function get_length(line){
+	//d = sqrt( (x2-x1)^2 + (y2-y1)^2);
+	var d = Math.sqrt((line.end_point.x - line.start_point.x)*(line.end_point.x - line.start_point.x) + (line.end_point.y - line.start_point.y)*(line.end_point.y - line.start_point.y));
+	return d;
 }
 
 
@@ -1459,6 +1506,19 @@ function get_midpoint(line) {
 	var midpoint = new Point(x,y);
 
 	return midpoint;
+}
+
+function point_distance(point1,point2){
+  var xs = 0;
+  var ys = 0;
+ 
+  xs = point2.x - point1.x;
+  xs = xs * xs;
+ 
+  ys = point2.y - point1.y;
+  ys = ys * ys;
+ 
+  return Math.sqrt( xs + ys );
 }
 
 
@@ -1745,6 +1805,12 @@ String.prototype.slope = function(font) {
 
   return f.split("px")[0]/w;
 }
+
+Number.prototype.isBetween  = function (a, b, inclusive) {
+    var min = Math.min.apply(Math, [a,b]),
+        max = Math.max.apply(Math, [a,b]);
+    return inclusive ? this >= min && this <= max : this > min && this < max;
+};
 
 function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
