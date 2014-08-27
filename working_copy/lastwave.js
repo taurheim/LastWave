@@ -223,7 +223,7 @@ function loadScheme(){
 		graph_options.font_color = document.getElementById("font_color").value;
 		return true;
 	}else {
-		graph_options.font_name = "Roboto";
+		graph_options.font_name = "Trebuchet MS";
 		graph_options.graph_type = "silhouette";
 		graph_options.normalize = document.getElementById("normalize").checked;
 		graph_options.showartistnames = document.getElementById("artist_names").checked;
@@ -1198,9 +1198,8 @@ function draw_Y(cp,artist_name){
 			}
 		} else if(Q.collidedWith == 1){
 			//Collision with V
-			start_point = previous_start_point;
-			intersect1 = Q.end_point;
-			break;
+			start_point = new Point(Q.end_point.x,U.slope*Q.end_point.x + U.y_int);
+			continue;
 		} else { 
 			//Collision with O
 			intersect1 = Q.end_point;
@@ -1277,7 +1276,12 @@ function draw_Y(cp,artist_name){
 	
 	fontsize = Math.round(Math.abs(intersect1.y-previous_start_point.y));
 	fontsize*= 0.8;
-	
+
+	//If the way the font size is calculated means that it's too large, size it down.
+	if(cp.topright.x - cp.topleft.x < artist_name.width(fontsize+"px "+graph_options.font_name)){
+		fontsize = artist_name.slope(graph_options.font_name)*(cp.topright.x - cp.topleft.x);
+		console.log("[y] Resizing to fit in space: " + artist_name);
+	}
 	//Pick value cp.A.bsed on type
 						 
 	//y1
@@ -1285,9 +1289,9 @@ function draw_Y(cp,artist_name){
 	//y2
 	if((cp.A.slope>0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope<=0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - previous_start_point.y;}
 	//y3
-	if((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
+	if((cp.A.slope<=0)&&(cp.B.slope<0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = intersect1.x;y_value_for_max_point = graph_options.graph_height - intersect2.y;}
 	//y4
-	if((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - intersect1.y;}
+	if((cp.A.slope>0)&&(cp.B.slope>=0)&&(cp.C.slope<0)&&(cp.D.slope>0)){x_value_for_max_point = previous_start_point.x;y_value_for_max_point = graph_options.graph_height - intersect2.y;}
 	//x_value_for_max_point = cp.A.slopeth.min(start_point.x,intersect1.x,intersect2.x);
 	
 	//y_value_for_max_point = graph_options.graph_height - cp.A.slopeth.min(start_point.y,intersect1.y,intersect2.y);// - cp.A.slopeth.abs((  intersect2.y - start_point.y - artist_name.height(fontsize+"px "+graph_options.font_name) )/2);// - fontsize*offset;
@@ -1307,12 +1311,20 @@ function draw_Y(cp,artist_name){
 		//x_value_for_max_point += "W".width(fontsize+"px "+graph_options.font_name);
 		y_value_for_max_point -= (.5*artist_name.height(fontsize+"px "+graph_options.font_name));
 		//if(artist_name ==test_artist){
-			console.log("[y]Correcting " + artist_name);
+		console.log("[y]Correcting " + artist_name);
 		//}
 	}
-	//}
-	//fontsize = 25;
-	
+
+	//If the left side is larger than the right side, move the text to the left a little (aesthetics)
+	if(cp.topleft.y-cp.btmleft.y > cp.topright.y - cp.btmright.y //If the left side is larger
+		&& (cp.A.slope < 0.2 && cp.A.slope > -0.2) //If the slope of A is relatively low
+		&& (cp.B.slope < 0.2 && cp.B.slope > -0.2) //If the slope of B is relatively low
+		&& (cp.topleft.y - cp.btmleft.y) > (cp.q.y-cp.r.y)*0.85){ //If the left side is about the same size as the middle distance
+		x_value_for_max_point -= (cp.q.x-cp.topleft.x)*0.5;
+		console.log("[y] Aesthetic Fix - "+artist_name);
+	}
+
+
 	return {
 		"x": x_value_for_max_point,
 		"y": y_value_for_max_point,
@@ -1547,6 +1559,9 @@ function share_preload(){
 	graph_data.data_uri = canvas.toDataURL('image/png');
 	//} else if(type=="svg"){
 	graph_data.svg_data = (new XMLSerializer).serializeToString(svg);
+
+	graph_data.base64 = Base64.encode(graph_data.svg_data);
+ 	$("#svg_dl").html($("<a href-lang='image/svg+xml' href='data:image/svg+xml;base64,\n"+graph_data.base64+"' title='file.svg' download='svg.svg'><button class='btn btn-primary'>Download vectorized SVG</button></a>"));
 	//}
 	togglediv("#sharing_options",true);
 	togglediv("#share_preload",false);
@@ -1570,17 +1585,6 @@ function share_preload(){
     
     $('#svg-img').attr('src', theImage);
 }*/
-
-function download_svg() {
-	// Submit the <FORM> to the server.
-	// The result will be an attachment file to download.
-	
-	var form = document.getElementById("svgform");
-	form['output_format'].value = "svg";
-	form['data'].value = graph_data.svg_data ;
-	form['']
-	form.submit();
-}
 
 function imgur_upload(){
 	if(graph_data.imgur_link==""){
@@ -1878,4 +1882,143 @@ function add_to_gallery(){
 	}).success(function(data){
 	  	console.log(data);
 	  });
+}
+
+
+//http://stackoverflow.com/questions/2483919/how-to-save-svg-canvas-to-local-filesystem
+//Base 64
+var Base64 = {
+ 
+    // private property
+    _keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+ 
+    // public method for encoding
+    encode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
+        var i = 0;
+ 
+        input = Base64._utf8_encode(input);
+ 
+        while (i < input.length) {
+ 
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
+ 
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
+ 
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
+ 
+            output = output +
+            this._keyStr.charAt(enc1) + this._keyStr.charAt(enc2) +
+            this._keyStr.charAt(enc3) + this._keyStr.charAt(enc4);
+ 
+        }
+ 
+        return output;
+    },
+ 
+    // public method for decoding
+    decode : function (input) {
+        var output = "";
+        var chr1, chr2, chr3;
+        var enc1, enc2, enc3, enc4;
+        var i = 0;
+ 
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
+ 
+        while (i < input.length) {
+ 
+            enc1 = this._keyStr.indexOf(input.charAt(i++));
+            enc2 = this._keyStr.indexOf(input.charAt(i++));
+            enc3 = this._keyStr.indexOf(input.charAt(i++));
+            enc4 = this._keyStr.indexOf(input.charAt(i++));
+ 
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+ 
+            output = output + String.fromCharCode(chr1);
+ 
+            if (enc3 != 64) {
+                output = output + String.fromCharCode(chr2);
+            }
+            if (enc4 != 64) {
+                output = output + String.fromCharCode(chr3);
+            }
+ 
+        }
+ 
+        output = Base64._utf8_decode(output);
+ 
+        return output;
+ 
+    },
+ 
+    // private method for UTF-8 encoding
+    _utf8_encode : function (string) {
+        string = string.replace(/\r\n/g,"\n");
+        var utftext = "";
+ 
+        for (var n = 0; n < string.length; n++) {
+ 
+            var c = string.charCodeAt(n);
+ 
+            if (c < 128) {
+                utftext += String.fromCharCode(c);
+            }
+            else if((c > 127) && (c < 2048)) {
+                utftext += String.fromCharCode((c >> 6) | 192);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+            else {
+                utftext += String.fromCharCode((c >> 12) | 224);
+                utftext += String.fromCharCode(((c >> 6) & 63) | 128);
+                utftext += String.fromCharCode((c & 63) | 128);
+            }
+ 
+        }
+ 
+        return utftext;
+    },
+ 
+    // private method for UTF-8 decoding
+    _utf8_decode : function (utftext) {
+        var string = "";
+        var i = 0;
+        var c = c1 = c2 = 0;
+ 
+        while ( i < utftext.length ) {
+ 
+            c = utftext.charCodeAt(i);
+ 
+            if (c < 128) {
+                string += String.fromCharCode(c);
+                i++;
+            }
+            else if((c > 191) && (c < 224)) {
+                c2 = utftext.charCodeAt(i+1);
+                string += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+                i += 2;
+            }
+            else {
+                c2 = utftext.charCodeAt(i+1);
+                c3 = utftext.charCodeAt(i+2);
+                string += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+                i += 3;
+            }
+ 
+        }
+ 
+        return string;
+    }
+ 
 }

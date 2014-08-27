@@ -81,33 +81,6 @@ See here for online demo:
 						x 
 						<input name="height" id="height" value="1000" type="text"><br/><span style="font-size:11px">(Recommended: 1000px per 3 months)</span>
 			<br><br>
-			Choose a layout (or create your own):<br>
-			<select id="scheme">
-			<option value=""></option>
-			<option value="lastwave" data-img-src='images/examples/lastwave.png'>LastWave</option>
-			<option value="forest" data-img-src='images/examples/forest.png'>Forest</option>
-			<option value="neon" data-img-src='images/examples/neon.png'>Neon</option>
-			<option value="fire" data-img-src='images/examples/fire.png'>Fire</option>
-			<option value="shades" data-img-src="images/examples/shades.png">Shades</option>
-			<option value="carpet" data-img-src='images/examples/carpet.png'>Carpet</option>
-			<option value="assault" data-img-src='images/examples/assault.png'>Assault</option>
-			<option value="custom" data-img-src='images/examples/custom.png'>Custom</option>
-			<!--
-				<option value="bluegreen">BlueGreen</option>
-				<option value="pinkorange">PinkOrange</option>
-				<option value="spectrum14">Spectrum 14</option>
-				<option value="spectrum2000">Spectrum 2000</option>
-				<option value="spectrum2001">Spectrum 2001</option>
-				<option value="lastwave">LastWave</option>
-				<option value="classic9">Classic 9</option>
-				<option value="httpStatus">httpStatus</option>
-				<option value="colorwheel">Color Wheel</option>
-				<option value="cool">Cool</option>
-				<option value="munin">Munin</option>
-				<option value="custom">Custom</option>
-			-->
-			</select>
-		</div>
 		<div id="graph_options" class="center_block unshown">
 			<div id="data" class="panel panel-primary">
 				<div class="panel-heading">
@@ -145,7 +118,7 @@ See here for online demo:
 				<div class="panel-body">
 
 					Font Name: 
-						<input name="font_name" id="font_name" value="Roboto" type="text"><br><br>
+						<input name="font_name" id="font_name" value="Trebuchet MS" type="text"><br><br>
 					Font Color: 
 						<input type="text" id="font_color" data-control="hue" value="#000000"><br/><br/>
 					Background Color:
@@ -161,6 +134,33 @@ See here for online demo:
 
 			</div>
 			
+		</div>
+			Choose a layout (or create your own):<br>
+			<select id="scheme">
+			<option value=""></option>
+			<option value="lastwave" data-img-src='images/examples/lastwave.png'>LastWave</option>
+			<option value="forest" data-img-src='images/examples/forest.png'>Forest</option>
+			<option value="neon" data-img-src='images/examples/neon.png'>Neon</option>
+			<option value="fire" data-img-src='images/examples/fire.png'>Fire</option>
+			<option value="shades" data-img-src="images/examples/shades.png">Shades</option>
+			<option value="carpet" data-img-src='images/examples/carpet.png'>Carpet</option>
+			<option value="assault" data-img-src='images/examples/assault.png'>Assault</option>
+			<option value="custom" data-img-src='images/examples/custom.png'>Custom</option>
+			<!--
+				<option value="bluegreen">BlueGreen</option>
+				<option value="pinkorange">PinkOrange</option>
+				<option value="spectrum14">Spectrum 14</option>
+				<option value="spectrum2000">Spectrum 2000</option>
+				<option value="spectrum2001">Spectrum 2001</option>
+				<option value="lastwave">LastWave</option>
+				<option value="classic9">Classic 9</option>
+				<option value="httpStatus">httpStatus</option>
+				<option value="colorwheel">Color Wheel</option>
+				<option value="cool">Cool</option>
+				<option value="munin">Munin</option>
+				<option value="custom">Custom</option>
+			-->
+			</select>
 		</div>
 		<input class="submit btn btn-primary" value="Create Wave!" onclick="submitWave()" type="submit">
 	</div>
@@ -198,7 +198,9 @@ CoinWidgetCom.go({
 		<div id="sharing_options" class="unshown">
 			<span style="font-size:11px;" class="text-danger">If you're having problems downloading the .svg, try <a href="http://nytimes.github.io/svg-crowbar/">this</a><br/><br/>
 			<button class="btn btn-primary" onclick="imgur_upload()">Upload to imgur</button>
-			<button class="btn btn-primary" onclick="download_svg()">Download vectorized SVG</button>
+			<span id="svg_dl">
+				<button class="btn btn-primary">Download vectorized SVG</button>
+			</span>
 			<button class="btn btn-primary" onclick="twitter_share()">Share on Twitter!</button>
 		</div>
 		<div id="imgur_data"></div>
