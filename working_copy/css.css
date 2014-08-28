@@ -50,7 +50,7 @@
 	text-align:left;
 }
 
-#graph_options, #box_1, #loading, #box_2, #edit_canvas, #errors, #sharing_options, #share_preload{
+#graph_options, #box_1, #loading, #box_2, #edit_canvas, #errors, #sharing_options, #share_preload, #custom_layout{
 	-webkit-transition:all 0.6s ease-in-out;  
     -moz-transition:all 0.6s ease-in-out;
     transition:all 0.6s ease-in-out;
@@ -115,7 +115,7 @@ ul.thumbnails {
 	width:1100px;
 }
 
-#data, #display, #aesthetics {
+#general, #data, #display {
 	height:326px;
 	width:326px;
 	float:left;
@@ -127,10 +127,10 @@ ul.thumbnails {
 	height:30px;
 
 }
-
-#data, #display {
-	border-right: 1px solid #000;
+#aesthetics {
+	float:right;
 }
+
 
 div.unshown {
 	max-height:0px !important;
@@ -260,4 +260,8 @@ div.shown {
 }
 #page_content ul ul li {
 	font-weight:normal;
+}
+
+#main_options input#user {
+	font-size: 40px;
 }

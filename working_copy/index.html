@@ -69,19 +69,35 @@ See here for online demo:
 	<div id="errors" class="center_block unshown"><span class="label label-danger">Error</span>&nbsp;&nbsp;&nbsp;<span class="text-danger">Errors Loading weeks: <span id="err_weeks"></span></span></div>
 	<div id="box_1" class="center_block jumbotron shown">
 		<div id="main_options">
-			Last.fm Username:<!--<input type="text" name="user" title="user" style="color:#888;" 
+			<!--<input type="text" name="user" title="user" style="color:#888;" 
 	    						value="Last.fm Username" onfocus="inputFocus(this)" onblur="inputBlur(this)" />-->
-	    						<input name="user" id="user" value="" type="text">
+	    						<input name="user" id="user" value="" type="text" placeholder="Last.fm Username">
 	    						<br><br>
-			Data Range : <br>
-			<input id="start_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"> to 
-			<input id="end_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"><br/><br/>
-			Dimensions: <br/>
-						<input name="width" id="width" value="2000" type="text"> 
-						x 
-						<input name="height" id="height" value="1000" type="text"><br/><span style="font-size:11px">(Recommended: 1000px per 3 months)</span>
+			<select id="data_range" onchange="refresh_data_range()">
+				<option value="" disabled selected>Select a timespan</option>
+				<option value="2month">2 Months</option>
+				<option value="3month">3 Months</option>
+				<option value="6month">6 Months</option>
+				<option value="1yr">1 Year</option>
+			</select>
+			<span onclick="togglediv('#graph_options')" class="btn btn-primary btn-sm">More Options &darr;</span>
 			<br><br>
+
 		<div id="graph_options" class="center_block unshown">
+			<div id="general" class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">General Options</h3>
+				</div>
+				<div class="panel-body">
+					Data Range : <br>
+						<input id="start_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"> to 
+						<input id="end_date" value="Click to choose" onfocus="inputFocus(this)" onblur="inputBlur(this)" type="text"><br/><br/>
+					Dimensions: <br/>
+								<input name="width" id="width" value="2000" type="text"> 
+								x 
+								<input name="height" id="height" value="1000" type="text"><br/><span style="font-size:11px">(Recommended: 1000px per 3 months)</span>
+				</div>
+			</div>
 			<div id="data" class="panel panel-primary">
 				<div class="panel-heading">
 					<h3 class="panel-title">Data</h3>
@@ -111,31 +127,9 @@ See here for online demo:
 						<input name="show_months" id="show_months" checked="" type="checkbox"><br><br>
 				</div>
 			</div>
-			<div id="aesthetics" class="panel panel-primary">
-				<div class="panel-heading">
-					<h3 class="panel-title">Aesthetics</h3>
-				</div>
-				<div class="panel-body">
-
-					Font Name: 
-						<input name="font_name" id="font_name" value="Trebuchet MS" type="text"><br><br>
-					Font Color: 
-						<input type="text" id="font_color" data-control="hue" value="#000000"><br/><br/>
-					Background Color:
-						<input type="text" id="bgcolor" data-control="hue" value="#ffffff"><br/><br/>
-					Wave:
-						<input type="text" id="wave_color_start" data-control="hue" value="#ffffff">
-						 to 
-						<input type="text" id="wave_color_end" data-control="hue" value="#000000">
-						<br/><br/>
-					Continuous Shade
-						<input name="cont_shade" id="cont_shade" checked="" type="checkbox">
-				</div>
-
-			</div>
 			
 		</div>
-			Choose a layout (or create your own):<br>
+			<br/><br/><span style="font-size: 25px">Choose a layout (or create your own):</span><br>
 			<select id="scheme">
 			<option value=""></option>
 			<option value="lastwave" data-img-src='images/examples/lastwave.png'>LastWave</option>
@@ -162,8 +156,33 @@ See here for online demo:
 			-->
 			</select>
 		</div>
+		<div id="custom_layout" class="center_block unshown">
+			<div id="aesthetics" class="panel panel-primary">
+				<div class="panel-heading">
+					<h3 class="panel-title">Aesthetics</h3>
+				</div>
+				<div class="panel-body">
+
+					Font Name: 
+						<input name="font_name" id="font_name" value="Trebuchet MS" type="text"><br><br>
+					Font Color: 
+						<input type="text" id="font_color" data-control="hue" value="#000000"><br/><br/>
+					Background Color:
+						<input type="text" id="bgcolor" data-control="hue" value="#ffffff"><br/><br/>
+					Wave:
+						<input type="text" id="wave_color_start" data-control="hue" value="#ffffff">
+						 to 
+						<input type="text" id="wave_color_end" data-control="hue" value="#000000">
+						<br/><br/>
+					Continuous Shade
+						<input name="cont_shade" id="cont_shade" checked="" type="checkbox">
+				</div>
+
+			</div>
+		</div>
 		<input class="submit btn btn-primary" value="Create Wave!" onclick="submitWave()" type="submit">
 	</div>
+
 	<div id="donate" class="center_block">
 	Like this tool? Donate!<br/>
 <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_blank">

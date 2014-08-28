@@ -373,6 +373,12 @@ function parseXML(){
 
 
 		week_data = graph_data.week_XML[w-1].responseXML;
+
+		if(week_data == undefined){
+			console.log("Unexpectedly unable to parse week "+w)
+			continue;
+		}
+
 		artist_count = week_data.getElementsByTagName("artist").length;
 		
 		//If week data is empty/error
@@ -381,11 +387,6 @@ function parseXML(){
 			artist_count==0
 		){
 			console.log("Empty Week "+w);
-			continue;
-		}
-
-		if(week_data == undefined){
-			console.log("Unexpectedly unable to parse week "+w)
 			continue;
 		}
 
@@ -849,7 +850,7 @@ function populate_lines(){
 
 			graph_data.userdata[artist_name].crit_points[pt] = crit;
 
-			if(artist_name==test_artist){
+			if(artist_name==test_artist){ //|| (crit.A.slope.isBetween(-0.2,0.2) && crit.C.slope.isBetween(-0.2,0.2) && crit.B.slope.isOutside(-1,1) && crit.D.slope.isOutside(-1,1))){
 				console.log(crit);
 				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.topleft.x).attr("y1",graph_options.graph_height-crit.topleft.y).attr("x2",crit.q.x).attr("y2",graph_options.graph_height-crit.q.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
 				d3.select("#lastwave").select("svg").select("#graph_names").append("line").attr("x1",crit.btmleft.x).attr("y1",graph_options.graph_height-crit.btmleft.y).attr("x2",crit.r.x).attr("y2",graph_options.graph_height-crit.r.y).attr("style","stroke:rgb(255,0,0);stroke-width:2");
@@ -1673,9 +1674,9 @@ function twitter_share(){
 
 function swapScheme(s){
 	if(s == "Custom"){
-		togglediv("#graph_options",true);
+		togglediv("#custom_layout",true);
 	} else {
-		togglediv("#graph_options",false);
+		togglediv("#custom_layout",false);
 	}
 }
 
@@ -1810,11 +1811,17 @@ String.prototype.slope = function(font) {
   return f.split("px")[0]/w;
 }
 
-Number.prototype.isBetween  = function (a, b, inclusive) {
+Number.prototype.isBetween  = function (a, b) {
     var min = Math.min.apply(Math, [a,b]),
         max = Math.max.apply(Math, [a,b]);
-    return inclusive ? this >= min && this <= max : this > min && this < max;
+    return this > min && this < max;
 };
+
+Number.prototype.isOutside = function(a,b){
+    var min = Math.min.apply(Math, [a,b]),
+        max = Math.max.apply(Math, [a,b]);
+    return this < min || this > max;
+}
 
 function rgbToHex(r, g, b) {
     return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
@@ -1859,9 +1866,16 @@ function inputBlur(i){
 
 //Shows/hides divs
 function togglediv(id,state) {
-	if ($(id).hasClass('shown') && state && id=="#graph_options" || !state) {
+	if(state==undefined){
+		if($(id).hasClass('shown')){
+			state = false;
+		} else {
+			state = true;
+		}
+	}
+	if ($(id).hasClass('shown') && state && id=="#custom_layout" || !state) {
     	$(id).removeClass('shown').addClass('unshown');
-	} else if(state){
+	} else if(state || state==undefined){
     	$(id).removeClass('unshown').addClass('shown');
     }
 }
@@ -1882,6 +1896,40 @@ function add_to_gallery(){
 	}).success(function(data){
 	  	console.log(data);
 	  });
+}
+
+//Sets the dates based on "last 3 months", etc.
+function refresh_data_range(){
+ var startDate = new Date();
+ var endDate = new Date();
+ var width = "";
+ var height = "";
+ switch(document.getElementById("data_range").value){
+ 	case "2month":
+ 		startDate.setMonth(startDate.getMonth() - 2);
+ 		width = "1500";
+ 		height = "1000";
+ 	break;
+ 	case "3month":
+ 		startDate.setMonth(startDate.getMonth() - 3);
+ 		width="2000";
+ 		height="1000";
+ 	break;
+ 	case "6month":
+ 		startDate.setMonth(startDate.getMonth() - 6);
+ 		width="3000";
+ 		height="1000";
+ 	break;
+ 	case "1yr":
+ 		startDate.setFullYear(startDate.getFullYear() - 1);
+ 		width="6000";
+ 		height="1000";
+ 	break;
+ }
+ $("#start_date").val(startDate.toLocaleDateString("en-US"));
+ $("#end_date").val(endDate.toLocaleDateString("en-US"));
+ $("#width").val(width);
+ $("#height").val(height);
 }
 
 
