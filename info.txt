@@ -1,2 +1,0 @@
-API Key: 27ca6b1a0750cf3fb3e1f0ec5b432b72
-Secret: is 49e6563bbfadbb7e4bdaae6d6d22e05a

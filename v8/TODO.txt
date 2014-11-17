@@ -1,6 +1,0 @@
-	> Multiple text drawing points
-	> Change time interval button
-	> Asynchronous processing
-	> Watermark
-	> Make future dates impossible
-	> Show months
