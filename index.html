@@ -1,53 +1,67 @@
-<!DOCTYPE html>
-<html>
 <!--
-This is a proof-of-concept demo for saving d3js graphics as PDF/PNG/SVG files.
+LastWave
+Version 9
 
-Copyright (C) 2012 by A. Gordon (gordon at cshl dot edu)
-All code written by me is released under BSD license: http://opensource.org/licenses/BSD-3-Clause
-(also uses several other libraries that have their own licenses).
+If you're interested in helping develop LastWave, check out the project on GitHub at http://github.com/taurheim/lastwave
 
-See here for more details:
-	https://github.com/agordon/d3export_demo
+Libraries Used:
 
-See here for online demo:
-	http://d3export.cancan.cshl.edu/
+Rickshaw.js & d3.js
+	Graph Library
+canvg
+	Used to parse the SVG created by Rickshaw.js and d3.js so it can be sent to imgur/svg format.
+jQuery
+	Super useful Javascript Libary
+jQueryUI
+	Used for the calendar date selector.
+jQuery imagePicker
+	Used to select graph style in LastWave.
+jQuery MiniColors
+	Color Selector for LastWave.
+Lightbox JS
+	Used in LastWave's gallery.
 
 -->
+<!DOCTYPE html>
+<html>
 <head>
 <title>LastWave</title>
 
-<link type="text/css" rel="stylesheet" href="rickshaw.min.css">
-<link type="text/css" rel="stylesheet" href="css.css">
-<link type="text/css" rel="stylesheet" href="jquery-ui-1.10.4.custom.min.css">
-<script src="d3.v3.js"></script>
-<script src="rickshaw.js"></script>
+<!-- Graphing Libraries -->
+<script src="includes/libraries/d3.v3.js"></script>
+	<script src="includes/libraries/rickshaw.js"></script>
+		<link type="text/css" rel="stylesheet" href="includes/libraries/rickshaw.min.css">
+
+
+<!-- jQuery and jQueryUI -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
+	<script type="text/javascript" src="includes/libraries/jquery-ui-1.10.4.custom.min.js"></script>
+		<link type="text/css" rel="stylesheet" href="includes/libraries/jquery-ui-1.10.4.custom.min.css">
+		<script src="includes/libraries/jquery.minicolors.min.js"></script>
+		<link rel="stylesheet" href="includes/libraries/jquery.minicolors.css">
+
+<!-- Bootstrap -->
+<script type="text/javascript" src="includes/libraries/bootstrap.min.js"></script>
+	<link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
+
+<!-- Design stuff (SVG, images, colours) -->
+<script type="text/javascript" src="includes/libraries/image-picker.min.js"></script>
+<link rel="stylesheet" href="includes/libraries/image-picker.css">
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/rgbcolor.js"></script> 
 <script type="text/javascript" src="http://canvg.googlecode.com/svn/trunk/canvg.js"></script> 
-<script type="text/javascript" src="jquery-ui-1.10.4.custom.min.js"></script>
-	<script src="jquery.minicolors.min.js"></script>
-	<link rel="stylesheet" href="jquery.minicolors.css">
-<script type="text/javascript" src="bootstrap.min.js"></script>
-<script type="text/javascript" src="lastwave.js"></script>
-<script type="text/javascript" src="image-picker.min.js"></script>
-<link rel="stylesheet" href="image-picker.css">
+
+<!-- LastWave files -->
+<link type="text/css" rel="stylesheet" href="includes/lastwave/css.css">
+<script type="text/javascript" src="includes/lastwave/lastwave.js"></script>
 <link rel="icon" 
       type="image/png" 
       href="http://savas.ca/lastwave/favicon.ico">
-
-<!-- couldn't find a CDN'd version of Google-Code-Prettify's CSS file, so include it inline.
-     Original version is here: http://google-code-prettify.googlecode.com/svn/trunk/src/prettify.css -->
-<style>
-.pln{color:#000}@media screen{.str{color:#080}.kwd{color:#008}.com{color:#800}.typ{color:#606}.lit{color:#066}.pun,.opn,.clo{color:#660}.tag{color:#008}.atn{color:#606}.atv{color:#080}.dec,.var{color:#606}.fun{color:red}}@media print,projection{.str{color:#060}.kwd{color:#006;font-weight:bold}.com{color:#600;font-style:italic}.typ{color:#404;font-weight:bold}.lit{color:#044}.pun,.opn,.clo{color:#440}.tag{color:#006;font-weight:bold}.atn{color:#404}.atv{color:#060}}pre.prettyprint{padding:2px;border:1px solid #888}ol.linenums{margin-top:0;margin-bottom:0}li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8{list-style-type:none}li.L1,li.L3,li.L5,li.L7,li.L9{background:#eee}
-</style>
 </head>
 
 <body>
 
 <div class="titlebar">
-	<img class="center_block" src="logo.png">
+	<img class="center_block" src="images/logo.png">
 	<div id="menu" class="center_block">
 			<a href="index.html">Home</a>
 			<a href="gallery.php">Gallery</a>

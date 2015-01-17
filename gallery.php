@@ -46,12 +46,12 @@ See here for online demo:
 -->
 <head>
 <title>LastWave - Gallery</title>
-<link type="text/css" rel="stylesheet" href="css.css">
+<link type="text/css" rel="stylesheet" href="includes/lastwave/css.css">
 <link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
-<script src="lastwave_gallery.js"></script>
-<script src="lightbox.min.js"></script>
-<link href="lightbox.css" rel="stylesheet" />
+<script src="includes/lastwave/lastwave_gallery.js"></script>
+<script src="includes/libraries/lightbox.min.js"></script>
+<link href="includes/libraries/lightbox.css" rel="stylesheet" />
 <link rel="icon" 
       type="image/png" 
       href="http://savas.ca/lastwave/favicon.ico">
@@ -86,7 +86,7 @@ function next(){
 <body>
 
 <div class="titlebar">
-	<img class="center_block" src="logo.png">
+	<img class="center_block" src="images/logo.png">
 	<div id="menu" class="center_block">
 			<a href="index.html">Home</a>
 			<a href="gallery.php">Gallery</a>
