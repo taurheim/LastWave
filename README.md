@@ -1,3 +1,21 @@
+# Version 3
+This is (more or less) a complete rewrite of LastWave, with a number of goals:
+1. Fix the last remaining issues with text placement on the graph
+2. Make the code cleaner and easier to contribute to
+3. Optimize performance to allow for bigger graphs to be generated without crashing the browser
+
+## Progress
+- [ ] Refactor lastwave.js
+    - [ ] Separate into 3 parts:
+        - lastwave.js : Main entry point 
+        - models/ : Renderer, DataSource, Action (interfaces for the implementations of different integrations)
+        - renderers/d3-wave.js : Render a wave using d3 - this would also draw the text
+        - datasources/lastfm.js : Pull data from lastfm
+        - actions/cloudinary.js : Save the image to a CDN
+- [ ] Update UI (make it look better and more functional)
+- [ ] Integrate with a new image host instead of using imgur
+- [ ] Debug mode
+
 # LastWave
 Graph your music listening history!
 ![An Example Graph](http://i.imgur.com/jMQoqg6.png)
