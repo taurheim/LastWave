@@ -170,8 +170,12 @@ function submitWave(){
         return false;
     }
 
-
     graph_options.total_weeks = total_weeks;
+    graph_options.groupByMonth = document.getElementById("groupmonth").checked;
+    graph_options.groupCount = graph_options.total_weeks;
+    if(graph_options.groupByMonth) {
+        graph_options.groupCount = 1+Math.floor(graph_options.groupCount/4);
+    }
 
     //If the data set hasn't changed, then simply re-parse the data and re-draw the graph
     if(time_start == graph_options.time_start && 
@@ -393,15 +397,14 @@ function parseXML(){
     //Run through every week, adding artists as we go
 
     for(w=1;w<=graph_options.total_weeks;w++){
-
-        //Add an empty value for all artists (this will be overwritten if the artist doesn't get any plays in the current week)
-        for(artist in graph_data.userdata){
-            graph_data.userdata[artist].data[w] = [w,0];
+        var group = w;
+        if(graph_options.groupByMonth) {
+            group = 1 + Math.floor(w/4);
         }
 
         //Check if this week failed to load
         if(graph_data.week_XML[w-1].status == 503){
-            console.log("Error Loading Week "+w);
+            console.log("Error Loading Week "+group);
             continue;
         }
 
@@ -420,7 +423,7 @@ function parseXML(){
             week_data.getElementsByTagName("lfm")[0].childNodes.length<=1 ||
             artist_count==0
         ){
-            console.log("Empty Week "+w);
+            console.log("Empty week: "+w);
             continue;
         }
 
@@ -430,23 +433,42 @@ function parseXML(){
             artist_name = week_data.getElementsByTagName("name")[i].childNodes[0].nodeValue;
             artist_plays = week_data.getElementsByTagName("playcount")[i].childNodes[0].nodeValue;
 
-            //If our artist has more plays than the minimum playcount (set in the custom options)
-            if((graph_data.userdata[artist_name]!=undefined) && parseInt(artist_plays)>=graph_options.min_playcount || (parseInt(artist_plays)>=graph_options.min_playcount)){
-                if(graph_data.userdata[artist_name] == undefined){
-                    //Add an artist if the artist didn't previously exist, fill all previous values with 0s
-                    graph_data.userdata[artist_name] = new artist_data();
-                    graph_data.userdata[artist_name].name = artist_name;
-                    graph_data.userdata[artist_name].crit_points = [];
+            if(graph_data.userdata[artist_name] == undefined){
+                //Add an artist if the artist didn't previously exist, fill all previous values with 0s
+                graph_data.userdata[artist_name] = new artist_data();
+                graph_data.userdata[artist_name].name = artist_name;
+                graph_data.userdata[artist_name].crit_points = [];
 
-                    for(n=0;n<=w;n++){
-                        graph_data.userdata[artist_name].data[n] = [n,0];
-                    }
-
+                for(n=0;n<=(graph_options.groupCount+1);n++){
+                    graph_data.userdata[artist_name].data[n] = [n,0];
                 }
-                
-                //Add the data to userdata
-                graph_data.userdata[artist_name].data[w] = [w,parseInt(artist_plays)];
             }
+
+            //Add the data to userdata
+            graph_data.userdata[artist_name].data[group][1] += parseInt(artist_plays);
+        }
+    }
+
+    // Remove any artists that don't meet the requirements
+    for(var artist in graph_data.userdata) {
+        var totalPlays = 0;
+        var artistData = graph_data.userdata[artist];
+
+        for(var i=0;i<artistData.data.length;i++) {
+            var playsThisGroup = artistData.data[i][1];
+
+            // If we're below the threshold, set it to 0
+            if(playsThisGroup < graph_options.min_playcount) {
+                graph_data.userdata[artist].data[i][1] = 0;
+            } else {
+                // Doesn't end up being 0 plays
+                totalPlays += playsThisGroup;
+            }
+        }
+
+        // Remove any artists that end up with no plays
+        if(totalPlays == 0) {
+            delete graph_data.userdata[artist];
         }
     }
 
@@ -492,7 +514,7 @@ function calculate_critical_points(){
         var full_weeks = [];
 
         //Populate "full weeks" - At the start this will just be a list of 1 to ___ total weeks
-        for(i=0;i<graph_options.total_weeks;i++){
+        for(i=0;i<(graph_data.userdata[artist].data.length-1);i++){
             if(graph_data.userdata[artist].data[i+1][1]>0){
                 full_weeks.push(i+1);
             }
@@ -512,6 +534,9 @@ function calculate_critical_points(){
 
             //Push the position and size of the point (e.g. [4,121]) to the crit_points array. This number will then be calculated into an actual Crit_Point in the populateWave() function
             graph_data.userdata[artist].crit_points.push(graph_data.userdata[artist].data[max_point[0]]);
+            if(artist == "PUP") {
+                console.log(graph_data.userdata[artist].crit_points[0]);
+            }
 
             //Remove all surrounding weeks from full_weeks
             for(w=max_point[0]-threshold;w<=max_point[0]+threshold;w++){
@@ -668,7 +693,7 @@ function populateWave(){
         var tempdata = [];
         
         //Populate tempdata
-        for(i=1;i<=graph_options.total_weeks;i++){
+        for(i=1;i<=(graph_options.groupCount);i++){
             if(graph_data.userdata[selected_artist].data[i] != undefined){
                 tempdata[i-1] = new Point(graph_data.userdata[selected_artist].data[i][0],graph_data.userdata[selected_artist].data[i][1]);
             }
@@ -711,6 +736,7 @@ function drawMonths(){
     var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
     //If our rounded month is behind our start time, skip it
+
     for(var t=graph_options.time_start;t<graph_options.time_end;t+=2629743){
         var month = round_month(t);
         month_name = months[new Date((month*1000)+604800000).getMonth()];
@@ -824,6 +850,7 @@ function drawNames(){
                 //console.log(artist_name+" - Z");
             } else {
                 console.log("Error Loading Artist: "+artist_name);
+                console.log(cp);
                 continue;
             }
             
@@ -903,12 +930,14 @@ function populate_lines(){
                 crit.btmleft.y = (graph_data.series_data[i].stack[x_point-2].y0)*yratio;
             }
             
-            if((x_point)==(graph_options.total_weeks)){
+            if((x_point)==(graph_options.groupCount)){
+                console.log("On the edge: " + artist_name);
                 crit.topright.x = ((x_point-1)*xratio)+5;
                 crit.topright.y = (crit.r.y)+((crit.q.y-crit.r.y)/2);
                 crit.btmright.x = ((x_point-1)*xratio)+5
                 crit.btmright.y = (crit.r.y)+((crit.q.y-crit.r.y)/2);
             } else {
+                // The critical point is centered around x_point-1, so x_point is one to the right
                 crit.topright.x = (x_point)*xratio;
                 crit.topright.y = (graph_data.series_data[i].stack[x_point].y + graph_data.series_data[i].stack[x_point].y0)*yratio;
                 crit.btmright.x = (x_point)*xratio;
