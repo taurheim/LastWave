@@ -47,14 +47,14 @@ See here for online demo:
 <head>
 <title>LastWave - Gallery</title>
 <link type="text/css" rel="stylesheet" href="includes/lastwave/css.css">
-<link href="http://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<link href="https://netdna.bootstrapcdn.com/bootswatch/3.1.1/yeti/bootstrap.min.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 <script src="includes/lastwave/lastwave_gallery.js"></script>
 <script src="includes/libraries/lightbox.min.js"></script>
 <link href="includes/libraries/lightbox.css" rel="stylesheet" />
 <link rel="icon" 
       type="image/png" 
-      href="http://savas.ca/lastwave/favicon.ico">
+      href="https://savas.ca/lastwave/favicon.ico">
 <script>
 	var jsonarray = <?php echo json_encode($urls); ?>;
 	var current_page = <?php echo $page;?>;
