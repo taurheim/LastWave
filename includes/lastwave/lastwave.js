@@ -323,7 +323,7 @@ function get_week(user, weeknum){
 
         //AJAX request
         graph_data.week_XML.push(
-            $.get("http://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
+            $.get("https://ws.audioscrobbler.com/2.0/?method=user.getweeklyartistchart&user="+user+"&api_key=27ca6b1a0750cf3fb3e1f0ec5b432b72&from="+week_start+"&to="+week_end)
             .fail(function() {
                 //If there is a problem, show the 'errors div' and print the number of the week
                 if(($('#errors').hasClass("unshown"))){
@@ -1781,7 +1781,7 @@ function imgur_upload(){
             graph_data.imgur_link = data.data.link;
             $("#imgur_upload").css("width","0%");
             $('#svg-img').attr('src', data.data.link);
-            $("#imgur_data").html("<br/><br/><input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
+            $("#imgur_data").html("<br/><br/><input type='text' value='https://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
             add_to_gallery();
         }).error(function() {
             alert('Unable to reach Imgur, Sorry :(');
@@ -1820,7 +1820,7 @@ function twitter_share(){
             graph_data.imgur_link = data.data.link;
             $("#imgur_upload").css("width","0%");
             $('#svg-img').attr('src', data.data.link);
-            $("#imgur_data").html("<input type='text' value='http://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
+            $("#imgur_data").html("<input type='text' value='https://www.imgur.com/"+data.data.id+"' onclick='this.setSelectionRange(0, this.value.length)' readonly>")
             add_to_gallery();
             var msg_text = "Check out my Listening History! "+graph_data.imgur_link+" Made with LastWave at savas.ca/lastwave";
             window.open("https://twitter.com/intent/tweet?text="+msg_text+"&hashtags=lastwave");
@@ -2051,7 +2051,7 @@ function togglediv(id,state) {
 function add_to_gallery(){
     $.ajax({
       type: "POST",
-      url: "http://savas.ca/lastwave/add_img.php",
+      url: "https://savas.ca/lastwave/add_img.php",
       dataType: 'json',
       data: {
         'user':graph_options.user,
