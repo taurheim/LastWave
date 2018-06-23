@@ -8,6 +8,7 @@ function DataSource(){
     }
     
     // Make a request
+    // Returns data (TODO format?)
     this.loadData = function() {
 
     }

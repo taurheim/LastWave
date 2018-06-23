@@ -1,7 +1,7 @@
 
 var actions = [new Cloudinary()];
-var dataSources = [new LastFm()];
-var renderers = [new WaveGraph()];
+var dataSources = [new LastFm()]; // First will be chosen by default
+var renderers = [new WaveGraph()]; // First will be chosen by default
 
 // Entry point for now
 $(document).ready(function() {
@@ -15,12 +15,55 @@ function CreateOptions() {
 
     // Show all sources
     for(var i=0;i<dataSources.length;++i){
-        console.log("Source: <name>");
+        var source = dataSources[i];
+        console.log("Source: " + source.title);
+
+        // Choose the first option
+        if (i === 0) LoadDataSourceOptions(source);
     }
 
     // Show all renderers
     for (var i=0;i<renderers.length;++i){
-        console.log("Renderer: <name>");
+        var renderer = renderers[i];
+        console.log("Renderer: " + renderer.title);
+
+        // Choose the first option
+        if (i === 0) LoadRendererOptions(renderer);
+    }
+}
+
+/*
+    When a data source or renderer is chosen, we need to load the
+    custom options for it.
+
+    TODO DRY
+*/
+function LoadDataSourceOptions(source) {
+    var options = source.getOptions();
+    for (var optionName in options) {
+        $("#data-source-options").append(BuildOptionHtml(options[optionName]));
+    }
+}
+
+function LoadRendererOptions(renderer) {
+    var options = renderer.getOptions();
+    for (var optionName in options) {
+        $("#renderer-options").append(BuildOptionHtml(options[optionName]));
+    }
+}
+
+function BuildOptionHtml(option) {
+    switch(option.type) {
+        case "dropdown":
+            // TODO check valid
+            var dropdownCode = option.title + ": <select>";
+            for (var i = 0; i < option.options.length; i++) {
+                dropdownCode += "<option>" + option.options[i] + "</option>";
+            }
+            dropdownCode += "</select>";
+            return dropdownCode;
+        default:
+            return "<span>Not supported: " + JSON.stringify(option) + "</span><br>";
     }
 }
 

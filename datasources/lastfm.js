@@ -5,19 +5,32 @@ function LastFm() {
     // Send an api every __ ms
     var LAST_FM_API_CADENCE_MS = 250;
 
+    this.title = "last.fm";
+
     this.getOptions = function() {
         return {
             "username": {
+                "title": "last.fm username",
                 "type": "string",
                 "default": "Taurheim"
             },
             "time_start": {
+                "title": "Timespan start",
                 "type": "date",
                 "default": ""
             },
             "time_end": {
+                "title": "Timespan end",
                 "type": "date",
                 "default": ""
+            },
+            "group_by": {
+                "title": "Group By",
+                "type": "dropdown",
+                "options": [
+                    "month",
+                    "week",
+                ]
             }
         }
     }
@@ -35,6 +48,7 @@ function LastFm() {
         */
 
         // Parse the data into the right format
+        return [];
     }
 }
 
