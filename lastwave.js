@@ -13,6 +13,12 @@ $(document).ready(function() {
 function CreateOptions() {
     console.log("Show all options to the user.");
 
+    // Create the options global
+    window.lastwaveOptions = {
+        dataSource: {},
+        renderer: {}
+    };
+
     // Show all sources
     for(var i=0;i<dataSources.length;++i){
         var source = dataSources[i];
@@ -40,30 +46,53 @@ function CreateOptions() {
 */
 function LoadDataSourceOptions(source) {
     var options = source.getOptions();
+    var parentDiv = $("#data-source-options");
     for (var optionName in options) {
-        $("#data-source-options").append(BuildOptionHtml(options[optionName]));
+        CreateOption(parentDiv, options[optionName], function(newValue) {
+            window.lastwaveOptions.dataSource[optionName] = newValue;
+        });
     }
 }
 
 function LoadRendererOptions(renderer) {
     var options = renderer.getOptions();
+    var parentDiv = $("#renderer-options");
     for (var optionName in options) {
-        $("#renderer-options").append(BuildOptionHtml(options[optionName]));
+        CreateOption(parentDiv, options[optionName], function(newValue) {
+            window.lastwaveOptions.renderer[optionName] = newValue;
+        });
     }
 }
 
-function BuildOptionHtml(option) {
+function CreateOption(parentDiv, option, callbackOnChange) {
     switch(option.type) {
         case "dropdown":
-            // TODO check valid
-            var dropdownCode = option.title + ": <select>";
+            // TODO @option for validity
+
+            // Build dropdown
+            var optionDiv = $('<div></div>');
+            var dropdown = $('<select></select>');
             for (var i = 0; i < option.options.length; i++) {
-                dropdownCode += "<option>" + option.options[i] + "</option>";
+                dropdown.append("<option>" + option.options[i] + "</option>");
             }
-            dropdownCode += "</select>";
-            return dropdownCode;
+
+            // First one is selected
+            callbackOnChange(option.options[0]);
+
+            // Bind callback
+            dropdown.change(function() {
+                callbackOnChange(dropdown.val());
+            });
+
+            optionDiv.append(option.title + ': ');
+            optionDiv.append(dropdown);
+            parentDiv.append(optionDiv);
+            break;
         default:
-            return "<span>Not supported: " + JSON.stringify(option) + "</span><br>";
+            var optionDiv = $('<div></div>');
+            optionDiv.append('Not supported: ' + JSON.stringify(option));
+            parentDiv.append(optionDiv);
+            break;
     }
 }
 
@@ -72,13 +101,14 @@ function CreateWave() {
 
     var selectedDataSource = dataSources[0];
     var selectedRenderer = renderers[0];
-    var selectedOptions = {};
+    var dataSourceOptions = window.lastwaveOptions.dataSource;
+    var rendererOptions = window.lastwaveOptions.renderer;
 
     console.log("Perform validation");
 
-    var musicData = selectedDataSource.loadData(selectedOptions);
+    var musicData = selectedDataSource.loadData(dataSourceOptions);
 
-    selectedRenderer.renderVisualization(musicData, selectedOptions);
+    selectedRenderer.renderVisualization(musicData, rendererOptions);
 
     ShowActions();
 }

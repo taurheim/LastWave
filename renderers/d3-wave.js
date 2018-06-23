@@ -25,7 +25,10 @@ function WaveGraph() {
         console.log("Rendering Visualization");
 
         // Grab the correct color scheme
-        var schemeName = options;
+        var schemeName = options.color_scheme;
+        var schemeColors = ColorSchemes[schemeName];
+        var colorCount = schemeColors.length;
+        var currentColor = 0;
 
         // Parse data into rickshaw format
         /*
@@ -40,9 +43,12 @@ function WaveGraph() {
             var dataPoint = data[i];
             var title = dataPoint.title;
             var counts = dataPoint.counts;
+            var color = schemeColors[currentColor++ % colorCount];
 
             rickshawData.push({
-                color: "#ffffff",
+                name: title,
+                data: counts,
+                color: color,
             });
         }
 
