@@ -108,6 +108,9 @@ function CreateWave() {
 
     var musicData = selectedDataSource.loadData(dataSourceOptions);
 
+    // While last.fm isn't hooked up!
+    musicData = window.demoData;
+
     selectedRenderer.renderVisualization(musicData, rendererOptions);
 
     ShowActions();
