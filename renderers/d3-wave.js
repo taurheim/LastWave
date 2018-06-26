@@ -84,22 +84,25 @@ function WaveGraph() {
         graph.render();
 
         // Add ripple labels (e.g. Artist Names)
+        var scalingValues = this.getScalingValues(rickshawData, 1000, 600);
+        console.log("Scaling values: " + JSON.stringify(scalingValues));
         for(var r = 0; r < rickshawData.length; r++) {
             var rippleData = rickshawData[r];
-            this.addGraphLabels(rippleData);
-            break;
+            this.addGraphLabels(rippleData, scalingValues);
         }
 
-        // Add month names
+        console.log("Rickshaw data: ");
         console.log(rickshawData);
+
+        // Add month names
 
         // Add watermark
     }
 
     /*
-        Heart of the LastWave algorithm
+        Draw labels on a ripple
     */
-    this.addGraphLabels = function(rippleData, graphWidth, graphHeight) {
+    this.addGraphLabels = function(rippleData, scalingValues) {
         console.log("Adding labels to graph...");
 
         // First find where we should add points
@@ -117,7 +120,8 @@ function WaveGraph() {
         for (var i = 0; i < labelIndices.length; i++) {
             var index = labelIndices[i];
             var peak = new Peak(index, rippleData.stack);
-            this.scalePeak(peak, graphWidth, graphHeight);
+            peak.scale(scalingValues.x, scalingValues.y);
+            this.drawTextOnPeak(rippleData.name, peak);
         }
     }
 
@@ -167,9 +171,45 @@ function WaveGraph() {
         return rippleLabelPoints;
     }
 
-    // This turns the points into pixel positions
-    this.scalePeak = function(peak, graphWidth, graphHeight) {
-        return;
+    /*
+        Figure out how big the text should be and where it should go
+    */
+    this.drawTextOnPeak = function(text, peak) {
+        console.log("Attempting to draw " + text + " on peak");
+
+        //TODO magic numbers/strings
+        var xPosition = peak.top.x;
+        var svgDiv = d3.select("#visualization").select("svg");
+        var graphHeight = svgDiv.attr("height");
+        svgDiv.append("text")
+            .text(text)
+            .attr("x", peak.top.x)
+            .attr("y", graphHeight - (peak.bottom.y + peak.top.y)/2)
+            .attr("font-size", 12);
+    }
+
+    /*
+        The graph data is in a generic format that doesn't corespond with
+        pixels on the svg. Scaling values are what we need to multiply the
+        graph data values by to get real pixel coordinates in the svg
+    */
+    this.getScalingValues = function(rickshawData, graphWidth, graphHeight) {
+        // The maximum y0 value corresponds with the height of the graph
+        var maxy0 = 0;
+        // The last ripple is on top
+        var lastRipple = rickshawData[rickshawData.length - 1];
+        for (var i = 0; i < lastRipple.stack.length; i++) {
+            var peakData = lastRipple.stack[i];
+            var peakHeight = peakData.y + peakData.y0;
+            if (peakHeight > maxy0) {
+                maxy0 = peakHeight;
+            }
+        }
+
+        return {
+            x: graphWidth / (rickshawData[0].stack.length - 1),
+            y: graphHeight / maxy0,
+        }
     }
 }
 
@@ -179,11 +219,14 @@ function WaveGraph() {
 // data structure, check GitHub
 function Peak(index, stack) {
     var leftRightSpreadingFactor = 0.1;
-    console.log("Building peak for index " + index);
 
     // 1. Grab all the surrounding points
+    // y: The amount of vertical space that the ripple takes up
+    // y0: the bottom point of the ripple
     this.top = new Point(stack[index].x, stack[index].y + stack[index].y0);
-    this.bottom = new Point(stack[index].x, stack[index].y);
+    this.bottom = new Point(stack[index].x, stack[index].y0);
+
+    console.log("Peak: " + JSON.stringify(this.top));
 
     if (index === 0) {
         var fakeX = -1 * leftRightSpreadingFactor;
@@ -192,7 +235,7 @@ function Peak(index, stack) {
         this.bottomLeft = new Point(fakeX, fakeY);
     } else {
         this.topLeft = new Point(stack[index - 1].x, stack[index-1].y + stack[index].y0);
-        this.bottomLeft = new Point(stack[index - 1].x, stack[index - 1].y);
+        this.bottomLeft = new Point(stack[index - 1].x, stack[index - 1].y0);
     }
 
     if (index === stack.length - 1) {
@@ -202,7 +245,7 @@ function Peak(index, stack) {
         this.bottomRight = new Point(fakeX, fakeY);
     } else {
         this.topRight = new Point(stack[index + 1].x, stack[index+1].y + stack[index].y0);
-        this.bottomRight = new Point(stack[index + 1].x, stack[index+1].y);
+        this.bottomRight = new Point(stack[index + 1].x, stack[index+1].y0);
     }
 
     // 2. Add lines betwen points, labelled A/B/C/D
@@ -211,12 +254,31 @@ function Peak(index, stack) {
     this.C = new Line(this.bottomLeft, this.bottom);
     this.D = new Line(this.bottom, this.bottomRight);
 
+    // 3. Allow for scaling by linear values
+    this.scale = function(x, y) {
+        this.top.scale(x, y);
+        this.bottom.scale(x, y);
+        this.topLeft.scale(x, y);
+        this.topRight.scale(x, y);
+        this.bottomLeft.scale(x, y);
+        this.bottomRight.scale(x, y);
+        this.A.scale(x, y);
+        this.B.scale(x, y);
+        this.C.scale(x, y);
+        this.D.scale(x, y);
+    }
+
     return this;
 }
 
 function Point(x, y) {
     this.x = x;
     this.y = y;
+
+    this.scale = function(x, y) {
+        this.x *= x;
+        this.y *= y;
+    }
 
     return this;
 }
@@ -227,6 +289,12 @@ function Line(start, end) {
 
     this.slope = (end.y - start.y) / (end.x - start.x);
     this.intercept = start.y - this.slope * start.x;
+
+    this.scale = function(x, y) {
+        // Don't need to scale start/end because it's a reference
+        // This is pretty confusing, we should probably clone
+        this.intercept *= y;
+    }
 
     return this;
 }
