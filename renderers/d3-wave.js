@@ -1,4 +1,7 @@
-// $.getScript('renderers/d3-wave-algorithms/')
+// $.getScript('renderers/d3-wave-algorithms/waveW.js')
+// $.getScript('renderers/d3-wave-algorithms/waveX.js')
+// $.getScript('renderers/d3-wave-algorithms/waveY.js')
+// $.getScript('renderers/d3-wave-algorithms/waveZ.js')
 
 function WaveGraph() {
     this.title = "Wave Graph";
@@ -174,18 +177,32 @@ function WaveGraph() {
     /*
         Figure out how big the text should be and where it should go
     */
-    this.drawTextOnPeak = function(text, peak) {
+    this.drawTextOnPeak = function(text, peak, font) {
         console.log("Attempting to draw " + text + " on peak");
 
         //TODO magic numbers/strings
-        var xPosition = peak.top.x;
         var svgDiv = d3.select("#visualization").select("svg");
         var graphHeight = svgDiv.attr("height");
+
+        var label;
+        if (isWType(peak)) {
+            label = getWLabel(peak, text, font);
+        } else if (isXType(peak)) {
+            label = getXLabel(peak, text, font);
+        } else if (isYType(peak)) {
+            label = getYLabel(peak, text, font);
+        } else if (isZType(peak)) {
+            label = getZLabel(peak, text, font);
+        } else {
+            console.log("Couldn't classify peak. Something went wrong!");
+        }
+
         svgDiv.append("text")
-            .text(text)
-            .attr("x", peak.top.x)
-            .attr("y", graphHeight - (peak.bottom.y + peak.top.y)/2)
-            .attr("font-size", 12);
+            .text(label.text)
+            .attr("x", label.x)
+            .attr("y", graphHeight - label.y)
+            .attr("font-size", label.fontSize)
+            .attr("font-family", label.font);
     }
 
     /*
@@ -234,7 +251,7 @@ function Peak(index, stack) {
         this.topLeft = new Point(fakeX, fakeY);
         this.bottomLeft = new Point(fakeX, fakeY);
     } else {
-        this.topLeft = new Point(stack[index - 1].x, stack[index-1].y + stack[index].y0);
+        this.topLeft = new Point(stack[index - 1].x, stack[index-1].y + stack[index-1].y0);
         this.bottomLeft = new Point(stack[index - 1].x, stack[index - 1].y0);
     }
 
@@ -244,7 +261,7 @@ function Peak(index, stack) {
         this.topRight = new Point(fakeX, fakeY);
         this.bottomRight = new Point(fakeX, fakeY);
     } else {
-        this.topRight = new Point(stack[index + 1].x, stack[index+1].y + stack[index].y0);
+        this.topRight = new Point(stack[index + 1].x, stack[index+1].y + stack[index+1].y0);
         this.bottomRight = new Point(stack[index + 1].x, stack[index+1].y0);
     }
 
@@ -294,7 +311,23 @@ function Line(start, end) {
         // Don't need to scale start/end because it's a reference
         // This is pretty confusing, we should probably clone
         this.intercept *= y;
+
+        this.slope *= y / x;
+        this.slope = this.slope.toFixed(4);
     }
 
+    return this;
+}
+
+/*
+    A label contains all the information necessary to draw
+    text on the SVG
+*/
+function Label(text, xPosition, yPosition, font, fontSize) {
+    this.text = text;
+    this.x = xPosition;
+    this.y = yPosition;
+    this.font = font;
+    this.fontSize = fontSize
     return this;
 }
