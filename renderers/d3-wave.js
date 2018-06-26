@@ -331,3 +331,24 @@ function Label(text, xPosition, yPosition, font, fontSize) {
     this.fontSize = fontSize
     return this;
 }
+
+function getTextDimensions(text, font, fontSize) {
+    var temp = $("<div>" + text + "</div>")
+        .css({
+            position: "absolute",
+            float: "left", 
+            "white-space": "nowrap",
+            visibility: "hidden",
+            font: fontSize + "px " + font,
+        })
+        .appendTo($("body"));
+    var width = temp.width();
+    var height = temp.height();
+
+    temp.remove();
+
+    return {
+        height: height,
+        width: width,
+    };
+}
