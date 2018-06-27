@@ -84,5 +84,6 @@ function getWLabel(peak, text, font) {
     labelY = peak.bottom.y;
   }
 
-  return new Label(text, labelX, labelY, "Roboto", fontSize);
+
+  return new Label(text, labelX, labelY, font, fontSize);
 }

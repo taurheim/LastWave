@@ -36,8 +36,5 @@ function isYType(peak) {
 }
 
 function getYLabel(peak, text, font) {
-  if(text == "GoldLink") {
-    console.log("Debugbrk");
-  }
-  return new Label(text, peak.top.x, (peak.bottom.y), "Roboto", 12);
+  return new Label("Y", peak.top.x, (peak.bottom.y), "Roboto", 12);
 }

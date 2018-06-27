@@ -316,6 +316,19 @@ function Line(start, end) {
         this.slope = this.slope.toFixed(4);
     }
 
+    this.getPointOnLineAtX = function(x) {
+        // y = m*x + b
+        return this.slope * x + this.intercept;
+    }
+
+    this.getCollisionWithRay = function(raySlope, rayIntercept) {
+        // x = (b2 - b1) / (m1 - m2)
+        var xCollision = (rayIntercept - this.intercept) / (this.slope - raySlope);
+        var yCollision = this.getPointOnLineAtX(xCollision);
+
+        return new Point(xCollision, yCollision);
+    }
+
     return this;
 }
 
@@ -350,5 +363,6 @@ function getTextDimensions(text, font, fontSize) {
     return {
         height: height,
         width: width,
+        slope: height / width,
     };
 }
