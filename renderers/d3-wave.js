@@ -7,7 +7,7 @@ function WaveGraph() {
   this.title = "Wave Graph";
   
   // Config
-  this.minimumSegmentsBetweenLabels = 4;
+  this.minimumSegmentsBetweenLabels = 3;
   this.leftRightSpreadingFactor = 0.1;
 
   this.getOptions = function() {
@@ -124,7 +124,7 @@ function WaveGraph() {
       var index = labelIndices[i];
       var peak = new Peak(index, rippleData.stack);
       peak.scale(scalingValues.x, scalingValues.y);
-      this.drawTextOnPeak(rippleData.name, peak);
+      this.drawTextOnPeak(rippleData.name, peak, "Roboto");
     }
   }
 
@@ -136,8 +136,10 @@ function WaveGraph() {
   this.findLabelIndices = function(rippleCounts) {
     // Possible points is a list of numbers representing the indices
     // in data.count that are being considered as label points
+    // We don't allow for the first or last points to have labels because
+    // They would appear off screen
     var possiblePoints = [];
-    for (var i = 0; i < rippleCounts.length; i++) {
+    for (var i = 1; i < rippleCounts.length - 1; i++) {
       possiblePoints.push(i);
     }
 
@@ -194,7 +196,7 @@ function WaveGraph() {
     } else if (isZType(peak)) {
       label = getZLabel(peak, text, font);
     } else {
-      console.log("Couldn't classify peak. Something went wrong!");
+      throw new Error("Couldn't classify peak. Something went wrong!");
     }
 
     svgDiv.append("text")

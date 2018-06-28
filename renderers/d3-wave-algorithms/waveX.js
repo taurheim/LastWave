@@ -74,10 +74,9 @@ function getXLabel(peak, text, font) {
   }
 
   var textCenter = new Point(maxWidthLeftCollisionX + maxWidth/2, maxWidthY);
-  var textIntercept = textCenter.y - textSlope * textCenter.x; // b = y - mx
 
   // 3. Now figure out how long we can make this line (extend it up and down)
-  var textLine = new InfiniteLine(textSlope, textIntercept);
+  var textLine = new InfiniteLine(textSlope, textCenter);
   var leftTextCollision = leftCollidingLine.getIntersect(textLine);
   var rightTextCollision = rightCollidingLine.getIntersect(textLine);
 

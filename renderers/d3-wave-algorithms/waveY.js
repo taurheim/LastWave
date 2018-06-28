@@ -85,7 +85,7 @@ function getYLabel(peak, text, font) {
   };
   SETUP_CONFIG[TYPE.Y4] = {
     startPoint: "top",
-    slopeModifier: 1,
+    slopeModifier: -1,
     opposite: "D",
     adjacent: "A",
     across: "C",
@@ -211,8 +211,8 @@ function getYLabel(peak, text, font) {
 
   // Iterate!
   while(shouldIterate) {
-    console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
     startPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
+    console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
 
     // Calculate our new font size
     fontSize = calculateFontSize(text, startPoint, fontSlope, opposite);
