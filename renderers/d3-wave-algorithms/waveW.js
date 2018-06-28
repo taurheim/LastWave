@@ -21,6 +21,12 @@ function isWType(peak) {
   );
 }
 
+/*
+  High level explanation:
+  The text box should be either touching the "top" point (w1) or the
+  "bottom" point (w2). With this assumption, we expand the text box as big
+  as it can be.
+*/
 function getWLabel(peak, text, font) {
   // Config
   var STARTING_FONT_SIZE = 5;

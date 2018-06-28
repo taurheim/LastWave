@@ -21,6 +21,11 @@ function isXType(peak) {
   )
 }
 
+/*
+  High level explanation:
+  Scan for the point of maximum width, then expand the text box at this
+  height.
+*/
 function getXLabel(peak, text, font) {
   var TEST_FONT_SIZE = 3000;
 

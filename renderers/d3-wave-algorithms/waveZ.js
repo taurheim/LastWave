@@ -13,7 +13,7 @@ function isZType(peak) {
 }
 
 /*
-  High level algorithm:
+  High level explanation:
   1. Find midpoint between top right and bottom right
   2. Find midpoint between top left and bottom left
   3. Find midpoint between (1) and (2)
