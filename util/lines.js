@@ -40,9 +40,7 @@ function LineBase(slope, point) {
       return false;
     }
 
-    var intersectY = this.getPointOnLineAtX(intersectX);
-
-    return new Point(intersectX, intersectY);
+    return this.getPointOnLineAtX(intersectX);
   }
 
   /*
@@ -55,7 +53,7 @@ function LineBase(slope, point) {
     }
 
     // y = mx + b
-    return this.slope * x + this.intercept;
+    return new Point(x, this.slope * x + this.intercept);
   }
 }
 

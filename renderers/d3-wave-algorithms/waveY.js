@@ -117,9 +117,7 @@ function getYLabel(peak, text, font) {
     if (acrossIntersect) {
       // End the iteration here, picking the new start point to be
       // along adjacent with the same X value as the intersection
-      var newStartX = acrossIntersect.x;
-      var newStartY = adjacent.getPointOnLineAtX(newStartX);
-      return new Point(newStartX, newStartY);
+      return adjacent.getPointOnLineAtX(acrossIntersect.x);
     }
 
     // Pick the collision point to continue the iteration
@@ -144,6 +142,17 @@ function getYLabel(peak, text, font) {
     // Short Circuit 2: Check if our line intersects adjacent
     var adjacentIntersect = adjacent.getIntersect(invertedLine);
     if(adjacentIntersect) {
+      // Edge case: We hit the adjacent line but we don't have enough space
+      // to calculate the font size. In this case, perform half an iteration
+      // right here. TODO this should probably happen in a different place?
+      // seems weird to have it almost perform another full iteration...
+      var fixFontLine = new InfiniteLine(fontSlope, adjacentIntersect);
+      var scAcrossIntersect = across.getIntersect(fixFontLine);
+      if (scAcrossIntersect) {
+        return adjacent.getPointOnLineAtX(scAcrossIntersect.x);
+      }
+      
+      // If not this edge case, then just give back our most recent collision point
       return adjacentIntersect;
     }
 
@@ -161,9 +170,7 @@ function getYLabel(peak, text, font) {
     }
 
     // Our new start point is at this X position, but on the adjacent line
-    var newStartX = invertIntersect.x;
-    var newStartY = adjacent.getPointOnLineAtX(invertIntersect.x);
-    var newStart = new Point(newStartX, newStartY);
+    var newStart = adjacent.getPointOnLineAtX(invertIntersect.x);
 
     // Short Circuit 3: Check if our font line will intersect across
     var shortCircuitLine = new InfiniteLine(fontSlope, newStart);
