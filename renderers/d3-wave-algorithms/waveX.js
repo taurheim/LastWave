@@ -77,8 +77,9 @@ function getXLabel(peak, text, font) {
   var textIntercept = textCenter.y - textSlope * textCenter.x; // b = y - mx
 
   // 3. Now figure out how long we can make this line (extend it up and down)
-  var leftTextCollision = leftCollidingLine.getCollisionWithRay(textSlope, textIntercept);
-  var rightTextCollision = rightCollidingLine.getCollisionWithRay(textSlope, textIntercept);
+  var textLine = new InfiniteLine(textSlope, textIntercept);
+  var leftTextCollision = leftCollidingLine.getIntersect(textLine);
+  var rightTextCollision = rightCollidingLine.getIntersect(textLine);
 
   // 4. Figure out what font size we can fit (same as the height of the line we just extended)
   var boxHeight = Math.abs(parseInt(leftTextCollision.y - rightTextCollision.y));
