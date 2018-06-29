@@ -7,8 +7,11 @@ function WaveGraph() {
   this.title = "Wave Graph";
   
   // Config
-  this.minimumSegmentsBetweenLabels = 3;
-  this.leftRightSpreadingFactor = 0.1;
+  this.MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
+  this.DEFAULT_WIDTH_PER_PEAK = 150;
+  this.DEFAULT_GRAPH_HEIGHT = 600;
+  this.RICKSHAW_RENDERER = "area";
+  this.DIV_ID = "visualization";
 
   this.getOptions = function() {
     return {
@@ -19,6 +22,35 @@ function WaveGraph() {
           "lastwave"
         ],
       },
+      "width": {
+        "title": "Graph width",
+        "type": "int",
+      },
+      "height": {
+        "title": "Graph height",
+        "type": "int",
+        "default": this.DEFAULT_GRAPH_HEIGHT,
+      },
+      "offset": {
+        "title": "Graph type",
+        "type": "dropdown",
+        "options": [
+          "silhouette",
+          "wiggle",
+          "expand",
+          "zero",
+        ],
+      },
+      "stroke": {
+        "title": "Ripple border",
+        "type": "toggle",
+        "default": true,
+      },
+      "font": {
+        "title": "Font",
+        "type": "string",
+        "default": "Roboto",
+      }
     };
   };
 
@@ -72,30 +104,32 @@ function WaveGraph() {
       });
     }
 
+    // Calculate the width if it hasn't been set
+    var graphWidth = options.width;
+    if (!graphWidth) {
+      graphWidth = data[0].counts.length * this.DEFAULT_WIDTH_PER_PEAK;
+    }
+    var graphHeight = options.height;
+
     // Create the wave graph using Rickshaw/d3
     var graph = new Rickshaw.Graph({
-      element: $("#visualization")[0],
-      width: 1000,
-      height: 600,
-      renderer: 'area',
-      offset: 'silhouette',
-      stroke: true,
-      preserve: true,
+      element: $("#" + this.DIV_ID)[0],
+      width: graphWidth,
+      height: graphHeight,
+      renderer: this.RICKSHAW_RENDERER,
+      offset: options.offset,
+      stroke: options.stroke,
+      preserve: true, // Leave our original data as it is
       series: rickshawData,
-      fill: "#000000",
     });
     graph.render();
 
     // Add ripple labels (e.g. Artist Names)
-    var scalingValues = this.getScalingValues(rickshawData, 1000, 600);
-    console.log("Scaling values: " + JSON.stringify(scalingValues));
+    var scalingValues = this.getScalingValues(rickshawData, graphWidth, graphHeight);
     for(var r = 0; r < rickshawData.length; r++) {
       var rippleData = rickshawData[r];
-      this.addGraphLabels(rippleData, scalingValues);
+      this.addGraphLabels(options.font, rippleData, scalingValues);
     }
-
-    console.log("Rickshaw data: ");
-    console.log(rickshawData);
 
     // Add month names
 
@@ -105,7 +139,7 @@ function WaveGraph() {
   /*
     Draw labels on a ripple
   */
-  this.addGraphLabels = function(rippleData, scalingValues) {
+  this.addGraphLabels = function(font, rippleData, scalingValues) {
     console.log("Adding labels to graph...");
 
     // First find where we should add points
@@ -124,7 +158,7 @@ function WaveGraph() {
       var index = labelIndices[i];
       var peak = new Peak(index, rippleData.stack);
       peak.scale(scalingValues.x, scalingValues.y);
-      this.drawTextOnPeak(rippleData.name, peak, "Roboto");
+      this.drawTextOnPeak(rippleData.name, peak, font);
     }
   }
 
@@ -163,8 +197,8 @@ function WaveGraph() {
       rippleLabelPoints.push(maxIndex);
 
       // Remove the nearby indices from possiblePoints
-      var removeFrom = maxIndex - this.minimumSegmentsBetweenLabels;
-      var removeTo = maxIndex + this.minimumSegmentsBetweenLabels;
+      var removeFrom = maxIndex - this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
+      var removeTo = maxIndex + this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
       for(var r = removeFrom; r < removeTo; r++) {
         var index = possiblePoints.indexOf(r);
         if (index > -1) {
@@ -237,7 +271,7 @@ function WaveGraph() {
 // For a graphical representation of each of the members of this
 // data structure, check GitHub
 function Peak(index, stack) {
-  var leftRightSpreadingFactor = 0.1;
+  var LEFT_RIGHT_SPREADING_FACTOR = 0.1;
 
   // 1. Grab all the surrounding points
   // y: The amount of vertical space that the ripple takes up
@@ -245,10 +279,8 @@ function Peak(index, stack) {
   this.top = new Point(stack[index].x, stack[index].y + stack[index].y0);
   this.bottom = new Point(stack[index].x, stack[index].y0);
 
-  console.log("Peak: " + JSON.stringify(this.top));
-
   if (index === 0) {
-    var fakeX = -1 * leftRightSpreadingFactor;
+    var fakeX = -1 * LEFT_RIGHT_SPREADING_FACTOR;
     var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
     this.topLeft = new Point(fakeX, fakeY);
     this.bottomLeft = new Point(fakeX, fakeY);
@@ -258,7 +290,7 @@ function Peak(index, stack) {
   }
 
   if (index === stack.length - 1) {
-    var fakeX = this.top.x + leftRightSpreadingFactor;
+    var fakeX = this.top.x + LEFT_RIGHT_SPREADING_FACTOR;
     var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
     this.topRight = new Point(fakeX, fakeY);
     this.bottomRight = new Point(fakeX, fakeY);

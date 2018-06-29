@@ -44,13 +44,19 @@ function CreateOptions() {
 
     TODO DRY
 */
+function updateOption(lastwaveModule, optionName) {
+    // Silly closures
+    return function(optionValue) {
+        console.log("Setting (" + optionName + ") to (" + optionValue + ")");
+        window.lastwaveOptions[lastwaveModule][optionName] = optionValue;
+    }
+}
+
 function LoadDataSourceOptions(source) {
     var options = source.getOptions();
     var parentDiv = $("#data-source-options");
     for (var optionName in options) {
-        CreateOption(parentDiv, options[optionName], function(newValue) {
-            window.lastwaveOptions.dataSource[optionName] = newValue;
-        });
+        CreateOption(parentDiv, options[optionName], updateOption("dataSource", optionName));
     }
 }
 
@@ -58,19 +64,18 @@ function LoadRendererOptions(renderer) {
     var options = renderer.getOptions();
     var parentDiv = $("#renderer-options");
     for (var optionName in options) {
-        CreateOption(parentDiv, options[optionName], function(newValue) {
-            window.lastwaveOptions.renderer[optionName] = newValue;
-        });
+        CreateOption(parentDiv, options[optionName], updateOption("renderer", optionName));
     }
 }
 
 function CreateOption(parentDiv, option, callbackOnChange) {
+    var optionDiv = $('<div></div>');
+
     switch(option.type) {
         case "dropdown":
             // TODO @option for validity
 
             // Build dropdown
-            var optionDiv = $('<div></div>');
             var dropdown = $('<select></select>');
             for (var i = 0; i < option.options.length; i++) {
                 dropdown.append("<option>" + option.options[i] + "</option>");
@@ -88,12 +93,61 @@ function CreateOption(parentDiv, option, callbackOnChange) {
             optionDiv.append(dropdown);
             parentDiv.append(optionDiv);
             break;
+        case "int":
+            // Build input
+            var inputDiv = $('<input type="text">');
+            optionDiv.append(option.title + ": ");
+            optionDiv.append(inputDiv);
+
+            // Bind callback
+            inputDiv.change(function() {
+                callbackOnChange($(this).val());
+            });
+
+            // Report default if necessary
+            if(option.default) {
+                callbackOnChange(option.default);
+            }
+            break;
+        case "toggle":
+            var checkboxDiv = $('<input type="checkbox"></input>');
+            if (option.default) {
+                checkboxDiv.prop('checked', true);
+            }
+            optionDiv.append(option.title + ': ');
+
+            optionDiv.append(checkboxDiv);
+
+            // Bind callback
+            checkboxDiv.change(function() {
+                callbackOnChange(this.checked);
+            });
+
+            // Report default (if no default, off)
+            callbackOnChange(option.default ? true : false);
+            break;
+        case "string":
+            var inputDiv = $('<input type="text"></input>');
+
+            if (option.default) {
+                inputDiv.prop("value", option.default);
+                callbackOnChange(option.default);
+            }
+
+            inputDiv.change(function() {
+                console.log("Font: " + $(this).val());
+                callbackOnChange($(this).val());
+            });
+
+            optionDiv.append(option.title + ': ');
+            optionDiv.append(inputDiv);
+            break;
         default:
-            var optionDiv = $('<div></div>');
             optionDiv.append('Not supported: ' + JSON.stringify(option));
-            parentDiv.append(optionDiv);
             break;
     }
+
+    parentDiv.append(optionDiv);
 }
 
 function CreateWave() {
