@@ -247,10 +247,10 @@ function getYLabel(peak, text, font) {
     if (window.debug) {
       window.debugTools.wave.drawPoint(startPoint, "red");
       window.debugTools.wave.drawTextBelowPoint(startPoint, iterationCount);
+      console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
     }
 
     startPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
-    console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
 
     // Calculate our new font size
     fontSize = calculateFontSize(text, startPoint, fontSlope, opposite);

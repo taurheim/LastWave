@@ -4,7 +4,7 @@
 // $.getScript('renderers/d3-wave-algorithms/waveZ.js')
 
 function WaveGraph() {
-  window.debug = true;
+  window.debug = false;
   // window.debugText = "Emancipator";
 
   this.title = "Wave Graph";
@@ -235,9 +235,9 @@ function WaveGraph() {
     Figure out how big the text should be and where it should go
   */
   this.drawTextOnPeak = function(text, peak, font) {
-    console.log("Drawing " + text);
 
     if (window.debug) {
+      console.log("Drawing " + text);
       console.log(peak);
     }
 

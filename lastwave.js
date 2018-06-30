@@ -135,7 +135,21 @@ function CreateOption(parentDiv, option, callbackOnChange) {
             }
 
             inputDiv.change(function() {
-                console.log("Font: " + $(this).val());
+                callbackOnChange($(this).val());
+            });
+
+            optionDiv.append(option.title + ': ');
+            optionDiv.append(inputDiv);
+            break;
+        case "date":
+            var inputDiv = $('<input type="text"></input>');
+
+            if (option.default) {
+                inputDiv.prop("value", option.default);
+                callbackOnChange(option.default);
+            }
+
+            inputDiv.change(function() {
                 callbackOnChange($(this).val());
             });
 
@@ -160,14 +174,14 @@ function CreateWave() {
 
     console.log("Perform validation");
 
-    var musicData = selectedDataSource.loadData(dataSourceOptions);
+    selectedDataSource.loadData(dataSourceOptions, function(err, musicData) {
+        // While last.fm isn't hooked up!
+        musicData = window.demoData;
 
-    // While last.fm isn't hooked up!
-    musicData = window.demoData;
+        selectedRenderer.renderVisualization(musicData, rendererOptions);
 
-    selectedRenderer.renderVisualization(musicData, rendererOptions);
-
-    ShowActions();
+        ShowActions();
+    });
 }
 
 function ShowActions() {
