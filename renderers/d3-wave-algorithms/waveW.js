@@ -9,8 +9,8 @@ function isWType(peak) {
     // "w1"
     peak.A.slope > 0 &&
     peak.B.slope < 0 &&
-    peak.C.slope >= 0 &&
-    peak.D.slope <= 0
+    peak.C.slope > 0 &&
+    peak.D.slope < 0
   ) ||
   (
     // "w2"

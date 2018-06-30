@@ -25,7 +25,7 @@ function LineBase(slope, point) {
     this.intercept *= y;
 
     this.slope *= y / x;
-    this.slope = this.slope.toFixed(FLOAT_PRECISION);
+    this.slope = parseFloat(this.slope.toFixed(FLOAT_PRECISION));
   }
 
   /*

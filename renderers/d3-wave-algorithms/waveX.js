@@ -85,9 +85,29 @@ function getXLabel(peak, text, font) {
   var leftTextCollision = leftCollidingLine.getIntersect(textLine);
   var rightTextCollision = rightCollidingLine.getIntersect(textLine);
 
+  // Sometimes we will miss (this means there are big gaps on the left and right)
+  // In this situation, just use the outer bounds.
+  if (!leftTextCollision) {
+    leftTextCollision = textLine.getPointOnLineAtX(leftCollidingLine.getStartPoint().x);
+  }
+  if (!rightTextCollision) {
+    rightTextCollision = textLine.getPointOnLineAtX(rightCollidingLine.getEndPoint().x);
+  }
+
   // 4. Figure out what font size we can fit (same as the height of the line we just extended)
   var boxHeight = Math.abs(parseInt(leftTextCollision.y - rightTextCollision.y));
   var fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
+
+  if (window.debug) {
+    window.debugTools.wave.drawLine(new LineSegment(
+      new Point(leftCollisionX, maxWidthY),
+      new Point(rightCollisionX, maxWidthY)
+    ), "red");
+    window.debugTools.wave.drawLine(textLine, "black");
+    window.debugTools.wave.drawPoint(leftTextCollision, "red");
+    window.debugTools.wave.drawPoint(textCenter, "blue");
+    window.debugTools.wave.drawPoint(rightTextCollision, "green");
+  }
 
   return new Label(text, leftTextCollision.x, leftTextCollision.y, font, fontSize);
 }

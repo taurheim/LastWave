@@ -9,7 +9,7 @@ function isYType(peak) {
     // y1
     peak.A.slope > 0 &&
     peak.B.slope < 0 &&
-    peak.C.slope >= 0 &&
+    peak.C.slope > 0 &&
     peak.D.slope > 0
   ) ||
   (
@@ -17,11 +17,11 @@ function isYType(peak) {
     peak.A.slope > 0 &&
     peak.B.slope < 0 &&
     peak.C.slope < 0 &&
-    peak.D.slope <= 0
+    peak.D.slope < 0
   ) ||
   (
     // y3
-    peak.A.slope <= 0 &&
+    peak.A.slope < 0 &&
     peak.B.slope < 0 &&
     peak.C.slope < 0 &&
     peak.D.slope > 0
@@ -29,7 +29,7 @@ function isYType(peak) {
   (
     // y4
     peak.A.slope > 0 &&
-    peak.B.slope >= 0 &&
+    peak.B.slope > 0 &&
     peak.C.slope < 0 &&
     peak.D.slope > 0
   );
@@ -97,12 +97,16 @@ function getYLabel(peak, text, font) {
   var peakType;
   if (peak.A.slope <= 0) {
     peakType = TYPE.Y3;
-  } else if (peak.B.slope > 0) {
+  } else if (peak.B.slope >= 0) {
     peakType = TYPE.Y4;
-  } else if (peak.C.slope > 0) {
+  } else if (peak.C.slope >= 0) {
     peakType = TYPE.Y1;
   } else {
     peakType = TYPE.Y2;
+  }
+
+  if (window.debug) {
+    console.log("Type: " + peakType);
   }
 
   /*
@@ -111,6 +115,10 @@ function getYLabel(peak, text, font) {
   var performIteration = function(startPoint, fontSlope, opposite, across, adjacent) {
     // Find out where our opposite and font lines intersect
     var fontLine = new InfiniteLine(fontSlope, startPoint);
+
+    if (window.debug) {
+      window.debugTools.wave.drawLine(fontLine, "black");
+    }
 
     // Short Circuit 1: Check if our line intersects across
     var acrossIntersect = across.getIntersect(fontLine);
@@ -138,6 +146,12 @@ function getYLabel(peak, text, font) {
     // and goes in the opposite slope direction
     var invertedStart = new Point(collisionPoint.x, startPoint.y);
     var invertedLine = new InfiniteLine(fontSlope*-1, invertedStart);
+
+    if (window.debug) {
+      window.debugTools.wave.drawPoint(collisionPoint, "purple");
+      window.debugTools.wave.drawPoint(invertedStart, "green");
+      window.debugTools.wave.drawLine(invertedLine, "orange");
+    }
 
     // Short Circuit 2: Check if our line intersects adjacent
     var adjacentIntersect = adjacent.getIntersect(invertedLine);
@@ -189,8 +203,20 @@ function getYLabel(peak, text, font) {
     var fontLine = new InfiniteLine(fontSlope, startPoint);
     var endPoint = fontLine.getIntersect(opposite);
 
+    if (window.debug) {
+      window.debugTools.wave.drawLine(fontLine, "cyan");
+    }
+
     if (!endPoint) {
-      throw new Error("[waveY] Couldn't calculate font size");
+      // If we miss opposite altogether, let's just stop there.
+      endPoint = fontLine.getPointOnLineAtX(
+        Math.min(
+          opposite.getStartPoint().x,
+          opposite.getEndPoint().y
+        )
+      );
+      console.log("Had to emergency fix " + text);
+      // throw new Error("[waveY] Couldn't calculate font size");
     }
 
     var boxHeight = Math.abs(startPoint.y - endPoint.y);
@@ -218,6 +244,11 @@ function getYLabel(peak, text, font) {
 
   // Iterate!
   while(shouldIterate) {
+    if (window.debug) {
+      window.debugTools.wave.drawPoint(startPoint, "red");
+      window.debugTools.wave.drawTextBelowPoint(startPoint, iterationCount);
+    }
+
     startPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
     console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
 

@@ -5,9 +5,14 @@
 */
 function isZType(peak) {
   return (
-    peak.A.slope > 0 &&
-    peak.B.slope < 0 &&
-    peak.C.slope < 0 &&
+    peak.A.slope >= 0 &&
+    peak.B.slope <= 0 &&
+    peak.C.slope <= 0 &&
+    peak.D.slope >= 0
+  ) || (
+    peak.A.slope === 0 &&
+    peak.B.slope === 0 &&
+    peak.C.slope > 0 &&
     peak.D.slope > 0
   );
 }
@@ -33,6 +38,14 @@ function getZLabel(peak, text, font) {
   var forwardLine = new InfiniteLine(textDimensions.slope, centerPoint);
   var backwardLine = new InfiniteLine(textDimensions.slope * -1, centerPoint);
 
+  if (window.debug) {
+    window.debugTools.wave.drawLine(forwardLine, "black");
+    window.debugTools.wave.drawLine(backwardLine, "white");
+    window.debugTools.wave.drawPoint(leftMidpoint, "red");
+    window.debugTools.wave.drawPoint(centerPoint, "green");
+    window.debugTools.wave.drawPoint(rightMidpoint, "blue");
+  }
+
   // Check all intersections with the peak
   // TODO better naming here
   var checkIntersections = ["A", "B", "C", "D"];
@@ -51,13 +64,17 @@ function getZLabel(peak, text, font) {
   }
 
   // The min vertical distance gives us how much height we have to work with
-  var boxHeight = minVerticalDistance*2;
+  var boxHeight = Math.floor(minVerticalDistance*2);
   var heightToFontSizeRatio = textDimensions.height / TEST_FONT_SIZE;
   var fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
 
   // Position the text on the bottom left corner
   var textPositionX = centerPoint.x - minVerticalDistance/textDimensions.slope;
-  var textPositionY = centerPoint.y - minVerticalDistance;
+  var textPositionY = centerPoint.y - boxHeight/2;
+
+  if (window.debug) {
+    window.debugTools.wave.drawPoint(new Point(textPositionX, textPositionY));
+  }
 
   return new Label(text, textPositionX, textPositionY, font, fontSize);
 }

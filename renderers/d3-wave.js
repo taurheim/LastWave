@@ -4,6 +4,9 @@
 // $.getScript('renderers/d3-wave-algorithms/waveZ.js')
 
 function WaveGraph() {
+  window.debug = true;
+  // window.debugText = "Emancipator";
+
   this.title = "Wave Graph";
   
   // Config
@@ -124,11 +127,24 @@ function WaveGraph() {
     });
     graph.render();
 
+    if (window.debug || window.debugText) {
+      window.debugTools.wave.setSvgDiv(d3.select("#" + this.DIV_ID).select("svg"));
+    }
+
     // Add ripple labels (e.g. Artist Names)
     var scalingValues = this.getScalingValues(rickshawData, graphWidth, graphHeight);
     for(var r = 0; r < rickshawData.length; r++) {
       var rippleData = rickshawData[r];
+
+      if (window.debugText && window.debugText === rippleData.name) {
+        window.debug = true;
+      }
+
       this.addGraphLabels(options.font, rippleData, scalingValues);
+
+      if (window.debugText && window.debugText === rippleData.name) {
+        window.debug = false;
+      }
     }
 
     // Add month names
@@ -140,8 +156,6 @@ function WaveGraph() {
     Draw labels on a ripple
   */
   this.addGraphLabels = function(font, rippleData, scalingValues) {
-    console.log("Adding labels to graph...");
-
     // First find where we should add points
     // Convert our data into a single array
     var rippleCounts = [];
@@ -152,12 +166,19 @@ function WaveGraph() {
     // labelPoints is an array of indices, each one is a
     // peak that we want to add a label to
     var labelIndices = this.findLabelIndices(rippleCounts);
-    console.log("Indices found: " + labelIndices);
 
     for (var i = 0; i < labelIndices.length; i++) {
       var index = labelIndices[i];
       var peak = new Peak(index, rippleData.stack);
       peak.scale(scalingValues.x, scalingValues.y);
+
+      if (window.debug) {
+        window.debugTools.wave.drawLine(peak.A, "red");
+        window.debugTools.wave.drawLine(peak.B, "blue");
+        window.debugTools.wave.drawLine(peak.C, "green");
+        window.debugTools.wave.drawLine(peak.D, "yellow");
+      }
+
       this.drawTextOnPeak(rippleData.name, peak, font);
     }
   }
@@ -214,10 +235,14 @@ function WaveGraph() {
     Figure out how big the text should be and where it should go
   */
   this.drawTextOnPeak = function(text, peak, font) {
-    console.log("Attempting to draw " + text + " on peak");
+    console.log("Drawing " + text);
+
+    if (window.debug) {
+      console.log(peak);
+    }
 
     //TODO magic numbers/strings
-    var svgDiv = d3.select("#visualization").select("svg");
+    var svgDiv = d3.select("#" + this.DIV_ID).select("svg");
     var graphHeight = svgDiv.attr("height");
 
     var label;
