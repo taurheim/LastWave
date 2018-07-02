@@ -8,16 +8,16 @@ function isXType(peak) {
   return (
     // "x1"
     peak.A.slope <= 0 &&
-    peak.B.slope < 0 &&
-    peak.C.slope < 0 &&
+    peak.B.slope <= 0 &&
+    peak.C.slope <= 0 &&
     peak.D.slope <= 0
   ) ||
   (
     // "x2"
-    peak.A.slope > 0 &&
+    peak.A.slope >= 0 &&
     peak.B.slope >= 0 &&
     peak.C.slope >= 0 &&
-    peak.D.slope > 0
+    peak.D.slope >= 0
   )
 }
 

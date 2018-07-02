@@ -33,6 +33,7 @@ function LastFm() {
     var defaultStartDate = new Date();
     defaultStartDate.setMonth(today.getMonth() - 3);
     defaultStartDate.setDate(today.getDate() - 5);
+    defaultStartDate.setFullYear(today.getFullYear() - 1);
     return {
       "username": {
         "title": "last.fm username",
@@ -53,14 +54,14 @@ function LastFm() {
         "title": "Group By",
         "type": "dropdown",
         "options": [
-          "week",
           "month",
+          "week",
         ]
       },
       "min_plays": {
         "title": "Minimum plays",
         "type": "int",
-        "default": 10,
+        "default": 30,
       }
     }
   }

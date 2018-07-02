@@ -5,7 +5,7 @@
 
 function WaveGraph() {
   window.debug = false;
-  window.debugText = "Red Hot Chili Peppers";
+  // window.debugText = "Kendrick Lamar";
 
   this.title = "Wave Graph";
   
@@ -120,6 +120,7 @@ function WaveGraph() {
     var graphHeight = options.height;
 
     // Create the wave graph using Rickshaw/d3
+    $("#" + this.DIV_ID).html("");
     var graph = new Rickshaw.Graph({
       element: $("#" + this.DIV_ID)[0],
       width: graphWidth,
@@ -262,16 +263,22 @@ function WaveGraph() {
     } else if (isZType(peak)) {
       label = getZLabel(peak, text, font);
     } else {
-      throw new Error("Couldn't classify peak. Something went wrong!");
+      var graphWidth = svgDiv.attr("width");
+      if (peak.topLeft.x === 0 || peak.topRight.x === graphWidth) {
+        // TODO this happens because we choose the second
+        // time segment as our labelling point, and right now we ignore
+        // the first time segment (the one that touches the edge of the graph)
+        // We can end up in position where we're drawing a label on a peak
+        // that's not a local maximum. For now let's just ignore.
+        return;
+      } else {
+        throw new Error("Couldn't classify peak. Something went wrong!");
+      }
     }
 
     if (label === false) {
       // Couldn't find a meaningful place to put text.
       return;
-    }
-
-    if (isNaN(label.y)) {
-      console.log("IS NAN");
     }
 
     svgDiv.append("text")
