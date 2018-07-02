@@ -5,7 +5,7 @@
 
 function WaveGraph() {
   window.debug = false;
-  window.debugText = "Portugal. The Man";
+  window.debugText = "Red Hot Chili Peppers";
 
   this.title = "Wave Graph";
   

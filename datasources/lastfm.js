@@ -56,6 +56,11 @@ function LastFm() {
           "week",
           "month",
         ]
+      },
+      "min_plays": {
+        "title": "Minimum plays",
+        "type": "int",
+        "default": 10,
       }
     }
   }
@@ -78,6 +83,29 @@ function LastFm() {
     url = url.replace("{from}", startDate);
     url = url.replace("{to}", endDate);
     return url;
+  }
+
+  /*
+    Remove any artist/genre/etc. that has fewer than minPlays plays in its
+    largest time segment.
+    Assume data in format:
+    [
+      {
+        name: <string>
+        counts: [<int>]
+      }
+    ]
+  */
+  this.cleanByMinPlays = function(data, minPlays) {
+    return data.filter(function(obj) {
+      var maxPlays = 0;
+      for (var i = 0; i < obj.counts.length; i++) {
+        var playCount = obj.counts[i];
+        if(playCount > maxPlays) maxPlays = playCount;
+      }
+
+      return maxPlays > minPlays;
+    });
   }
 
   /*
@@ -173,6 +201,7 @@ function LastFm() {
     var unixEnd = DateStringToUnix(options["time_end"]);
     var username = options["username"];
     var groupBy = options["group_by"];
+    var minPlays = options["min_plays"];
 
     // TODO error checking (date in future, etc.)
 
@@ -192,6 +221,10 @@ function LastFm() {
 
       // Once each segment has been parsed, we just need to join them
       var lastFmData = self.joinSegments(segmentData);
+
+      console.log("Ripples before cleaning: " + lastFmData.length);
+      lastFmData = self.cleanByMinPlays(lastFmData, minPlays);
+      console.log("Ripples after cleaning: " + lastFmData.length);
 
       callback(err, lastFmData);
     });
