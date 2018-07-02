@@ -176,7 +176,7 @@ function CreateWave() {
 
     selectedDataSource.loadData(dataSourceOptions, function(err, musicData) {
         // While last.fm isn't hooked up!
-        musicData = window.demoData;
+        // musicData = window.demoData;
 
         selectedRenderer.renderVisualization(musicData, rendererOptions);
 

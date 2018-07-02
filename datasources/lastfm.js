@@ -6,7 +6,8 @@ function LastFm() {
   this.title = "last.fm";
   // Send an api every __ ms
   this.LAST_FM_API_CADENCE_MS = 500;
-  this.LAST_FM_API_CONCURRENT_REQUESTS = 2;
+  // TODO If this is set to more than 1 there is a race condition
+  this.LAST_FM_API_CONCURRENT_REQUESTS = 1; 
   this.INTERVALS = {
     week: 604800,
     month: 2628000,
@@ -91,7 +92,8 @@ function LastFm() {
     var segments = rootDiv.childNodes[0].childNodes;
     var counts = [];
 
-    console.log("Parsing doc...");
+
+    console.log("Parsing doc with " + segments.length + " artists");
 
     for (var i = 0; i < segments.length; i++) {
       var segmentData = segments[i];

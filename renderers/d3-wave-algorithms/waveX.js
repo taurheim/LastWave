@@ -28,6 +28,7 @@ function isXType(peak) {
 */
 function getXLabel(peak, text, font) {
   var TEST_FONT_SIZE = 3000;
+  var MINIMUM_SPACE_PX = 1;
 
   var isX1 = peak.A.slope < 0;
 
@@ -37,6 +38,12 @@ function getXLabel(peak, text, font) {
   var leftCollisionX, rightCollisionX;
   var bottomY = peak.bottom.y + 1;
   var topY = peak.top.y - 1;
+
+  // If there is less than a pixel between the top and bottom,
+  // we can't fit any meaningful text here.
+  if ((topY - bottomY) < MINIMUM_SPACE_PX) {
+    return false;
+  }
 
   var leftCollidingLine, rightCollidingLine;
   if (isX1) {
@@ -85,8 +92,28 @@ function getXLabel(peak, text, font) {
   var leftTextCollision = leftCollidingLine.getIntersect(textLine);
   var rightTextCollision = rightCollidingLine.getIntersect(textLine);
 
-  // Sometimes we will miss (this means there are big gaps on the left and right)
-  // In this situation, just use the outer bounds.
+  // There are two situations where we might not collide:
+  // 1. The textLine actually hits a different line on the top/bottom
+  // --> We need to check if the other line has a collision
+  // 2. The textline goes through a wide gap on left/right
+  // --> Use the outer bounds
+  // Situation #1
+  if (!leftTextCollision) {
+    if (isX1) {
+      leftTextCollision = peak.D.getIntersect(textLine);
+    } else {
+      leftTextCollision = peak.B.getIntersect(textLine);
+    }
+  }
+  if (!rightTextCollision) {
+    if (isX1) {
+      rightTextCollision = peak.A.getIntersect(textLine);
+    } else {
+      rightTextCollision = peak.C.getIntersect(textLine);
+    }
+  }
+
+  // Situation #2
   if (!leftTextCollision) {
     leftTextCollision = textLine.getPointOnLineAtX(leftCollidingLine.getStartPoint().x);
   }
@@ -102,7 +129,7 @@ function getXLabel(peak, text, font) {
     window.debugTools.wave.drawLine(new LineSegment(
       new Point(leftCollisionX, maxWidthY),
       new Point(rightCollisionX, maxWidthY)
-    ), "red");
+    ), "green");
     window.debugTools.wave.drawLine(textLine, "black");
     window.debugTools.wave.drawPoint(leftTextCollision, "red");
     window.debugTools.wave.drawPoint(textCenter, "blue");

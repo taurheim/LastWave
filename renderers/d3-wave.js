@@ -5,7 +5,7 @@
 
 function WaveGraph() {
   window.debug = false;
-  // window.debugText = "Emancipator";
+  window.debugText = "Portugal. The Man";
 
   this.title = "Wave Graph";
   
@@ -53,6 +53,11 @@ function WaveGraph() {
         "title": "Font",
         "type": "string",
         "default": "Roboto",
+      },
+      "add_labels": {
+        "title": "Add labels",
+        "type": "toggle",
+        "default": true,
       }
     };
   };
@@ -132,18 +137,20 @@ function WaveGraph() {
     }
 
     // Add ripple labels (e.g. Artist Names)
-    var scalingValues = this.getScalingValues(rickshawData, graphWidth, graphHeight);
-    for(var r = 0; r < rickshawData.length; r++) {
-      var rippleData = rickshawData[r];
+    if (options.add_labels) {
+      var scalingValues = this.getScalingValues(rickshawData, graphWidth, graphHeight);
+      for(var r = 0; r < rickshawData.length; r++) {
+        var rippleData = rickshawData[r];
 
-      if (window.debugText && window.debugText === rippleData.name) {
-        window.debug = true;
-      }
+        if (window.debugText && window.debugText === rippleData.name) {
+          window.debug = true;
+        }
 
-      this.addGraphLabels(options.font, rippleData, scalingValues);
+        this.addGraphLabels(options.font, rippleData, scalingValues);
 
-      if (window.debugText && window.debugText === rippleData.name) {
-        window.debug = false;
+        if (window.debugText && window.debugText === rippleData.name) {
+          window.debug = false;
+        }
       }
     }
 
@@ -256,6 +263,15 @@ function WaveGraph() {
       label = getZLabel(peak, text, font);
     } else {
       throw new Error("Couldn't classify peak. Something went wrong!");
+    }
+
+    if (label === false) {
+      // Couldn't find a meaningful place to put text.
+      return;
+    }
+
+    if (isNaN(label.y)) {
+      console.log("IS NAN");
     }
 
     svgDiv.append("text")
