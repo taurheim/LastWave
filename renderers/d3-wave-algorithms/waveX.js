@@ -136,5 +136,8 @@ function getXLabel(peak, text, font) {
     window.debugTools.wave.drawPoint(rightTextCollision, "green");
   }
 
-  return new Label(text, leftTextCollision.x, leftTextCollision.y, font, fontSize);
+  var textX = leftTextCollision.x;
+  var textY = Math.min(leftTextCollision.y, rightTextCollision.y);
+
+  return new Label(text, textX, textY, font, fontSize);
 }

@@ -31,11 +31,17 @@ function getWLabel(peak, text, font) {
   // Config
   var STARTING_FONT_SIZE = 5;
   var FONT_SIZE_INTERVAL = 2;
-  var FONT_SIZE_SAFETY_SCALE = 0.75;
+  var FONT_SIZE_SAFETY_SCALE = 0.9;
 
   var fontSize = STARTING_FONT_SIZE;
-  var leftCollisionX, rightCollisionX;
+  var leftCollision, rightCollision;
   var verticalPointyBound, horizontalLeftBound, horizontalRightBound;
+
+  // If we don't have enough space, don't even bother
+  var minimumHeightRequired = getTextDimensions(text, font, fontSize).height;
+  if ((peak.top.y - peak.bottom.y) < minimumHeightRequired) {
+    return false;
+  }
 
   // Slightly different code for "w1" vs "w2"
   var isW1 = (peak.A.slope <= 0);
@@ -51,26 +57,38 @@ function getWLabel(peak, text, font) {
     horizontalRightBound = peak.B;
   }
 
+
   // Loop
   // TODO explain
   while (true) {
     var verticalInnerBound;
+    var textDimensions = getTextDimensions(text, font, fontSize);
     if (isW1) {
-      verticalInnerBound = verticalPointyBound - fontSize;
+      verticalInnerBound = verticalPointyBound - textDimensions.height;
     } else {
-      verticalInnerBound = verticalPointyBound + fontSize;
+      verticalInnerBound = verticalPointyBound + textDimensions.height;
     }
 
     // If we draw a line above our text box, how far can it stretch
     // to the left and right before it hits the sides
-    // of our text box?  x = (y - b)/m
-    leftCollisionX = (verticalInnerBound - horizontalLeftBound.intercept) / horizontalLeftBound.slope;
-    rightCollisionX = (verticalInnerBound - horizontalRightBound.intercept) / horizontalRightBound.slope;
+    // of our text box?
+    var topLine = new InfiniteLine(0, new Point(0, verticalInnerBound));
+    leftCollision = topLine.getIntersect(horizontalLeftBound);
+    rightCollision = topLine.getIntersect(horizontalRightBound);
+
+    if (!leftCollision) leftCollision = new Point(peak.topLeft.x, verticalInnerBound);
+    if (!rightCollision) rightCollision = new Point(peak.topRight.x, verticalInnerBound);
 
     // This is the available width at this font size
-    var availableWidth = rightCollisionX - leftCollisionX;
+    var availableWidth = rightCollision.x - leftCollision.x;
 
-    var textDimensions = getTextDimensions(text, font, fontSize);
+    if (window.debug) {
+      window.debugTools.wave.drawLine(topLine, "black");
+      window.debugTools.wave.drawPoint(leftCollision, "red");
+      window.debugTools.wave.drawPoint(rightCollision, "green");
+      window.debugTools.wave.drawTextBelowPoint(rightCollision, fontSize);
+    }
+
     if (textDimensions.width < availableWidth) {
       fontSize += FONT_SIZE_INTERVAL;
     } else {
@@ -80,9 +98,8 @@ function getWLabel(peak, text, font) {
 
   fontSize *= FONT_SIZE_SAFETY_SCALE;
   
-  // Center the text vertically & horizontally
+  // Center the text vertically
   var textDimensions = getTextDimensions(text, font, fontSize);
-  var labelX = peak.bottom.x - (textDimensions.width/2);
   var labelY;
   if (isW1) {
     labelY = peak.top.y - textDimensions.height;
@@ -90,6 +107,7 @@ function getWLabel(peak, text, font) {
     labelY = peak.bottom.y;
   }
 
+  var labelX = leftCollision.x;
 
   return new Label(text, labelX, labelY, font, fontSize);
 }

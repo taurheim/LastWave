@@ -249,17 +249,19 @@ function getYLabel(peak, text, font) {
       window.debugTools.wave.drawTextBelowPoint(startPoint, iterationCount);
       console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
     }
-
-    startPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
+    var newStartPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
 
     // Calculate our new font size
-    fontSize = calculateFontSize(text, startPoint, fontSlope, opposite);
+    fontSize = calculateFontSize(text, newStartPoint, fontSlope, opposite);
 
     // Sometimes we "bounce" between two (or three) different spots. In this case,
-    // just stop the algorithm
+    // just stop the algorithm (and go back to the last spot)
     for(var i = 0; i < iterationCache.length; i++) {
       if (iterationCache[i] === fontSize) {
         shouldIterate = false;
+        
+        // Go back to the last start point
+        newStartPoint = startPoint;
       }
     }
 
@@ -271,6 +273,9 @@ function getYLabel(peak, text, font) {
     if (iterationCount > MAXIMUM_ITERATIONS) {
       shouldIterate = false;
     }
+
+    // Set up for next iteration
+    startPoint = newStartPoint;
   }
 
   var textPosition = startPoint;

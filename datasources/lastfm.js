@@ -14,7 +14,7 @@ function LastFm() {
   };
   this.METHODS = {
     artist: "user.getweeklyartistchart",
-    album: "user.getmonthlyartistchart",
+    album: "user.getweeklyalbumchart",
   };
   this.API_KEY = "27ca6b1a0750cf3fb3e1f0ec5b432b72";
   this.API_URL = "http://ws.audioscrobbler.com/2.0/";
@@ -27,6 +27,8 @@ function LastFm() {
   this.LFM_IGNORE_NODE_NAME = "#text";
   this.LFM_NAME_TAG = "name";
   this.LFM_PLAYS_TAG = "playcount";
+  this.LFM_ARTIST_TAG = "artist";
+  this.ALBUM_NAME_FORMAT = '{album}<br>{artist}';
 
   this.getOptions = function() {
     var today = new Date();
@@ -62,6 +64,14 @@ function LastFm() {
         "title": "Minimum plays",
         "type": "int",
         "default": 30,
+      },
+      "method": {
+        "title": "Data Set",
+        "type": "dropdown",
+        "options": [
+          "album",
+          "artist",
+        ],
       }
     }
   }
@@ -77,9 +87,9 @@ function LastFm() {
     return segments;
   }
 
-  this.getAPIRequestURL = function(username, startDate, endDate) {
+  this.getAPIRequestURL = function(method, username, startDate, endDate) {
     var url = this.API_URL;
-    url = url.replace("{method}", this.METHODS["artist"]);
+    url = url.replace("{method}", this.METHODS[method]);
     url = url.replace("{user}", username);
     url = url.replace("{from}", startDate);
     url = url.replace("{to}", endDate);
@@ -105,7 +115,7 @@ function LastFm() {
         if(playCount > maxPlays) maxPlays = playCount;
       }
 
-      return maxPlays > minPlays;
+      return maxPlays >= minPlays;
     });
   }
 
@@ -128,6 +138,16 @@ function LastFm() {
       var segmentData = segments[i];
       if (segmentData.nodeName === self.LFM_IGNORE_NODE_NAME) continue;
       var name = segmentData.getElementsByTagName(self.LFM_NAME_TAG)[0].childNodes[0].nodeValue;
+      
+      // Combine album + name
+      if (segmentData.getElementsByTagName(self.LFM_ARTIST_TAG).length) {
+        var albumArtist = segmentData.getElementsByTagName(self.LFM_ARTIST_TAG)[0].childNodes[0].nodeValue;
+        var albumName = name;
+        name = self.ALBUM_NAME_FORMAT;
+        name = name.replace("{album}", albumName);
+        name = name.replace("{artist}", albumArtist);
+      }
+
       var plays = segmentData.getElementsByTagName(self.LFM_PLAYS_TAG)[0].childNodes[0].nodeValue;
       counts.push({
         name: name,
@@ -176,6 +196,8 @@ function LastFm() {
       }
     }
 
+    console.log("Joined " + segmentData.length + " segments");
+
     // Turn our map into an array
     return Array.from(Object.values(countsByName));
   }
@@ -203,6 +225,7 @@ function LastFm() {
     var username = options["username"];
     var groupBy = options["group_by"];
     var minPlays = options["min_plays"];
+    var method = options["method"];
 
     // TODO error checking (date in future, etc.)
 
@@ -210,7 +233,7 @@ function LastFm() {
     var requestURLs = [];
     for (var i = 0; i < allSegments.length; i++) {
       var segment = allSegments[i];
-      requestURLs.push(this.getAPIRequestURL(username, segment.start, segment.end));
+      requestURLs.push(this.getAPIRequestURL(method, username, segment.start, segment.end));
     }
 
     // Send all the requests

@@ -5,7 +5,7 @@
 
 function WaveGraph() {
   window.debug = false;
-  // window.debugText = "Kendrick Lamar";
+  window.debugText = "solitude.<br>JinSang";
 
   this.title = "Wave Graph";
   
@@ -15,6 +15,8 @@ function WaveGraph() {
   this.DEFAULT_GRAPH_HEIGHT = 600;
   this.RICKSHAW_RENDERER = "area";
   this.DIV_ID = "visualization";
+  this.MULTILINE_LINE_HEIGHT = "1em";
+  this.MINIMUM_FONT_SIZE_PIXELS = 8;
 
   this.getOptions = function() {
     return {
@@ -264,12 +266,16 @@ function WaveGraph() {
       label = getZLabel(peak, text, font);
     } else {
       var graphWidth = svgDiv.attr("width");
-      if (peak.topLeft.x === 0 || peak.topRight.x === graphWidth) {
-        // TODO this happens because we choose the second
-        // time segment as our labelling point, and right now we ignore
-        // the first time segment (the one that touches the edge of the graph)
-        // We can end up in position where we're drawing a label on a peak
-        // that's not a local maximum. For now let's just ignore.
+      if (
+        (peak.top.y - peak.bottom.y) < (peak.topLeft.y - peak.bottomLeft.y) ||
+        (peak.top.y - peak.bottom.y) < (peak.topRight.y - peak.bottomRight.y)
+      ) {
+        // TODO we can end up here if the height of our peak is less than
+        // either of the neighboring peaks. This happens sometimes
+        // We can deal with this one of two ways:
+        // 1. Come up with more wave algos to handle these cases
+        // 2. Move the peak to the left or right by one
+        // To test, imagine a continually increasing or decreasing ripple
         return;
       } else {
         throw new Error("Couldn't classify peak. Something went wrong!");
@@ -281,12 +287,35 @@ function WaveGraph() {
       return;
     }
 
-    svgDiv.append("text")
-      .text(label.text)
-      .attr("x", label.x)
-      .attr("y", graphHeight - label.y)
-      .attr("font-size", label.fontSize)
-      .attr("font-family", label.font);
+    if (parseFloat(label.fontSize) < this.MINIMUM_FONT_SIZE_PIXELS) {
+      return;
+    }
+
+    if (label.text.indexOf("<br>") > -1) {
+      // Assume max one <br>
+      var firstLine = label.text.split("<br>")[0];
+      var secondLine = label.text.split("<br>")[1];
+      svgDiv.append("text")
+        .attr("x", label.x)
+        .attr("y", graphHeight - label.y)
+        .attr("font-size", label.fontSize)
+        .attr("font-family", label.font)
+        .append("svg:tspan")
+          .attr("x", label.x)
+          .attr("dy", "-" + this.MULTILINE_LINE_HEIGHT)
+          .text(firstLine)
+        .append("svg:tspan")
+          .attr("x", label.x)
+          .attr("dy", this.MULTILINE_LINE_HEIGHT)
+          .text(secondLine);
+    } else {
+      svgDiv.append("text")
+        .text(label.text)
+        .attr("x", label.x)
+        .attr("y", graphHeight - label.y)
+        .attr("font-size", label.fontSize)
+        .attr("font-family", label.font);
+    }
   }
 
   /*
@@ -405,10 +434,11 @@ function getTextDimensions(text, font, fontSize) {
       position: "absolute",
       float: "left", 
       "white-space": "nowrap",
-      visibility: "hidden",
       font: fontSize + "px " + font,
+      visibility: "hidden",
     })
     .appendTo($("body"));
+  temp.css("line-height", "1em");
   var width = temp.width();
   var height = temp.height();
 
