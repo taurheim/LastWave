@@ -106,6 +106,7 @@ function CreateOption(parentDiv, option, callbackOnChange) {
 
             // Report default if necessary
             if(option.default) {
+                inputDiv.prop("value", option.default);
                 callbackOnChange(option.default);
             }
             break;
@@ -175,9 +176,6 @@ function CreateWave() {
     console.log("Perform validation");
 
     selectedDataSource.loadData(dataSourceOptions, function(err, musicData) {
-        // While last.fm isn't hooked up!
-        // musicData = window.demoData;
-
         selectedRenderer.renderVisualization(musicData, rendererOptions);
 
         ShowActions();
