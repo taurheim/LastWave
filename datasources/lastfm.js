@@ -15,27 +15,28 @@ function LastFm() {
   this.METHODS = {
     artist: "user.getweeklyartistchart",
     album: "user.getweeklyalbumchart",
+    tag: "artist.gettoptags",
   };
   this.API_KEY = "27ca6b1a0750cf3fb3e1f0ec5b432b72";
   this.API_URL = "http://ws.audioscrobbler.com/2.0/";
     this.API_URL += "?method={method}";
-    this.API_URL += "&user={user}";
     this.API_URL += "&api_key=" + this.API_KEY;
-    this.API_URL += "&from={from}";
-    this.API_URL += "&to={to}";
   this.API_RESPONSE_ROOT_DIV_TAG = "lfm";
   this.LFM_IGNORE_NODE_NAME = "#text";
   this.LFM_NAME_TAG = "name";
   this.LFM_PLAYS_TAG = "playcount";
   this.LFM_ARTIST_TAG = "artist";
+  this.LFM_TAG_COUNT_TAG = "count";
   this.ALBUM_NAME_FORMAT = '{album}<br>{artist}';
+  this.IGNORE_TAG_WEIGHT_UNDER = 50;
+  this.TAG_TOP_N_COUNT = 30;
 
   this.getOptions = function() {
     var today = new Date();
     var defaultStartDate = new Date();
-    defaultStartDate.setMonth(today.getMonth() - 3);
-    defaultStartDate.setDate(today.getDate() - 5);
-    defaultStartDate.setFullYear(today.getFullYear() - 1);
+    defaultStartDate.setDate(today.getDate() - 1);
+    // defaultStartDate.setMonth(today.getMonth() - 1);
+    // defaultStartDate.setFullYear(today.getFullYear() - 1);
     return {
       "username": {
         "title": "last.fm username",
@@ -56,8 +57,8 @@ function LastFm() {
         "title": "Group By",
         "type": "dropdown",
         "options": [
-          "month",
           "week",
+          "month",
         ]
       },
       "min_plays": {
@@ -69,6 +70,7 @@ function LastFm() {
         "title": "Data Set",
         "type": "dropdown",
         "options": [
+          "tag",
           "album",
           "artist",
         ],
@@ -87,13 +89,16 @@ function LastFm() {
     return segments;
   }
 
-  this.getAPIRequestURL = function(method, username, startDate, endDate) {
+  /*
+    Additional params should be an object of keys and values
+  */
+  this.getAPIRequestURL = function(method, additionalParams) {
     var url = this.API_URL;
     url = url.replace("{method}", this.METHODS[method]);
-    url = url.replace("{user}", username);
-    url = url.replace("{from}", startDate);
-    url = url.replace("{to}", endDate);
-    return url;
+    for (var k in additionalParams) {
+      url += "&" + k + "=" + additionalParams[k];
+    }
+    return encodeURI(url);
   }
 
   /*
@@ -108,7 +113,8 @@ function LastFm() {
     ]
   */
   this.cleanByMinPlays = function(data, minPlays) {
-    return data.filter(function(obj) {
+    console.log("Before clean: " + data.length);
+    var cleanedData = data.filter(function(obj) {
       var maxPlays = 0;
       for (var i = 0; i < obj.counts.length; i++) {
         var playCount = obj.counts[i];
@@ -117,6 +123,27 @@ function LastFm() {
 
       return maxPlays >= minPlays;
     });
+    console.log("After clean: " + cleanedData.length);
+
+    return cleanedData;
+  }
+
+  /*
+    Only keep the top N groups
+  */
+  this.cleanByTopN = function(data, n) {
+    data.sort(function(a, b) {
+      var maxA = 0;
+      var maxB = 0;
+      for (var i = 0; i < a.counts.length; i++) {
+        if (a.counts[i] > maxA) maxA = a.counts[i];
+        if (b.counts[i] > maxB) maxB = b.counts[i];
+      }
+
+      return maxB - maxA;
+    });
+
+    return data.slice(0, n);
   }
 
   /*
@@ -148,14 +175,131 @@ function LastFm() {
         name = name.replace("{artist}", albumArtist);
       }
 
-      var plays = segmentData.getElementsByTagName(self.LFM_PLAYS_TAG)[0].childNodes[0].nodeValue;
+      var count;
+      if (segmentData.getElementsByTagName(self.LFM_PLAYS_TAG).length) {
+        count = segmentData.getElementsByTagName(self.LFM_PLAYS_TAG)[0].childNodes[0].nodeValue;
+      } else if (segmentData.getElementsByTagName(self.LFM_TAG_COUNT_TAG).length) {
+        count = segmentData.getElementsByTagName(self.LFM_TAG_COUNT_TAG)[0].childNodes[0].nodeValue;
+      }
+
       counts.push({
         name: name,
-        count: plays,
+        count: parseInt(count),
       });
     }
 
     return counts;
+  }
+
+  // TODO DRY for the other async limit
+  /*
+    artistData should look like this:
+    [
+      {
+        "title": <string>,
+        "counts": [<int>]
+      }
+    ]
+  */
+  this.getTagsForArtistData = function(artistData, callback) {
+    // 1. Get all tags for every artist
+    var requests = [];
+    for (var i = 0; i < artistData.length; i++) {
+      var artist = artistData[i];
+      var requestMethod = "tag";
+      var requestParams = {
+        // TODO normalize name vs title
+        artist: artist.title,
+      };
+
+      requests.push(this.getAPIRequestURL(requestMethod, requestParams));
+    }
+
+    this.sendAllRequests(requests, function(err, lastFmData) {
+      var tagData = {};
+      for (var i = 0; i < lastFmData.length; i++) {
+        var name = artistData[i].title;
+        var tags = self.parseResponseDoc(lastFmData[i]);
+        tagData[name] = tags;
+      }
+
+      // 2. Multiply the play counts for every time span by the tags
+      callback(null, self.combineArtistTags(artistData, tagData));
+    });
+  }
+
+  /*
+    Take in a list of artist playcounts:
+    [
+      {
+        "title": <string> (Name of artist)
+        "counts": [<int>] (counts of artist over time)
+      }
+    ]
+
+    and a map of tags for artists:
+      key: <artist name>
+      value: [
+        {
+          "name": <string>, (Name of tag)
+          "count": <int> (Weight of tag)
+        }
+      ]
+
+    and combine them into a new list of tags:
+    [
+      {
+        "title": <string>,  (Name of tag)
+        "counts": [<int>]   (Count of tag)
+      }
+    ]
+
+    TODO this can likely be combined in a smart way with joinSegments
+  */
+  this.combineArtistTags = function(artistData, tagData) {
+    // Key: tag name
+    // Value: {name: <string>, counts: [<int>]}
+    var countsByTag = {};
+
+    for(var i = 0; i < artistData.length; i++) {
+      var artistName = artistData[i].title;
+      var segmentCounts = artistData[i].counts;
+      var artistTags = tagData[artistName];
+
+      // Sometimes we couldn't get tags
+      if (!artistTags) {
+        continue;
+      }
+      
+      // Go through every time segment
+      for(var s = 0; s < segmentCounts.length; s++) {
+        var segmentCount = segmentCounts[s];
+
+        // Go through every tag
+        for (var t = 0; t < artistTags.length; t++) {
+          var tagName = artistTags[t].name;
+          var tagWeight = artistTags[t].count;
+
+          if (tagWeight < self.IGNORE_TAG_WEIGHT_UNDER) {
+            continue;
+          }
+
+          if (!countsByTag[tagName]) {
+            countsByTag[tagName] = {
+              title: tagName,
+              counts: new Array(segmentCounts.length+1).join('0').split('').map(parseFloat),
+            }
+          }
+
+          // Our final weight is:
+          // (weight of the tag for the artist) * (playcount)
+          countsByTag[tagName].counts[s] += tagWeight * segmentCount;
+        }
+      }
+    }
+
+    // Turn our map into an array
+    return Array.from(Object.values(countsByTag));
   }
 
   /*
@@ -214,6 +358,9 @@ function LastFm() {
         $.get(url, function(data) {
           responseData.push(data);
           setTimeout(callback, this.LAST_FM_API_CADENCE_MS);
+        }).fail(function(err) {
+          console.error("Request failed: " + err);
+          setTimeout(callback, this.LAST_FM_API_CADENCE_MS);
         });
       }
     , function(err) {
@@ -236,7 +383,20 @@ function LastFm() {
     var requestURLs = [];
     for (var i = 0; i < allSegments.length; i++) {
       var segment = allSegments[i];
-      requestURLs.push(this.getAPIRequestURL(method, username, segment.start, segment.end));
+      var requestParams = {
+        user: username,
+        from: segment.start,
+        to: segment.end,
+      };
+      var requestMethod = method;
+
+      // TODO magic strings
+      // If we're getting tags, we need to do it in two parts
+      if (method === "tag") {
+        requestMethod = "artist";
+      }
+
+      requestURLs.push(this.getAPIRequestURL(requestMethod, requestParams));
     }
 
     // Send all the requests
@@ -249,11 +409,17 @@ function LastFm() {
       // Once each segment has been parsed, we just need to join them
       var lastFmData = self.joinSegments(segmentData);
 
-      console.log("Ripples before cleaning: " + lastFmData.length);
-      lastFmData = self.cleanByMinPlays(lastFmData, minPlays);
-      console.log("Ripples after cleaning: " + lastFmData.length);
-
-      callback(err, lastFmData);
+      // If the user wants tags over time, we need to run a second set of requests
+      // to get the tags for the album/artist
+      if (method == "tag") {
+        self.getTagsForArtistData(lastFmData, function(err, tagData) {
+          tagData = self.cleanByTopN(tagData, self.TAG_TOP_N_COUNT);
+          callback(err, tagData);
+        });
+      } else {
+        lastFmData = self.cleanByMinPlays(lastFmData, minPlays);
+        callback(err, lastFmData);
+      }
     });
   }
 }

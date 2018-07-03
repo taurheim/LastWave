@@ -6,7 +6,7 @@
 function WaveGraph() {
   var self = this;
   window.debug = false;
-  window.debugText = "Discovery<br>Daft Punk";
+  window.debugText = "female vocalists";
 
   this.title = "Wave Graph";
   
@@ -294,6 +294,13 @@ function WaveGraph() {
     }
 
     if (parseFloat(label.fontSize) < this.MINIMUM_FONT_SIZE_PIXELS) {
+      return;
+    }
+
+    // Sanity check: We shouldn't ever hit this
+    // TODO telemetry on this guy
+    if (getTextDimensions(label.text, label.font, label.fontSize).height > (peak.top.y - peak.bottom.y)) {
+      console.error("One of our algorithms got a font size too big for the space!");
       return;
     }
 
