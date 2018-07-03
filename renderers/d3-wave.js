@@ -4,8 +4,9 @@
 // $.getScript('renderers/d3-wave-algorithms/waveZ.js')
 
 function WaveGraph() {
+  var self = this;
   window.debug = false;
-  window.debugText = "solitude.<br>JinSang";
+  window.debugText = "Discovery<br>Daft Punk";
 
   this.title = "Wave Graph";
   
@@ -122,6 +123,7 @@ function WaveGraph() {
     var graphHeight = options.height;
 
     // Create the wave graph using Rickshaw/d3
+    $("#output").html("Rendering graph...");
     $("#" + this.DIV_ID).html("");
     var graph = new Rickshaw.Graph({
       element: $("#" + this.DIV_ID)[0],
@@ -142,19 +144,23 @@ function WaveGraph() {
     // Add ripple labels (e.g. Artist Names)
     if (options.add_labels) {
       var scalingValues = this.getScalingValues(rickshawData, graphWidth, graphHeight);
-      for(var r = 0; r < rickshawData.length; r++) {
-        var rippleData = rickshawData[r];
+
+      var count = 0;
+      async.each(rickshawData, function(rippleData, callback) {
+        count++;
+        $("#output").html("Adding label to ripple " + count + "/" + rickshawData.length);
 
         if (window.debugText && window.debugText === rippleData.name) {
           window.debug = true;
         }
 
-        this.addGraphLabels(options.font, rippleData, scalingValues);
+        self.addGraphLabels(options.font, rippleData, scalingValues);
 
         if (window.debugText && window.debugText === rippleData.name) {
           window.debug = false;
         }
-      }
+
+      });
     }
 
     // Add month names

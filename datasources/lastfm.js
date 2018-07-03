@@ -203,11 +203,14 @@ function LastFm() {
   }
 
   this.sendAllRequests = function(requests, callback) {
+    var count = 0;
     var responseData = [];
     async.eachLimit(
       requests,
       this.LAST_FM_API_CONCURRENT_REQUESTS,
       function(url, callback) {
+        count++;
+        $("#output").html("Sending request " + count + "/" + requests.length);
         $.get(url, function(data) {
           responseData.push(data);
           setTimeout(callback, this.LAST_FM_API_CADENCE_MS);

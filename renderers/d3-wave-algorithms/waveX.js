@@ -30,7 +30,7 @@ function getXLabel(peak, text, font) {
   var TEST_FONT_SIZE = 3000;
   var MINIMUM_SPACE_PX = 1;
 
-  var isX1 = peak.A.slope < 0;
+  var isX1 = peak.A.slope <= 0;
 
   // 1. Running from bottom to top, find the maximum width point
   var maxWidth = 0;
@@ -62,8 +62,12 @@ function getXLabel(peak, text, font) {
     // If any of these collisions are outside the bounds, cut them off
     // TODO this could be made even better by allowing text to cross multiple peaks
     // for particularly big areas
-    if (leftCollisionX < peak.topLeft.x) leftCollisionX = peak.topLeft.x;
-    if (rightCollisionX > peak.topRight.x) rightCollisionX = peak.topRight.x;
+    if (leftCollisionX < peak.topLeft.x || leftCollisionX == Number.POSITIVE_INFINITY) {
+      leftCollisionX = peak.topLeft.x;
+    }
+    if (rightCollisionX > peak.topRight.x || rightCollisionX == Number.NEGATIVE_INFINITY) {
+      rightCollisionX = peak.topRight.x;
+    }
 
     // Update maximum
     var width = rightCollisionX - leftCollisionX;
