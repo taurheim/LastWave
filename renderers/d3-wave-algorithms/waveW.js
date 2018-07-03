@@ -7,17 +7,17 @@
 function isWType(peak) {
   return (
     // "w1"
-    peak.A.slope > 0 &&
-    peak.B.slope < 0 &&
-    peak.C.slope > 0 &&
-    peak.D.slope < 0
-  ) ||
-  (
-    // "w2"
     peak.A.slope <= 0 &&
     peak.B.slope >= 0 &&
     peak.C.slope < 0 &&
     peak.D.slope > 0
+  ) ||
+  (
+    // "w2"
+    peak.A.slope > 0 &&
+    peak.B.slope < 0 &&
+    peak.C.slope > 0 &&
+    peak.D.slope < 0
   );
 }
 
@@ -67,6 +67,11 @@ function getWLabel(peak, text, font) {
       verticalInnerBound = verticalPointyBound - textDimensions.height;
     } else {
       verticalInnerBound = verticalPointyBound + textDimensions.height;
+    }
+
+    // If we start going outisde our top/bottom, we need to stop
+    if (verticalInnerBound > peak.top.y || verticalInnerBound < peak.bottom.y) {
+      break;
     }
 
     // If we draw a line above our text box, how far can it stretch

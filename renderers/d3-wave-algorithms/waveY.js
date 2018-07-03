@@ -95,11 +95,11 @@ function getYLabel(peak, text, font) {
     TODO merge this and the first method to figure out if it's Y type
   */
   var peakType;
-  if (peak.A.slope <= 0) {
+  if (peak.A.slope < 0) {
     peakType = TYPE.Y3;
-  } else if (peak.B.slope >= 0) {
+  } else if (peak.B.slope > 0) {
     peakType = TYPE.Y4;
-  } else if (peak.C.slope >= 0) {
+  } else if (peak.C.slope > 0) {
     peakType = TYPE.Y1;
   } else {
     peakType = TYPE.Y2;
