@@ -31,6 +31,7 @@ function LastFm() {
   this.ALBUM_NAME_FORMAT = '{album}<br>{artist}';
   this.IGNORE_TAG_WEIGHT_UNDER = 50;
   this.TAG_TOP_N_COUNT = 10;
+  this.DEFAULT_MIN_PLAYS = 10;
   this.IGNORE_TAGS = [
     "seen live",
   ];
@@ -68,15 +69,15 @@ function LastFm() {
       "min_plays": {
         "title": "Minimum plays",
         "type": "int",
-        "default": 30,
+        "default": this.DEFAULT_MIN_PLAYS,
       },
       "method": {
         "title": "Data Set",
         "type": "dropdown",
         "options": [
-          "tag",
-          "album",
           "artist",
+          "album",
+          "tag",
         ],
       },
       "use_localstorage": {
