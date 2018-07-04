@@ -61,7 +61,7 @@ function WaveGraph() {
         "title": "Add labels",
         "type": "toggle",
         "default": true,
-      }
+      },
     };
   };
 
@@ -160,6 +160,10 @@ function WaveGraph() {
           window.debug = false;
         }
 
+        callback();
+      }, function() {
+        console.log("Finished.");
+        console.log(data);
       });
     }
 
