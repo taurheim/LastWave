@@ -5,7 +5,7 @@ function LastFm() {
   var self = this;
   this.title = "last.fm";
   // Send an api every __ ms
-  this.LAST_FM_API_CADENCE_MS = 500;
+  this.LAST_FM_API_CADENCE_MS = 100;
   // TODO If this is set to more than 1 there is a race condition
   this.LAST_FM_API_CONCURRENT_REQUESTS = 1; 
   this.INTERVALS = {
@@ -40,7 +40,7 @@ function LastFm() {
     var today = new Date();
     var defaultStartDate = new Date();
     defaultStartDate.setDate(today.getDate() - 1);
-    defaultStartDate.setMonth(today.getMonth() - 3);
+    defaultStartDate.setMonth(today.getMonth() - 1);
     // defaultStartDate.setFullYear(today.getFullYear() - 1);
     return {
       "username": {
@@ -75,9 +75,9 @@ function LastFm() {
         "title": "Data Set",
         "type": "dropdown",
         "options": [
+          "tag",
           "artist",
           "album",
-          "tag",
         ],
       },
       "use_localstorage": {
@@ -88,19 +88,31 @@ function LastFm() {
     }
   }
   
-  this.splitTimeSpan = function(splitBy, unixStart, unixEnd) {
-    console.log("Time span: " + unixStart + " to " + unixEnd);
+  /*
+    Split a time span into weeks/months.
+    @param splitBy "month" or "week"
+    @param unixStart Unix timestamp for the start of the time span
+    @param unixEnd Unix timestmap for the end of the time span
+    @return Array of TimeSpan objects, each one corresponding to a week/month
+  */
+  this.splitTimeSpan = function(splitBy, timeSpan) {
     var segments = [];
     var interval = this.INTERVALS[splitBy];
-    for (var t = unixStart; t < unixEnd; t += interval) {
+    for (var t = timeSpan.start; t < timeSpan.end; t += interval) {
       segments.push(new TimeSpan(t, t + interval));
     }
+
+    console.log("Time span: " + timeSpan.start + " to " + timeSpan.end);
+    console.log("Split into " + segments.length + " segments");
 
     return segments;
   }
 
   /*
-    Additional params should be an object of keys and values
+    Make a call to the last.fm api.
+    @param method
+    @param additionalParams
+    @return url
   */
   this.getAPIRequestURL = function(method, additionalParams) {
     var url = this.API_URL;
@@ -163,51 +175,6 @@ function LastFm() {
       count: <int>
     }
   */
-  this.parseResponseDoc = function(xmlDoc) {
-    var rootDiv = xmlDoc.getElementsByTagName(this.API_RESPONSE_ROOT_DIV_TAG)[0];
-    var segments = rootDiv.childNodes[0].childNodes;
-    var counts = [];
-
-
-    console.log("Parsing doc with " + segments.length + " artists");
-
-    for (var i = 0; i < segments.length; i++) {
-      var segmentData = segments[i];
-      if (segmentData.nodeName === self.LFM_IGNORE_NODE_NAME) continue;
-      var name = segmentData.getElementsByTagName(self.LFM_NAME_TAG)[0].childNodes[0].nodeValue;
-      
-      // Combine album + name
-      if (segmentData.getElementsByTagName(self.LFM_ARTIST_TAG).length) {
-        var albumArtist = segmentData.getElementsByTagName(self.LFM_ARTIST_TAG)[0].childNodes[0].nodeValue;
-        var albumName = name;
-        name = self.ALBUM_NAME_FORMAT;
-        name = name.replace("{album}", albumName);
-        name = name.replace("{artist}", albumArtist);
-      }
-
-      var count;
-      if (segmentData.getElementsByTagName(self.LFM_PLAYS_TAG).length) {
-        count = segmentData.getElementsByTagName(self.LFM_PLAYS_TAG)[0].childNodes[0].nodeValue;
-      } else if (segmentData.getElementsByTagName(self.LFM_TAG_COUNT_TAG).length) {
-        count = segmentData.getElementsByTagName(self.LFM_TAG_COUNT_TAG)[0].childNodes[0].nodeValue;
-      }
-
-      counts.push({
-        name: name,
-        count: parseInt(count),
-      });
-    }
-
-    return counts;
-  }
-
-  /*
-    Returns an array of:
-    {
-      name: <Name of artist/genre/etc.>
-      count: <int>
-    }
-  */
   this.parseResponseJSON = function(responseJSON) {
     var rootKey = Object.keys(responseJSON)[0];
     var secondKey = Object.keys(responseJSON[rootKey])[0];
@@ -254,30 +221,52 @@ function LastFm() {
     ]
   */
   this.getTagsForArtistData = function(artistData, useLocalStorage, callback) {
-    // 1. Get all tags for every artist
-    var requests = [];
-    for (var i = 0; i < artistData.length; i++) {
-      var artist = artistData[i];
-      var requestMethod = "tag";
-      var requestParams = {
-        // TODO normalize name vs title
-        artist: artist.title,
-      };
-
-      requests.push(this.getAPIRequestURL(requestMethod, requestParams));
-    }
-
-    this.sendAllRequests(requests, useLocalStorage, function(err, lastFmData) {
-      var tagData = {};
-      for (var i = 0; i < lastFmData.length; i++) {
-        var name = artistData[i].title;
-        var tags = self.parseResponseJSON(lastFmData[i]);
-        tagData[name] = tags;
-      }
-
-      // 2. Multiply the play counts for every time span by the tags
-      callback(null, self.combineArtistTags(artistData, tagData));
+    var count = 0;
+    // Make an array of artists
+    var artists = artistData.map(function(artistObject) {
+      return artistObject.title;
     });
+    var tagData = {};
+
+    async.eachLimit(
+      artists,
+      this.LAST_FM_API_CONCURRENT_REQUESTS,
+      function(artistName, callback) {
+        count++;
+        $("#output").html(count + "/" + artists.length + " artist tags fetched.");
+
+        // Check the cache if necessary
+        if (useLocalStorage && window.localStorage["tag-" + artistName]) {
+          tagData[artistName] = JSON.parse(window.localStorage["tag-" + artistName]);
+          return callback();
+        }
+
+        // Make the request
+        var requestParams = {
+          artist: artistName,
+        };
+        var requestURL = self.getAPIRequestURL("tag", requestParams);
+        $.get(requestURL, function(data) {
+          if (!data.error) {
+            var parsedData = self.parseResponseJSON(data);
+            tagData[artistName] = parsedData;
+
+            if (useLocalStorage) {
+              window.localStorage["tag-" + artistName] = JSON.stringify(parsedData);
+            }
+          }
+
+          setTimeout(callback, self.LAST_FM_API_CADENCE_MS);
+        }).fail(function(err) {
+          // Ignore failures
+          callback();
+        });
+      },
+      function(err) {
+        var combinedData = self.combineArtistTags(artistData, tagData);
+        callback(err, combinedData);
+      }
+    );
   }
 
   /*
@@ -401,51 +390,53 @@ function LastFm() {
     return Array.from(Object.values(countsByName));
   }
 
-  this.sendAllRequests = function(requests, useLocalStorage, callback) {
+  /*
+    Get data from the last.fm API for a given time span.
+  */
+  this.getDataForTimeSpan = function(username, groupByCategory, groupByTime, timeSpan, callback) {
+    var timeSegments = this.splitTimeSpan(groupByTime, timeSpan);
     var count = 0;
-    var responseData = [];
+    var segmentData = [];
 
     async.eachLimit(
-      requests,
+      timeSegments,
       this.LAST_FM_API_CONCURRENT_REQUESTS,
-      function(url, callback) {
+      function (timeSegment, callback) {
         count++;
-        $("#output").html("Sending request " + count + "/" + requests.length);
-
-        var handleResponse = function(data) {
-          if (data.error) {
-            return;
-          }
-
-          // Cache responses
-          if (useLocalStorage) {
-            window.localStorage[url] = JSON.stringify(data);
-          }
-
-          responseData.push(data);
+        $("#output").html(count + "/" + timeSegments.length + " time segments");
+        // TODO cache old segments (but not new ones!)
+        var params = {
+          user: username,
+          from: timeSegment.start,
+          to: timeSegment.end,
         };
+        var requestURL = self.getAPIRequestURL(groupByCategory, params);
 
-        // Check the cache
-        if (window.localStorage[url]) {
-          handleResponse(JSON.parse(window.localStorage[url]));
+        // Make the request
+        $.get(requestURL, function(data) {
+          if (!data.error) {
+            // Parse through the data
+            var parsedData = self.parseResponseJSON(data);
+            segmentData.push(parsedData);
+          }
+
+          setTimeout(callback, this.LAST_FM_API_CADENCE_MS);
+        }).fail(function(err) {
+          // Ignore failures
           callback();
-        } else {
-          $.get(url, function(data) {
-            handleResponse(data);
-            setTimeout(callback, this.LAST_FM_API_CADENCE_MS);
-          }).fail(function(err) {
-            console.error("Request failed: " + err);
-            setTimeout(callback, this.LAST_FM_API_CADENCE_MS);
-          });
-        }
+        });
       },
       function(err) {
-        // All requests finished
-        callback(err, responseData);
+        // All requests finished.
+        var joinedSegments = self.joinSegments(segmentData);
+        callback(err, joinedSegments);
       }
     );
   }
 
+  /*
+    Main entry point for the data source.
+  */
   this.loadData = function(options, callback) {
     var unixStart = DateStringToUnix(options["time_start"]);
     var unixEnd = DateStringToUnix(options["time_end"]);
@@ -454,52 +445,29 @@ function LastFm() {
     var minPlays = options["min_plays"];
     var method = options["method"];
     var useLocalStorage = options["use_localstorage"];
+    var timeSpan = new TimeSpan(unixStart, unixEnd);
 
     // TODO error checking (date in future, etc.)
     // TODO instead of using localstorage as a request cache, make it smaller
     // by only caching the responses we care about (e.g. if we had a request for
     // RHCP plays, we would cache just the number of plays)
-
-    var allSegments = this.splitTimeSpan(groupBy, unixStart, unixEnd);
-    var requestURLs = [];
-    for (var i = 0; i < allSegments.length; i++) {
-      var segment = allSegments[i];
-      var requestParams = {
-        user: username,
-        from: segment.start,
-        to: segment.end,
-      };
-      var requestMethod = method;
-
-      // TODO magic strings
-      // If we're getting tags, we need to do it in two parts
-      if (method === "tag") {
-        requestMethod = "artist";
-      }
-
-      requestURLs.push(this.getAPIRequestURL(requestMethod, requestParams));
-    }
-
-    // Send all the requests
-    this.sendAllRequests(requestURLs, useLocalStorage, function(err, responses) {
-      var segmentData = [];
-      for (var i = 0; i < responses.length; i++) {
-        segmentData.push(self.parseResponseJSON(responses[i]));
-      }
-
-      // Once each segment has been parsed, we just need to join them
-      var lastFmData = self.joinSegments(segmentData);
-
-      // If the user wants tags over time, we need to run a second set of requests
-      // to get the tags for the album/artist
-      if (method == "tag") {
-        self.getTagsForArtistData(lastFmData, useLocalStorage, function(err, tagData) {
-          tagData = self.cleanByTopN(tagData, self.TAG_TOP_N_COUNT);
-          callback(err, tagData);
-        });
-      } else {
-        lastFmData = self.cleanByMinPlays(lastFmData, minPlays);
-        callback(err, lastFmData);
+    var firstMethod = (method === "tag") ? "artist" : method;
+    this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan, function(err, data) {
+      switch(method) {
+        case "artist":
+        case "album":
+          var cleanedData = self.cleanByMinPlays(data, minPlays);
+          callback(err, cleanedData);
+          break;
+        case "tag":
+          // Now that we have the artist data, we need to get the tags.
+          self.getTagsForArtistData(data, useLocalStorage, function(err, tagData) {
+            var cleanedData = self.cleanByTopN(tagData, self.TAG_TOP_N_COUNT);
+            callback(err, cleanedData);
+          });
+          break;
+        default:
+          callback("Method not recognized: " + method);
       }
     });
   }
