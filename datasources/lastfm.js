@@ -210,6 +210,32 @@ function LastFm() {
     return counts;
   }
 
+  /*
+    @param allTags
+      [
+        {
+          name: <tag name>,
+          count: <tag weight>,
+        }
+      ]
+    @return [<tag name>]
+  */
+  this.getTopTags = function(allTags) {
+    var topTags = [];
+    for (var i = 0; i < allTags.length; i++) {
+      var tag = allTags[i];
+
+      // Make sure it's not on the blacklist
+      if (
+        this.IGNORE_TAGS.indexOf(tag.name) === -1 &&
+        tag.count > this.IGNORE_TAG_WEIGHT_UNDER
+      ) {
+        topTags.push(tag.name);
+      }
+    }
+    return topTags;
+  }
+
   // TODO DRY for the other async limit
   /*
     artistData should look like this:
@@ -235,9 +261,12 @@ function LastFm() {
         count++;
         $("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
+        var artistTags = new ArtistTags(artistName);
+
         // Check the cache if necessary
-        if (useLocalStorage && window.localStorage["tag-" + artistName]) {
-          tagData[artistName] = JSON.parse(window.localStorage["tag-" + artistName]);
+        if (useLocalStorage && artistTags.isInCache()) {
+          artistTags.fetchFromCache();
+          tagData[artistName] = artistTags;
           return callback();
         }
 
@@ -248,11 +277,14 @@ function LastFm() {
         var requestURL = self.getAPIRequestURL("tag", requestParams);
         $.get(requestURL, function(data) {
           if (!data.error) {
-            var parsedData = self.parseResponseJSON(data);
-            tagData[artistName] = parsedData;
+            var allTags = self.parseResponseJSON(data);
+            var topTags = self.getTopTags(allTags);
+
+            artistTags.setTags(topTags);
+            tagData[artistName] = artistTags;
 
             if (useLocalStorage) {
-              window.localStorage["tag-" + artistName] = JSON.stringify(parsedData);
+              artistTags.cache();
             }
           }
 
@@ -280,12 +312,7 @@ function LastFm() {
 
     and a map of tags for artists:
       key: <artist name>
-      value: [
-        {
-          "name": <string>, (Name of tag)
-          "count": <int> (Weight of tag)
-        }
-      ]
+      value: <ArtistTags object>
 
     and combine them into a new list of tags:
     [
@@ -317,16 +344,8 @@ function LastFm() {
         var segmentCount = segmentCounts[s];
 
         // Go through every tag
-        for (var t = 0; t < artistTags.length; t++) {
-          var tagName = artistTags[t].name;
-          var tagWeight = parseInt(artistTags[t].count);
-
-          if (
-            tagWeight < self.IGNORE_TAG_WEIGHT_UNDER ||
-            self.IGNORE_TAGS.indexOf(tagName) > -1
-          ) {
-            continue;
-          }
+        for (var t = 0; t < artistTags.tags.length; t++) {
+          var tagName = artistTags.tags[t];
 
           if (!countsByTag[tagName]) {
             countsByTag[tagName] = {
@@ -335,9 +354,7 @@ function LastFm() {
             }
           }
 
-          // Our final weight is:
-          // (weight of the tag for the artist) * (playcount)
-          countsByTag[tagName].counts[s] += tagWeight * segmentCount;
+          countsByTag[tagName].counts[s] += segmentCount;
         }
       }
     }
@@ -500,4 +517,29 @@ function RoundWeek(unixTimestamp) {
 function TimeSpan(start, end) {
   this.start = start;
   this.end = end;
+}
+
+/*
+  @param artist Name Name of the artist
+  @param tags Array of tags associated with the artist
+*/
+function ArtistTags(artistName) {
+  this.artistName = artistName;
+  this.tags = [];
+
+  this.setTags = function(tags) {
+    this.tags = tags;
+  }
+
+  this.cache = function() {
+    window.localStorage[this.artistName] = JSON.stringify(this.tags);
+  }
+
+  this.fetchFromCache = function() {
+    this.setTags(JSON.parse(window.localStorage[this.artistName]));
+  }
+
+  this.isInCache = function() {
+    return window.localStorage[this.artistName] != null;
+  }
 }
