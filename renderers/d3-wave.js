@@ -204,54 +204,6 @@ function WaveGraph() {
   }
 
   /*
-    A "Label Point" is where we are adding a label on a ripple.
-    @param list of counts for a ripple
-    @return list of indices, each one should have a label
-  */
-  this.findLabelIndices = function(rippleCounts) {
-    // Possible points is a list of numbers representing the indices
-    // in data.count that are being considered as label points
-    // We don't allow for the first or last points to have labels because
-    // They would appear off screen
-    var possiblePoints = [];
-    for (var i = 1; i < rippleCounts.length - 1; i++) {
-      possiblePoints.push(i);
-    }
-
-    // These are the points we're actually going to use
-    var rippleLabelPoints = [];
-    while (possiblePoints.length !== 0) {
-      // Find max point
-      var maxValue = 0;
-      var maxIndex = 0;
-      for (var i = 0; i < possiblePoints.length; i++) {
-        var index = possiblePoints[i];
-        var value = rippleCounts[index];
-        if (value > maxValue) {
-          maxValue = value;
-          maxIndex = index;
-        }
-      }
-
-      if (maxValue === 0) break;
-
-      rippleLabelPoints.push(maxIndex);
-
-      // Remove the nearby indices from possiblePoints
-      var removeFrom = maxIndex - this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
-      var removeTo = maxIndex + this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
-      for(var r = removeFrom; r < removeTo; r++) {
-        var index = possiblePoints.indexOf(r);
-        if (index > -1) {
-          possiblePoints.splice(index, 1);
-        }
-      }
-    }
-
-    return rippleLabelPoints;
-  }
-
-  /*
     Figure out how big the text should be and where it should go
   */
   this.drawTextOnPeak = function(text, peak, font) {
@@ -336,7 +288,7 @@ function WaveGraph() {
   }
 
   /*
-    The graph data is in a generic format that doesn't corespond with
+    The graph data is in a generic format that doesn't correspond with
     pixels on the svg. Scaling values are what we need to multiply the
     graph data values by to get real pixel coordinates in the svg
   */
@@ -358,112 +310,4 @@ function WaveGraph() {
       y: graphHeight / maxy0,
     }
   }
-}
-
-// A peak is a point on the stacked graph that exactly represents
-// a value (e.g. 13 plays for Jimi Hendrix in week 2)
-// For a graphical representation of each of the members of this
-// data structure, check GitHub
-function Peak(index, stack) {
-  var LEFT_RIGHT_SPREADING_FACTOR = 0.1;
-
-  // 1. Grab all the surrounding points
-  // y: The amount of vertical space that the ripple takes up
-  // y0: the bottom point of the ripple
-  this.top = new Point(stack[index].x, stack[index].y + stack[index].y0);
-  this.bottom = new Point(stack[index].x, stack[index].y0);
-
-  if (index === 0) {
-    var fakeX = -1 * LEFT_RIGHT_SPREADING_FACTOR;
-    var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
-    this.topLeft = new Point(fakeX, fakeY);
-    this.bottomLeft = new Point(fakeX, fakeY);
-  } else {
-    this.topLeft = new Point(stack[index - 1].x, stack[index-1].y + stack[index-1].y0);
-    this.bottomLeft = new Point(stack[index - 1].x, stack[index - 1].y0);
-  }
-
-  if (index === stack.length - 1) {
-    var fakeX = this.top.x + LEFT_RIGHT_SPREADING_FACTOR;
-    var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
-    this.topRight = new Point(fakeX, fakeY);
-    this.bottomRight = new Point(fakeX, fakeY);
-  } else {
-    this.topRight = new Point(stack[index + 1].x, stack[index+1].y + stack[index+1].y0);
-    this.bottomRight = new Point(stack[index + 1].x, stack[index+1].y0);
-  }
-
-  // 2. Add lines betwen points, labelled A/B/C/D
-  this.A = new LineSegment(this.topLeft, this.top);
-  this.B = new LineSegment(this.top, this.topRight);
-  this.C = new LineSegment(this.bottomLeft, this.bottom);
-  this.D = new LineSegment(this.bottom, this.bottomRight);
-
-  // 3. Allow for scaling by linear values
-  this.scale = function(x, y) {
-    this.top.scale(x, y);
-    this.bottom.scale(x, y);
-    this.topLeft.scale(x, y);
-    this.topRight.scale(x, y);
-    this.bottomLeft.scale(x, y);
-    this.bottomRight.scale(x, y);
-    this.A.scale(x, y);
-    this.B.scale(x, y);
-    this.C.scale(x, y);
-    this.D.scale(x, y);
-  }
-
-  return this;
-}
-
-function Point(x, y) {
-  this.x = x;
-  this.y = y;
-
-  this.scale = function(x, y) {
-    this.x *= x;
-    this.y *= y;
-  }
-
-  this.equals = function(otherPoint) {
-    return (this.x === otherPoint.x && this.y === otherPoint.y);
-  }
-
-  return this;
-}
-
-/*
-  A label contains all the information necessary to draw
-  text on the SVG
-*/
-function Label(text, xPosition, yPosition, font, fontSize) {
-  this.text = text;
-  this.x = xPosition;
-  this.y = yPosition;
-  this.font = font;
-  this.fontSize = fontSize
-  return this;
-}
-
-function getTextDimensions(text, font, fontSize) {
-  var temp = $("<div>" + text + "</div>")
-    .css({
-      position: "absolute",
-      float: "left", 
-      "white-space": "nowrap",
-      font: fontSize + "px " + font,
-      visibility: "hidden",
-    })
-    .appendTo($("body"));
-  temp.css("line-height", "1em");
-  var width = temp.width();
-  var height = temp.height();
-
-  temp.remove();
-
-  return {
-    height: height,
-    width: width,
-    slope: height / width,
-  };
 }
