@@ -6,5 +6,5 @@
 */
 export default interface SeriesData {
   title: string,
-  count: [number],
+  counts: number[],
 }

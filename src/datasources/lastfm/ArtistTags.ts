@@ -1,24 +1,25 @@
-/*
-  @param artist Name Name of the artist
-  @param tags Array of tags associated with the artist
-*/
-function ArtistTags(artistName) {
-  this.artistName = artistName;
-  this.tags = [];
+export default class ArtistTags  {
+  artistName: string;
+  tags: string[];
 
-  this.setTags = function(tags) {
+  constructor(artistName: string) {
+    this.artistName = artistName;
+    this.tags = [];
+  }
+
+  setTags(tags: string[]) {
     this.tags = tags;
   }
 
-  this.cache = function() {
+  cache(): void {
     window.localStorage[this.artistName] = JSON.stringify(this.tags);
   }
 
-  this.loadFromCache = function() {
+  loadFromCache(): void {
     this.setTags(JSON.parse(window.localStorage[this.artistName]));
   }
 
-  this.isInCache = function() {
+  isInCache(): boolean {
     return window.localStorage[this.artistName] != null;
   }
 }

@@ -1,6 +1,9 @@
-export default interface Option {
-  title: string,
-  type: string,
-  default?: string,
-  options?: [string],
+export default class Option {
+  constructor(
+    public title: string,
+    public type: string,
+    public defaultValue?: string,
+    public options?: string[],
+  ) {
+  }
 }

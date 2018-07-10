@@ -1,8 +1,12 @@
+import TimeSpan from './models/TimeSpan';
+import SeriesData from '@/models/SeriesData';
+import SegmentData from 'src/models/SegmentData';
+import ArtistTags from '@/datasources/lastfm/ArtistTags';
 
 /**
  * Convert from date in format YY/MM/DD to unix timestamp
  */
-function DateStringToUnix(dateString) {
+export function DateStringToUnix(dateString: string) {
   return (new Date(dateString)).getTime() / 1000;
 }
 
@@ -12,15 +16,6 @@ function DateStringToUnix(dateString) {
     @param additionalParams
     @return url
   */
-  this.getAPIRequestURL = function(method, additionalParams) {
-    var url = this.API_URL;
-    url = url.replace("{method}", this.METHODS[method]);
-    for (var k in additionalParams) {
-      // TODO encode additionalParams
-      url += "&" + k + "=" + additionalParams[k];
-    }
-    return encodeURI(url);
-  }
 
   /*
     Split a time span into weeks/months.
@@ -29,46 +24,27 @@ function DateStringToUnix(dateString) {
     @param unixEnd Unix timestmap for the end of the time span
     @return Array of TimeSpan objects, each one corresponding to a week/month
   */
-  this.splitTimeSpan = function(splitBy, timeSpan) {
-    var segments = [];
-    var interval = this.INTERVALS[splitBy];
-    for (var t = timeSpan.start; t < timeSpan.end; t += interval) {
-      segments.push(new TimeSpan(t, t + interval));
-    }
-
-    console.log("Time span: " + timeSpan.start + " to " + timeSpan.end);
-    console.log("Split into " + segments.length + " segments");
-
-    return segments;
+export function splitTimeSpan(splitBy: string, timeSpan: TimeSpan) {
+  const TIME_IN_SECONDS: { [key:string]: number} = {
+    week: 604800,
+    month: 2628000,
+  };
+  let segments = [];
+  let interval = TIME_IN_SECONDS[splitBy];
+  for (var t = timeSpan.start; t < timeSpan.end; t += interval) {
+    segments.push(new TimeSpan(t, t + interval));
   }
 
-  /*
-    Take in a list of artist playcounts:
-    [
-      {
-        "title": <string> (Name of artist)
-        "counts": [<int>] (counts of artist over time)
-      }
-    ]
+  console.log("Time span: " + timeSpan.start + " to " + timeSpan.end);
+  console.log("Split into " + segments.length + " segments");
 
-    and a map of tags for artists:
-      key: <artist name>
-      value: <ArtistTags object>
+  return segments;
+}
 
-    and combine them into a new list of tags:
-    [
-      {
-        "title": <string>,  (Name of tag)
-        "counts": [<int>]   (Count of tag)
-      }
-    ]
-
-    TODO this can likely be combined in a smart way with joinSegments
-  */
-  this.combineArtistTags = function(artistData, tagData) {
+export function combineArtistTags(artistData: SeriesData[], tagData: {[key: string]: ArtistTags}) {
     // Key: tag name
     // Value: {name: <string>, counts: [<int>]}
-    var countsByTag = {};
+    var countsByTag: {[key: string]: SeriesData} = {};
 
     for(var i = 0; i < artistData.length; i++) {
       var artistName = artistData[i].title;
@@ -101,7 +77,9 @@ function DateStringToUnix(dateString) {
     }
 
     // Turn our map into an array
-    return Array.from(Object.values(countsByTag));
+    return Array.from(Object.keys(countsByTag).map(key => {
+      return countsByTag[key];
+    }));
   }
 
   /*
@@ -119,15 +97,15 @@ function DateStringToUnix(dateString) {
 
     // TODO I can probably do this with some fancy map/reduce
   */
-  this.joinSegments = function(segmentData) {
+export function joinSegments(segmentData: SegmentData[][]): SeriesData[] {
     // Use a map to join the data
-    var countsByName = {};
+    var countsByName: {[key: string]: SeriesData} = {};
 
     for (var s = 0; s < segmentData.length; s++) {
       for (var n = 0; n < segmentData[s].length; n++) {
         var nameData = segmentData[s][n];
-        var name = nameData.name;
-        var count = parseInt(nameData.count);
+        var name = nameData.title;
+        var count = nameData.count;
 
         if (!countsByName[name]) {
           // Hasn't been added to the map yet
@@ -145,7 +123,9 @@ function DateStringToUnix(dateString) {
     console.log("Joined " + segmentData.length + " segments");
 
     // Turn our map into an array
-    return Array.from(Object.values(countsByName));
+    return Array.from(Object.keys(countsByName).map(key => {
+      return countsByName[key];
+    }));
   }
 
   /*
@@ -159,7 +139,7 @@ function DateStringToUnix(dateString) {
       }
     ]
   */
-  this.cleanByMinPlays = function(data, minPlays) {
+export function cleanByMinPlays(data: SeriesData[], minPlays: number) {
     console.log("Before clean: " + data.length);
     var cleanedData = data.filter(function(obj) {
       var maxPlays = 0;
@@ -178,7 +158,7 @@ function DateStringToUnix(dateString) {
   /*
     Only keep the top N groups
   */
-  this.cleanByTopN = function(data, n) {
+export function cleanByTopN(data: SeriesData[], n: number) {
     data.sort(function(a, b) {
       var maxA = 0;
       var maxB = 0;
@@ -203,17 +183,22 @@ function DateStringToUnix(dateString) {
       ]
     @return [<tag name>]
   */
-  this.getTopTags = function(allTags) {
+export function getTopTags(allTags: SegmentData[]) {
+  // TODO use config file
+  var IGNORE_TAGS = [
+    "seen live",
+  ];
+  var IGNORE_TAG_WEIGHT_UNDER = 50;
     var topTags = [];
     for (var i = 0; i < allTags.length; i++) {
       var tag = allTags[i];
 
       // Make sure it's not on the blacklist
       if (
-        this.IGNORE_TAGS.indexOf(tag.name) === -1 &&
-        tag.count > this.IGNORE_TAG_WEIGHT_UNDER
+        IGNORE_TAGS.indexOf(tag.title) === -1 &&
+        tag.count > IGNORE_TAG_WEIGHT_UNDER
       ) {
-        topTags.push(tag.name);
+        topTags.push(tag.title);
       }
     }
     return topTags;

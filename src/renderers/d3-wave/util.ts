@@ -1,4 +1,4 @@
-function getTextDimensions(text, font, fontSize) {
+export function getTextDimensions(text: string, font: string, fontSize: number) {
   var temp = $("<div>" + text + "</div>")
     .css({
       position: "absolute",
@@ -11,6 +11,10 @@ function getTextDimensions(text, font, fontSize) {
   temp.css("line-height", "1em");
   var width = temp.width();
   var height = temp.height();
+
+  if (!width || !height) {
+    throw new Error("Couldn't get width or height");
+  }
 
   temp.remove();
 
@@ -26,7 +30,7 @@ function getTextDimensions(text, font, fontSize) {
     @param list of counts for a ripple
     @return list of indices, each one should have a label
   */
-  this.findLabelIndices = function(rippleCounts) {
+export function findLabelIndices(rippleCounts: number[], segmentsBetweenLabels: number) {
     // Possible points is a list of numbers representing the indices
     // in data.count that are being considered as label points
     // We don't allow for the first or last points to have labels because
@@ -56,8 +60,8 @@ function getTextDimensions(text, font, fontSize) {
       rippleLabelPoints.push(maxIndex);
 
       // Remove the nearby indices from possiblePoints
-      var removeFrom = maxIndex - this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
-      var removeTo = maxIndex + this.MINIMUM_SEGMENTS_BETWEEN_LABELS;
+      var removeFrom = maxIndex - segmentsBetweenLabels;
+      var removeTo = maxIndex + segmentsBetweenLabels;
       for(var r = removeFrom; r < removeTo; r++) {
         var index = possiblePoints.indexOf(r);
         if (index > -1) {

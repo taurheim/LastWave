@@ -1,11 +1,35 @@
-  /*
-    Returns an array of:
-    {
-      name: <Name of artist/genre/etc.>
-      count: <int>
+import URLParameter from './models/URLParameter';
+import SegmentData from 'src/models/SegmentData';
+
+export default class LastFmApi {
+  apiKey: string;
+  ALBUM_NAME_FORMAT: string = "{album}<br>{artist}";
+  API_BASE_URL: string = "http://ws.audioscrobbler.com/2.0/";
+  METHODS: any = {
+    artist: "user.getweeklyartistchart",
+    album: "user.getweeklyalbumchart",
+    tag: "artist.gettoptags",
+  };
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey;
+  }
+
+  getAPIRequestURL(method: string, additionalParams: URLParameter[]) {
+    var url = this.API_BASE_URL;
+    url += "?method={method}";
+    url += "&api_key=" + this.apiKey;
+    url += "&format=json";
+
+    url = url.replace("{method}", this.METHODS[method]);
+    for (var k in additionalParams) {
+      // TODO encode additionalParams
+      url += "&" + k + "=" + additionalParams[k];
     }
-  */
-  this.parseResponseJSON = function(responseJSON) {
+    return encodeURI(url);
+  }
+
+  parseResponseJSON(responseJSON: any): SegmentData[] {
     var rootKey = Object.keys(responseJSON)[0];
     var secondKey = Object.keys(responseJSON[rootKey])[0];
     var responseData = responseJSON[rootKey][secondKey];
@@ -19,7 +43,7 @@
       if (secondKey === "album") {
         var albumArtist = segmentData.artist["#text"];
         var albumName = name;
-        name = self.ALBUM_NAME_FORMAT;
+        name = this.ALBUM_NAME_FORMAT;
         name = name.replace("{album}", albumName);
         name = name.replace("{artist}", albumArtist);
       }
@@ -31,11 +55,9 @@
         count = segmentData.playcount;
       }
 
-      counts.push({
-        name: name,
-        count: parseInt(count),
-      });
+      counts.push(new SegmentData(name, parseInt(count)));
     }
 
     return counts;
   }
+}

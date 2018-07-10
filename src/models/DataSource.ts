@@ -1,6 +1,7 @@
 import Option from 'src/models/Option';
 
 export default interface DataSource {
-    getOptions(): [Option],
-    loadData(): void,
+    title: string,
+    getOptions(): Option[],
+    loadData(options: any, callback: any): void,
 }
