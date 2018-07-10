@@ -653,6 +653,194 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.0.tgz#50c1e2260ac0ed9439a181de3725a0168d59c48a"
 
+"@types/d3-array@*":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-1.2.1.tgz#e489605208d46a1c9d980d2e5772fa9c75d9ec65"
+
+"@types/d3-axis@*":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@types/d3-axis/-/d3-axis-1.0.10.tgz#41d6b3ea9032f9531ec0d71d83bcf49294511210"
+  dependencies:
+    "@types/d3-selection" "*"
+
+"@types/d3-brush@*":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@types/d3-brush/-/d3-brush-1.0.8.tgz#2bb9b93e58115da9e0c94ac2b865e34d3631b69b"
+  dependencies:
+    "@types/d3-selection" "*"
+
+"@types/d3-chord@*":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-chord/-/d3-chord-1.0.7.tgz#6cb982d84c02bf1b05874d921316451546fde9c3"
+
+"@types/d3-collection@*":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-collection/-/d3-collection-1.0.7.tgz#829e1db477d6bbbcdc038cbc489f22798752d707"
+
+"@types/d3-color@*":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-color/-/d3-color-1.2.1.tgz#26141c3c554e320edd40726b793570a3ae57397e"
+
+"@types/d3-contour@*":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-contour/-/d3-contour-1.2.1.tgz#03d4f9849f8b99f841d2adf6f59b2dcf06987178"
+  dependencies:
+    "@types/d3-array" "*"
+    "@types/geojson" "*"
+
+"@types/d3-dispatch@*":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/d3-dispatch/-/d3-dispatch-1.0.6.tgz#19b173f669cd2ab7dd3d862e8037aae1a98c7508"
+
+"@types/d3-drag@*":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-drag/-/d3-drag-1.2.1.tgz#6394bcf2f6414140b3b0d521259cadc6fa1da926"
+  dependencies:
+    "@types/d3-selection" "*"
+
+"@types/d3-dsv@*":
+  version "1.0.33"
+  resolved "https://registry.yarnpkg.com/@types/d3-dsv/-/d3-dsv-1.0.33.tgz#18de1867927f7ec898671aef82f730f16d4c7fcb"
+
+"@types/d3-ease@*":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-ease/-/d3-ease-1.0.7.tgz#93a301868be9e15061f3d44343b1ab3f8acb6f09"
+
+"@types/d3-fetch@*":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@types/d3-fetch/-/d3-fetch-1.1.2.tgz#a59921477e25850ca6b3353e03d5d29e5a0e8e03"
+  dependencies:
+    "@types/d3-dsv" "*"
+
+"@types/d3-force@*":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-force/-/d3-force-1.1.1.tgz#185c18b77932df63457894bd36d0d6e9692546c0"
+
+"@types/d3-format@*":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@types/d3-format/-/d3-format-1.3.0.tgz#c5e115fac8e6861ce656fe9861892b22f6b0cfcb"
+
+"@types/d3-geo@*":
+  version "1.10.3"
+  resolved "https://registry.yarnpkg.com/@types/d3-geo/-/d3-geo-1.10.3.tgz#3c01b2baa480e1108301096328dc2837e7ff4d8a"
+  dependencies:
+    "@types/geojson" "*"
+
+"@types/d3-hierarchy@*":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@types/d3-hierarchy/-/d3-hierarchy-1.1.2.tgz#63a4e433f321ffc4dbd9aa05ff95962072b51993"
+
+"@types/d3-interpolate@*":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@types/d3-interpolate/-/d3-interpolate-1.2.0.tgz#b5587e013f8afbbc0194046e6a66bb7b8f1c8619"
+  dependencies:
+    "@types/d3-color" "*"
+
+"@types/d3-path@*":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-path/-/d3-path-1.0.7.tgz#a0736fceed688a695f48265a82ff7a3369414b81"
+
+"@types/d3-polygon@*":
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/@types/d3-polygon/-/d3-polygon-1.0.6.tgz#db25c630a2afb9191fe51ba61dd37baee9dd44c7"
+
+"@types/d3-quadtree@*":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@types/d3-quadtree/-/d3-quadtree-1.0.5.tgz#1ce1e659eae4530df0cb127f297f1741a367a82e"
+
+"@types/d3-random@*":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-random/-/d3-random-1.1.1.tgz#38647ce2ff4ce7d0d56974334c1c4092513c8b9f"
+
+"@types/d3-scale-chromatic@*":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@types/d3-scale-chromatic/-/d3-scale-chromatic-1.2.0.tgz#c415744622fd8033f98ebcc9cf962dc8333dec97"
+
+"@types/d3-scale@*":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-scale/-/d3-scale-2.0.1.tgz#f94cd991c50422b2e68d8f43be3f9fffdb1ae7be"
+  dependencies:
+    "@types/d3-time" "*"
+
+"@types/d3-selection@*":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-selection/-/d3-selection-1.3.1.tgz#c6227f4e39d429cc429ce3882fd533facc7f014c"
+
+"@types/d3-shape@*":
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/@types/d3-shape/-/d3-shape-1.2.3.tgz#cadc9f93a626db9190f306048a650df4ffa4e500"
+  dependencies:
+    "@types/d3-path" "*"
+
+"@types/d3-time-format@*":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/d3-time-format/-/d3-time-format-2.1.0.tgz#011e0fb7937be34a9a8f580ae1e2f2f1336a8a22"
+
+"@types/d3-time@*":
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-1.0.8.tgz#6c083127b330b3c2fc65cd0f3a6e9cbd9607b28c"
+
+"@types/d3-timer@*":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-timer/-/d3-timer-1.0.7.tgz#053e6369d9485c9dc80bc62fc0851123341d7816"
+
+"@types/d3-transition@*":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@types/d3-transition/-/d3-transition-1.1.2.tgz#1106fc3129decc9ad5682a9f52b2dfa52f14e57c"
+  dependencies:
+    "@types/d3-selection" "*"
+
+"@types/d3-voronoi@*":
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@types/d3-voronoi/-/d3-voronoi-1.1.7.tgz#c0a145cf04395927e01706ff6c4ff835c97a8ece"
+
+"@types/d3-zoom@*":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@types/d3-zoom/-/d3-zoom-1.7.1.tgz#0d69be0bf5849cffb66f48e4258c838436b43822"
+  dependencies:
+    "@types/d3-interpolate" "*"
+    "@types/d3-selection" "*"
+
+"@types/d3@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/d3/-/d3-5.0.0.tgz#fec49f2aea0f0784f829eff38132926e92676d57"
+  dependencies:
+    "@types/d3-array" "*"
+    "@types/d3-axis" "*"
+    "@types/d3-brush" "*"
+    "@types/d3-chord" "*"
+    "@types/d3-collection" "*"
+    "@types/d3-color" "*"
+    "@types/d3-contour" "*"
+    "@types/d3-dispatch" "*"
+    "@types/d3-drag" "*"
+    "@types/d3-dsv" "*"
+    "@types/d3-ease" "*"
+    "@types/d3-fetch" "*"
+    "@types/d3-force" "*"
+    "@types/d3-format" "*"
+    "@types/d3-geo" "*"
+    "@types/d3-hierarchy" "*"
+    "@types/d3-interpolate" "*"
+    "@types/d3-path" "*"
+    "@types/d3-polygon" "*"
+    "@types/d3-quadtree" "*"
+    "@types/d3-random" "*"
+    "@types/d3-scale" "*"
+    "@types/d3-scale-chromatic" "*"
+    "@types/d3-selection" "*"
+    "@types/d3-shape" "*"
+    "@types/d3-time" "*"
+    "@types/d3-time-format" "*"
+    "@types/d3-timer" "*"
+    "@types/d3-transition" "*"
+    "@types/d3-voronoi" "*"
+    "@types/d3-zoom" "*"
+
+"@types/geojson@*":
+  version "7946.0.4"
+  resolved "https://registry.yarnpkg.com/@types/geojson/-/geojson-7946.0.4.tgz#4e049756383c3f055dd8f3d24e63fb543e98eb07"
+
 "@types/node@*":
   version "10.5.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.5.2.tgz#f19f05314d5421fe37e74153254201a7bf00a707"
@@ -1152,7 +1340,7 @@ async@^1.5.2:
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/async/-/async-1.5.2.tgz#ec6a61ae56480c0c3cb241c95618e20892f9672a"
 
-async@^2.3.0:
+async@^2.3.0, async@^2.6.1:
   version "2.6.1"
   resolved "https://registry.yarnpkg.com/async/-/async-2.6.1.tgz#b245a23ca71930044ec53fa46aa00a3e87c6a610"
   dependencies:
@@ -2045,6 +2233,10 @@ currently-unhandled@^0.4.1:
 cyclist@~0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/cyclist/-/cyclist-0.2.2.tgz#1b33792e11e914a2fd6d6ed6447464444e5fa640"
+
+d3@3.5.17, d3@^3.5.16:
+  version "3.5.17"
+  resolved "https://registry.yarnpkg.com/d3/-/d3-3.5.17.tgz#bc46748004378b21a360c9fc7cf5231790762fb8"
 
 d@1:
   version "1.0.0"
@@ -3555,6 +3747,10 @@ joi@^12.0.0:
     hoek "4.x.x"
     isemail "3.x.x"
     topo "2.x.x"
+
+jquery@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.3.1.tgz#958ce29e81c9790f31be7792df5d4d95fc57fbca"
 
 js-base64@^2.1.9:
   version "2.4.5"
@@ -5338,6 +5534,12 @@ restore-cursor@^2.0.0:
 ret@~0.1.10:
   version "0.1.15"
   resolved "https://registry.yarnpkg.com/ret/-/ret-0.1.15.tgz#b8a4825d5bdb1fc3f6f53c2bc33f81388681c7bc"
+
+rickshaw@^1.6.6:
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/rickshaw/-/rickshaw-1.6.6.tgz#041a2c05d8dc08783450a457b4d62419094b5c52"
+  dependencies:
+    d3 "^3.5.16"
 
 rimraf@^2.2.8, rimraf@^2.5.4, rimraf@^2.6.1, rimraf@^2.6.2:
   version "2.6.2"
