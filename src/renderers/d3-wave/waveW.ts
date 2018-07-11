@@ -1,10 +1,17 @@
+import Peak from '@/renderers/d3-wave/models/Peak';
+import { getTextDimensions } from '@/renderers/d3-wave/util';
+import Point from '@/renderers/d3-wave/models/Point';
+import InfiniteLine from '@/renderers/d3-wave/models/InfiniteLine';
+import { DebugWave } from '@/renderers/d3-wave/debugTools';
+import Label from '@/renderers/d3-wave/models/Label';
+
 /*
   Returns true if the W algorithm should be used:
   "w1" "w2"
   \/    /\
   \/ or /\
 */
-function isWType(peak) {
+export function isWType(peak: Peak) {
   return (
     // "w1"
     peak.A.slope <= 0 &&
@@ -27,20 +34,20 @@ function isWType(peak) {
   "bottom" point (w2). With this assumption, we expand the text box as big
   as it can be.
 */
-function getWLabel(peak, text, font) {
+export function getWLabel(peak: Peak, text: string, font: string): Label | null {
   // Config
   var STARTING_FONT_SIZE = 5;
   var FONT_SIZE_INTERVAL = 2;
   var FONT_SIZE_SAFETY_SCALE = 0.9;
 
-  var fontSize = STARTING_FONT_SIZE;
+  var fontSize: number = STARTING_FONT_SIZE;
   var leftCollision, rightCollision;
   var verticalPointyBound, horizontalLeftBound, horizontalRightBound;
 
   // If we don't have enough space, don't even bother
   var minimumHeightRequired = getTextDimensions(text, font, fontSize).height;
   if ((peak.top.y - peak.bottom.y) < minimumHeightRequired) {
-    return false;
+    return null;
   }
 
   // Slightly different code for "w1" vs "w2"
@@ -87,11 +94,11 @@ function getWLabel(peak, text, font) {
     // This is the available width at this font size
     var availableWidth = rightCollision.x - leftCollision.x;
 
-    if (window.debug) {
-      window.debugTools.wave.drawLine(topLine, "black");
-      window.debugTools.wave.drawPoint(leftCollision, "red");
-      window.debugTools.wave.drawPoint(rightCollision, "green");
-      window.debugTools.wave.drawTextBelowPoint(rightCollision, fontSize);
+    if(DebugWave.isEnabled) {
+      DebugWave.drawLine(topLine, "black");
+      DebugWave.drawPoint(leftCollision, "red");
+      DebugWave.drawPoint(rightCollision, "green");
+      DebugWave.drawTextBelowPoint(rightCollision, fontSize.toString());
     }
 
     if (textDimensions.width < availableWidth) {
@@ -110,6 +117,11 @@ function getWLabel(peak, text, font) {
     labelY = peak.top.y - textDimensions.height;
   } else {
     labelY = peak.bottom.y;
+  }
+
+  // Final sanity check
+  if (!leftCollision) {
+    return null;
   }
 
   var labelX = leftCollision.x;

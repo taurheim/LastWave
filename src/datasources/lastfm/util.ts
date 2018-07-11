@@ -1,7 +1,7 @@
 import TimeSpan from './models/TimeSpan';
 import SeriesData from '@/models/SeriesData';
 import SegmentData from 'src/models/SegmentData';
-import ArtistTags from '@/datasources/lastfm/ArtistTags';
+import ArtistTags from './models/ArtistTags';
 
 /**
  * Convert from date in format YY/MM/DD to unix timestamp

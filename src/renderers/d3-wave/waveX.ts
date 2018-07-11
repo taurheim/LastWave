@@ -1,10 +1,18 @@
+import Peak from '@/renderers/d3-wave/models/Peak';
+import { getTextDimensions } from '@/renderers/d3-wave/util';
+import Point from '@/renderers/d3-wave/models/Point';
+import InfiniteLine from '@/renderers/d3-wave/models/InfiniteLine';
+import { DebugWave } from '@/renderers/d3-wave/debugTools';
+import Label from '@/renderers/d3-wave/models/Label';
+import LineSegment from '@/renderers/d3-wave/models/LineSegment';
+
 /*
   Returns true if the X algorithm should be used:
   "x1" "x2"
    \\  //
    \\  //
 */
-function isXType(peak) {
+export function isXType(peak: Peak) {
   return (
     // "x1"
     peak.A.slope <= 0 &&
@@ -26,7 +34,7 @@ function isXType(peak) {
   Scan for the point of maximum width, then expand the text box at this
   height.
 */
-function getXLabel(peak, text, font) {
+export function getXLabel(peak: Peak, text: string, font: string): Label | null {
   var TEST_FONT_SIZE = 3000;
   var MINIMUM_SPACE_PX = 1;
 
@@ -42,7 +50,7 @@ function getXLabel(peak, text, font) {
   // If there is less than a pixel between the top and bottom,
   // we can't fit any meaningful text here.
   if ((topY - bottomY) < MINIMUM_SPACE_PX) {
-    return false;
+    return null;
   }
 
   var leftCollidingLine, rightCollidingLine;
@@ -89,6 +97,10 @@ function getXLabel(peak, text, font) {
     textSlope *= -1;
   }
 
+  if (!maxWidthLeftCollisionX || !maxWidthY) {
+    return null;
+  }
+
   var textCenter = new Point(maxWidthLeftCollisionX + maxWidth/2, maxWidthY);
 
   // 3. Now figure out how long we can make this line (extend it up and down)
@@ -119,25 +131,27 @@ function getXLabel(peak, text, font) {
 
   // Situation #2
   if (!leftTextCollision) {
-    leftTextCollision = textLine.getPointOnLineAtX(leftCollidingLine.getStartPoint().x);
+    leftTextCollision = textLine.getPointOnLineAtX(leftCollidingLine.start.x);
+    if(!leftTextCollision) return null;
   }
   if (!rightTextCollision) {
-    rightTextCollision = textLine.getPointOnLineAtX(rightCollidingLine.getEndPoint().x);
+    rightTextCollision = textLine.getPointOnLineAtX(rightCollidingLine.end.x);
+    if (!rightTextCollision) return null;
   }
 
   // 4. Figure out what font size we can fit (same as the height of the line we just extended)
-  var boxHeight = Math.abs(parseInt(leftTextCollision.y - rightTextCollision.y));
+  var boxHeight = Math.abs(leftTextCollision.y - rightTextCollision.y);
   var fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
 
-  if (window.debug) {
-    window.debugTools.wave.drawLine(new LineSegment(
-      new Point(leftCollisionX, maxWidthY),
-      new Point(rightCollisionX, maxWidthY)
+  if (DebugWave.isEnabled) {
+    DebugWave.drawLine(new LineSegment(
+      new Point(leftTextCollision.x, maxWidthY),
+      new Point(rightTextCollision.y, maxWidthY)
     ), "green");
-    window.debugTools.wave.drawLine(textLine, "black");
-    window.debugTools.wave.drawPoint(leftTextCollision, "red");
-    window.debugTools.wave.drawPoint(textCenter, "blue");
-    window.debugTools.wave.drawPoint(rightTextCollision, "green");
+    DebugWave.drawLine(textLine, "black");
+    DebugWave.drawPoint(leftTextCollision, "red");
+    DebugWave.drawPoint(textCenter, "blue");
+    DebugWave.drawPoint(rightTextCollision, "green");
   }
 
   var textX = leftTextCollision.x;

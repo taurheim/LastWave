@@ -1,6 +1,0 @@
-/*
-
-*/
-function RippleData(title, counts) {
-
-}

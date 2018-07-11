@@ -1,20 +1,33 @@
-window.debugTools = {};
-/*
-  Debugging tools for d3-wave renderer
-*/
-window.debugTools["wave"] = new function() {
-  this.svgDiv = null;
-  this.graphHeight = null;
-  this.graphWidth = null;
+import LineBase from '@/renderers/d3-wave/models/LineBase';
+import InfiniteLine from './models/InfiniteLine';
+import LineSegment from './models/LineSegment';
+import Point from './models/Point';
+import d3 from 'd3';
 
-  this.setSvgDiv = function(d3Handle) {
-    console.log("DEBUG: SVG div set.");
-    this.svgDiv = d3Handle;
-    this.graphHeight = this.svgDiv.attr("height");
-    this.graphWidth = this.svgDiv.attr("width");
+class WaveDebugger {
+  isEnabled: boolean = false;
+  debugRippleName: string = "female vocalists";
+
+  svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any> = d3.select('');
+  graphHeight: number = 0;
+  graphWidth: number = 0;
+
+  enable(): void {
+    this.isEnabled = true;
   }
 
-  this.drawLine = function(debugLine, color) {
+  disable(): void {
+    this.isEnabled = false;
+  }
+
+  setSvgDiv(d3Handle: d3.Selection<d3.BaseType, {}, HTMLElement, any>): void {
+    console.log("DEBUG: SVG div set.");
+    this.svgDiv = d3Handle;
+    this.graphHeight = parseInt(this.svgDiv.attr("height")!);
+    this.graphWidth = parseInt(this.svgDiv.attr("width")!);
+  }
+
+  drawLine(debugLine: LineBase, color: string) {
     var LINE_WIDTH = 1;
 
     var start, end;
@@ -22,8 +35,8 @@ window.debugTools["wave"] = new function() {
       start = new Point(0, debugLine.intercept);
       end = new Point(this.graphWidth, debugLine.slope * this.graphWidth + debugLine.intercept);
     } else if (debugLine instanceof LineSegment) {
-      start = debugLine.getStartPoint();
-      end = debugLine.getEndPoint();
+      start = debugLine.start;
+      end = debugLine.end;
     } else {
       throw new Error("Unrecognized line type");
     }
@@ -37,7 +50,7 @@ window.debugTools["wave"] = new function() {
       .attr("style", "stroke:" + color + ";stroke-width:" + LINE_WIDTH);
   }
 
-  this.drawPoint = function(debugPoint, color) {
+  drawPoint(debugPoint: Point, color: string): void {
     var CIRCLE_RADIUS = 4;
 
     this.svgDiv.append("circle")
@@ -48,7 +61,7 @@ window.debugTools["wave"] = new function() {
       .attr("stroke-width", 5);
   }
 
-  this.drawTextBelowPoint = function(debugPoint, text) {
+  drawTextBelowPoint(debugPoint: Point, text: string): void {
     var FONT_SIZE = 12;
     var FONT_COLOR = "#000000";
     var FONT_FAMILY = "Times New Roman";
@@ -62,3 +75,5 @@ window.debugTools["wave"] = new function() {
       .attr("font-family", FONT_FAMILY);
   }
 }
+
+export const DebugWave = new WaveDebugger();

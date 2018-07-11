@@ -1,10 +1,18 @@
+import Peak from '@/renderers/d3-wave/models/Peak';
+import Label from '@/renderers/d3-wave/models/Label';
+import { getTextDimensions } from '@/renderers/d3-wave/util';
+import { DebugWave } from '@/renderers/d3-wave/debugTools';
+import Point from '@/renderers/d3-wave/models/Point';
+import LineSegment from '@/renderers/d3-wave/models/LineSegment';
+import InfiniteLine from '@/renderers/d3-wave/models/InfiniteLine';
+
 /*
   Returns true if the Y algorithm should be used:
   "y1" "y2" "y3" "y4"
   /\    /\  \\   //
   // or \\  \/   \/
 */
-function isYType(peak) {
+export function isYType(peak: Peak) {
   return (
     // y1
     peak.A.slope > 0 &&
@@ -12,27 +20,27 @@ function isYType(peak) {
     peak.C.slope > 0 &&
     peak.D.slope >= 0
   ) ||
-  (
-    // y2
-    peak.A.slope > 0 &&
-    peak.B.slope < 0 &&
-    peak.C.slope <= 0 &&
-    peak.D.slope < 0
-  ) ||
-  (
-    // y3
-    peak.A.slope < 0 &&
-    peak.B.slope <= 0 &&
-    peak.C.slope < 0 &&
-    peak.D.slope > 0
-  ) ||
-  (
-    // y4
-    peak.A.slope >= 0 &&
-    peak.B.slope > 0 &&
-    peak.C.slope < 0 &&
-    peak.D.slope > 0
-  );
+    (
+      // y2
+      peak.A.slope > 0 &&
+      peak.B.slope < 0 &&
+      peak.C.slope <= 0 &&
+      peak.D.slope < 0
+    ) ||
+    (
+      // y3
+      peak.A.slope < 0 &&
+      peak.B.slope <= 0 &&
+      peak.C.slope < 0 &&
+      peak.D.slope > 0
+    ) ||
+    (
+      // y4
+      peak.A.slope >= 0 &&
+      peak.B.slope > 0 &&
+      peak.C.slope < 0 &&
+      peak.D.slope > 0
+    );
 }
 
 /*
@@ -51,7 +59,7 @@ function isYType(peak) {
         | (  ____ / start_po |
         |  /           int   |
 */
-function getYLabel(peak, text, font) {
+export function getYLabel(peak: Peak, text: string, font: string): Label | null {
   var TEST_FONT_SIZE = 3000;
   var ITERATION_CACHE_SIZE = 2;
   var MAXIMUM_ITERATIONS = 100;
@@ -61,7 +69,17 @@ function getYLabel(peak, text, font) {
     Y3: 2,
     Y4: 3,
   };
-  var SETUP_CONFIG = {};
+  class WaveConfig {
+    constructor(
+      public startPoint: string,
+      public slopeModifier: number,
+      public opposite: string,
+      public adjacent: string,
+      public across: string,
+    ) {
+    }
+  }
+  var SETUP_CONFIG: {[key: number]: WaveConfig} = {};
   SETUP_CONFIG[TYPE.Y1] = {
     startPoint: "bottom",
     slopeModifier: -1,
@@ -94,7 +112,7 @@ function getYLabel(peak, text, font) {
   /*
     TODO merge this and the first method to figure out if it's Y type
   */
-  var peakType;
+  var peakType: number;
   if (peak.A.slope < 0) {
     peakType = TYPE.Y3;
   } else if (peak.B.slope > 0) {
@@ -105,19 +123,19 @@ function getYLabel(peak, text, font) {
     peakType = TYPE.Y2;
   }
 
-  if (window.debug) {
+  if (DebugWave.isEnabled) {
     console.log("Type: " + peakType);
   }
 
   /*
     Returns a new start point
   */
-  var performIteration = function(startPoint, fontSlope, opposite, across, adjacent) {
+  var performIteration = function (startPoint: Point, fontSlope: number, opposite: LineSegment, across: LineSegment, adjacent: LineSegment) {
     // Find out where our opposite and font lines intersect
     var fontLine = new InfiniteLine(fontSlope, startPoint);
 
-    if (window.debug) {
-      window.debugTools.wave.drawLine(fontLine, "black");
+    if (DebugWave.isEnabled) {
+      DebugWave.drawLine(fontLine, "black");
     }
 
     // Short Circuit 1: Check if our line intersects across
@@ -135,9 +153,9 @@ function getYLabel(peak, text, font) {
     if (!collisionPoint) {
       // Choose the outside point of the opposite line
       if (peakType === TYPE.Y1 || peakType === TYPE.Y3) {
-        collisionPoint = opposite.getStartPoint();
+        collisionPoint = opposite.start;
       } else {
-        collisionPoint = opposite.getEndPoint();
+        collisionPoint = opposite.end;
       }
     }
 
@@ -145,17 +163,17 @@ function getYLabel(peak, text, font) {
     // It has the same X as the collisionPoint, and the same Y as startPoint
     // and goes in the opposite slope direction
     var invertedStart = new Point(collisionPoint.x, startPoint.y);
-    var invertedLine = new InfiniteLine(fontSlope*-1, invertedStart);
+    var invertedLine = new InfiniteLine(fontSlope * -1, invertedStart);
 
-    if (window.debug) {
-      window.debugTools.wave.drawPoint(collisionPoint, "purple");
-      window.debugTools.wave.drawPoint(invertedStart, "green");
-      window.debugTools.wave.drawLine(invertedLine, "orange");
+    if (DebugWave.isEnabled) {
+      DebugWave.drawPoint(collisionPoint, "purple");
+      DebugWave.drawPoint(invertedStart, "green");
+      DebugWave.drawLine(invertedLine, "orange");
     }
 
     // Short Circuit 2: Check if our line intersects adjacent
     var adjacentIntersect = adjacent.getIntersect(invertedLine);
-    if(adjacentIntersect) {
+    if (adjacentIntersect) {
       // Edge case: We hit the adjacent line but we don't have enough space
       // to calculate the font size. In this case, perform half an iteration
       // right here. TODO this should probably happen in a different place?
@@ -165,7 +183,7 @@ function getYLabel(peak, text, font) {
       if (scAcrossIntersect) {
         return adjacent.getPointOnLineAtX(scAcrossIntersect.x);
       }
-      
+
       // If not this edge case, then just give back our most recent collision point
       return adjacentIntersect;
     }
@@ -177,14 +195,16 @@ function getYLabel(peak, text, font) {
     if (!invertIntersect) {
       // http://i.imgur.com/61YmgJt.png Just misses V
       if (peakType === TYPE.Y1 || peakType === TYPE.Y3) {
-        invertIntersect = across.getEndPoint();
+        invertIntersect = across.end;
       } else {
-        invertIntersect = across.getStartPoint();
+        invertIntersect = across.start;
       }
     }
 
     // Our new start point is at this X position, but on the adjacent line
     var newStart = adjacent.getPointOnLineAtX(invertIntersect.x);
+
+    if (!newStart) return null;
 
     // Short Circuit 3: Check if our font line will intersect across
     var shortCircuitLine = new InfiniteLine(fontSlope, newStart);
@@ -198,25 +218,25 @@ function getYLabel(peak, text, font) {
   /*
     Figure out what font size an iteration will allow for
   */
-  var calculateFontSize = function(text, startPoint, fontSlope, opposite) {
+  var calculateFontSize = function (text: string, startPoint: Point, fontSlope: number, opposite: LineSegment) {
     // Where is our end point?
     var fontLine = new InfiniteLine(fontSlope, startPoint);
     var endPoint = fontLine.getIntersect(opposite);
 
-    if (window.debug) {
-      window.debugTools.wave.drawLine(fontLine, "cyan");
+    if (DebugWave.isEnabled) {
+      DebugWave.drawLine(fontLine, "cyan");
     }
 
     if (!endPoint) {
       // If we miss opposite altogether, let's just stop there.
       endPoint = fontLine.getPointOnLineAtX(
         Math.min(
-          opposite.getStartPoint().x,
-          opposite.getEndPoint().y
+          opposite.start.x,
+          opposite.end.y
         )
       );
       console.log("Had to emergency fix " + text);
-      // throw new Error("[waveY] Couldn't calculate font size");
+      if (!endPoint) return null;
     }
 
     var boxHeight = Math.abs(startPoint.y - endPoint.y);
@@ -229,10 +249,10 @@ function getYLabel(peak, text, font) {
     Set up initial state
   */
   var cfg = SETUP_CONFIG[peakType];
-  var startPoint = peak[cfg.startPoint];
-  var opposite = peak[cfg.opposite];
-  var adjacent = peak[cfg.adjacent];
-  var across = peak[cfg.across];
+  var startPoint = (peak as any)[cfg.startPoint];
+  var opposite = (peak as any)[cfg.opposite];
+  var adjacent = (peak as any)[cfg.adjacent];
+  var across = (peak as any)[cfg.across];
   var textDimensions = getTextDimensions(text, font, TEST_FONT_SIZE);
   var heightToFontSizeRatio = textDimensions.height / TEST_FONT_SIZE;
   var fontSlope = textDimensions.slope * cfg.slopeModifier;
@@ -241,25 +261,31 @@ function getYLabel(peak, text, font) {
   var iterationCache = new Array(ITERATION_CACHE_SIZE);
   var shouldIterate = true;
   var iterationCount = 0;
+  var fontSize: number = 0;
 
   // Iterate!
-  while(shouldIterate) {
-    if (window.debug) {
-      window.debugTools.wave.drawPoint(startPoint, "red");
-      window.debugTools.wave.drawTextBelowPoint(startPoint, iterationCount);
+  while (shouldIterate) {
+
+    if (DebugWave.isEnabled) {
+      DebugWave.drawPoint(startPoint, "red");
+      DebugWave.drawTextBelowPoint(startPoint, iterationCount.toString());
       console.log("Iteration " + iterationCount + " : " + JSON.stringify(startPoint));
     }
     var newStartPoint = performIteration(startPoint, fontSlope, opposite, across, adjacent);
 
+    if (!newStartPoint) return null;
+
     // Calculate our new font size
-    fontSize = calculateFontSize(text, newStartPoint, fontSlope, opposite);
+    var newFontSize = calculateFontSize(text, newStartPoint, fontSlope, opposite);
+    if (!newFontSize) return null;
+    fontSize = newFontSize;
 
     // Sometimes we "bounce" between two (or three) different spots. In this case,
     // just stop the algorithm (and go back to the last spot)
-    for(var i = 0; i < iterationCache.length; i++) {
+    for (var i = 0; i < iterationCache.length; i++) {
       if (iterationCache[i] === fontSize) {
         shouldIterate = false;
-        
+
         // Go back to the last start point
         newStartPoint = startPoint;
       }

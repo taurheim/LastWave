@@ -1,9 +1,16 @@
+import Peak from '@/renderers/d3-wave/models/Peak';
+import Point from '@/renderers/d3-wave/models/Point';
+import { getTextDimensions } from '@/renderers/d3-wave/util';
+import InfiniteLine from '@/renderers/d3-wave/models/InfiniteLine';
+import { DebugWave } from '@/renderers/d3-wave/debugTools';
+import Label from '@/renderers/d3-wave/models/Label';
+
 /*
   Returns true if the Z algorithm should be used:
   /\
   \/
 */
-function isZType(peak) {
+export function isZType(peak: Peak) {
   return (
     peak.A.slope >= 0 &&
     peak.B.slope <= 0 &&
@@ -24,7 +31,7 @@ function isZType(peak) {
   3. Find midpoint between (1) and (2)
   4. Expand the text box from this point
 */
-function getZLabel(peak, text, font) {
+export function getZLabel(peak: Peak, text: string, font: string): Label | null {
   var TEST_FONT_SIZE = 3000;
 
   var rightMidpoint = new Point(peak.topRight.x, (peak.topRight.y + peak.bottomRight.y)/2);
@@ -38,12 +45,13 @@ function getZLabel(peak, text, font) {
   var forwardLine = new InfiniteLine(textDimensions.slope, centerPoint);
   var backwardLine = new InfiniteLine(textDimensions.slope * -1, centerPoint);
 
-  if (window.debug) {
-    window.debugTools.wave.drawLine(forwardLine, "black");
-    window.debugTools.wave.drawLine(backwardLine, "white");
-    window.debugTools.wave.drawPoint(leftMidpoint, "red");
-    window.debugTools.wave.drawPoint(centerPoint, "green");
-    window.debugTools.wave.drawPoint(rightMidpoint, "blue");
+
+  if (DebugWave.isEnabled) {
+    DebugWave.drawLine(forwardLine, "black");
+    DebugWave.drawLine(backwardLine, "white");
+    DebugWave.drawPoint(leftMidpoint, "red");
+    DebugWave.drawPoint(centerPoint, "green");
+    DebugWave.drawPoint(rightMidpoint, "blue");
   }
 
   // Check all intersections with the peak
@@ -51,7 +59,7 @@ function getZLabel(peak, text, font) {
   var checkIntersections = ["A", "B", "C", "D"];
   var minVerticalDistance = Number.MAX_VALUE;
   for (var i = 0; i < checkIntersections.length; i++) {
-    var checkLine = peak[checkIntersections[i]];
+    var checkLine = (peak as any)[checkIntersections[i]];
     var againstLine = (checkLine.slope < 0) ? forwardLine : backwardLine;
 
     var checkIntersect = checkLine.getIntersect(againstLine);
@@ -72,8 +80,8 @@ function getZLabel(peak, text, font) {
   var textPositionX = centerPoint.x - minVerticalDistance/textDimensions.slope;
   var textPositionY = centerPoint.y - boxHeight/2;
 
-  if (window.debug) {
-    window.debugTools.wave.drawPoint(new Point(textPositionX, textPositionY));
+  if (DebugWave.isEnabled) {
+    DebugWave.drawPoint(new Point(textPositionX, textPositionY), "red");
   }
 
   return new Label(text, textPositionX, textPositionY, font, fontSize);

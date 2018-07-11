@@ -7,7 +7,7 @@ import LastFmApi from './lastfm/LastFmApi';
 import URLParameter from './lastfm/models/URLParameter';
 
 import LastFmOptions from './lastfm/Options';
-import ArtistTags from '@/datasources/lastfm/ArtistTags';
+import ArtistTags from '@/datasources/lastfm/models/ArtistTags';
 import { getTopTags, combineArtistTags, splitTimeSpan, joinSegments, DateStringToUnix, cleanByMinPlays, cleanByTopN } from './lastfm/util';
 import TimeSpan from '@/datasources/lastfm/models/TimeSpan';
 import SegmentData from '@/models/SegmentData';
