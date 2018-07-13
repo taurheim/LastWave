@@ -1,4 +1,4 @@
-import Option from 'src/models/Option';
+import Option from '@/models/Option';
 var today = new Date();
 var defaultStartDate = new Date();
 defaultStartDate.setDate(today.getDate() - 1);

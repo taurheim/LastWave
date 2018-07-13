@@ -8,7 +8,7 @@ class WaveDebugger {
   isEnabled: boolean = false;
   debugRippleName: string = "female vocalists";
 
-  svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any> = d3.select('');
+  svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any> | undefined;
   graphHeight: number = 0;
   graphWidth: number = 0;
 
@@ -28,6 +28,7 @@ class WaveDebugger {
   }
 
   drawLine(debugLine: LineBase, color: string) {
+    if (!this.svgDiv) return;
     var LINE_WIDTH = 1;
 
     var start, end;
@@ -51,6 +52,7 @@ class WaveDebugger {
   }
 
   drawPoint(debugPoint: Point, color: string): void {
+    if (!this.svgDiv) return;
     var CIRCLE_RADIUS = 4;
 
     this.svgDiv.append("circle")
@@ -62,6 +64,7 @@ class WaveDebugger {
   }
 
   drawTextBelowPoint(debugPoint: Point, text: string): void {
+    if (!this.svgDiv) return;
     var FONT_SIZE = 12;
     var FONT_COLOR = "#000000";
     var FONT_FAMILY = "Times New Roman";

@@ -1,10 +1,10 @@
 import DataSource from 'src/models/DataSource';
-import Option from 'src/models/Option';
 import SeriesData from 'src/models/SeriesData';
 import async from 'async';
 import jQuery from 'jquery';
 import LastFmApi from './lastfm/LastFmApi';
 import URLParameter from './lastfm/models/URLParameter';
+import Option from '@/models/Option';
 
 import LastFmOptions from './lastfm/Options';
 import ArtistTags from '@/datasources/lastfm/models/ArtistTags';

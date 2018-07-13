@@ -1,5 +1,5 @@
 import URLParameter from './models/URLParameter';
-import SegmentData from 'src/models/SegmentData';
+import SegmentData from '@/models/SegmentData';
 
 export default class LastFmApi {
   apiKey: string;
