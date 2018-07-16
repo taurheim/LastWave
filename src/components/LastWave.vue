@@ -2,7 +2,7 @@
   <div class="lastwave-control">
     <div class="viz-select">
       Data Source:
-      <select>
+      <select @change="chooseDataSource">
         <option v-for="dataSource in dataSources" v-bind:value="dataSource.title" v-bind:key="dataSource.title">
           {{ dataSource.title }}
         </option>
@@ -18,22 +18,26 @@
     <div class="options">
       Data Source Options:
       <template v-for="opt in dataSourceOptions">
-        <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
+        <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="dataSource"></WaveOption>
       </template>
       <br>
       Renderer Options:
       <template v-for="opt in rendererOptions">
-        <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
+        <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="renderer"></WaveOption>
       </template>
     </div>
     <div class="submit">
       <button v-on:click="createWave">Submit</button>
+    </div>
+    <div id="visualization">
+
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
+import store from '@/store';
 import WaveOption from '@/components/WaveOption.vue';
 import LastWaveEngine from '@/lastwave';
 import LastFm from '@/datasources/lastfm';
@@ -57,21 +61,25 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.$data.rendererOptions = [];
-    this.$data.renderers.map((renderer: Renderer) => {
-      this.$data.rendererOptions = this.$data.rendererOptions.concat(renderer.getOptions());
-    });
-
-    this.$data.dataSourceOptions = [];
-    this.$data.dataSources.map((dataSource: DataSource) => {
-      this.$data.dataSourceOptions = this.$data.dataSourceOptions.concat(dataSource.getOptions());
-    });
-
-    // Show all options
+    this.$data.rendererOptions = this.$data.renderers[0].getOptions();
+    this.$data.dataSourceOptions = this.$data.dataSources[0].getOptions();
   },
   methods: {
     createWave: function(evnt: any) {
       console.log("Creating wave");
+      console.log(store.state.dataSourceOptions);
+      console.log(store.state.rendererOptions);
+
+      const engine = new LastWaveEngine();
+      const dataSource = this.$data.dataSources[0];
+      const dsOptions = store.state.dataSourceOptions;
+      const renderer = this.$data.renderers[0];
+      const renderOptions = store.state.rendererOptions;
+
+      engine.CreateWave(dataSource, renderer, dsOptions, renderOptions);
+    },
+    chooseDataSource: () => {
+      console.log("Chose datasource");
     }
   }
   

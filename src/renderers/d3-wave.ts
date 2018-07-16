@@ -40,7 +40,7 @@ export default class WaveGraph implements Renderer {
     console.log("Rendering Visualization");
 
     // Grab the correct color scheme
-    var schemeName = options.color_scheme;
+    var schemeName = options["Color Scheme"];
     var schemeColors = colorSchemes[schemeName];
     var colorCount = schemeColors.length;
     var currentColor = 0;

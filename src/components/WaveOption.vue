@@ -1,23 +1,23 @@
 <template>
   <div class="option">
     <template v-if="option.type === 'dropdown'">
-      <DropdownOption v-bind:title="option.title" v-bind:options="option.options">
+      <DropdownOption v-bind:owner="owner" v-bind:title="option.title" v-bind:options="option.options" v-bind:defaultValue="option.defaultValue">
       </DropdownOption>
     </template>
     <template v-else-if="option.type === 'int'">
-      <InputOption v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
+      <InputOption v-bind:owner="owner" v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
       </InputOption>
     </template>
     <template v-else-if="option.type === 'toggle'">
-      <ToggleOption v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
+      <ToggleOption v-bind:owner="owner" v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
       </ToggleOption>
     </template>
     <template v-else-if="option.type === 'string'">
-      <InputOption v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
+      <InputOption v-bind:owner="owner" v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
       </InputOption>
     </template>
     <template v-else-if="option.type === 'date'">
-      <DateOption v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
+      <DateOption v-bind:owner="owner" v-bind:title="option.title" v-bind:defaultValue="option.defaultValue">
       </DateOption>
     </template>
     <template v-else>
@@ -39,7 +39,7 @@ export default Vue.extend({
     ToggleOption,
     DateOption,
   },
-  props: ["option"],
+  props: ["option", "owner"],
 })
 </script>
 
