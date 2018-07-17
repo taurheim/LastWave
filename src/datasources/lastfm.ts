@@ -88,7 +88,7 @@ export default class LastFm implements DataSource {
         1, // LFM_CONCURRENT_API_REQUESTS
         function(artistName, callback) {
           count++;
-          // $("#output").html(count + "/" + artists.length + " artist tags fetched.");
+          // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
           var artistTags = new ArtistTags(artistName);
 
@@ -144,7 +144,7 @@ export default class LastFm implements DataSource {
       LAST_FM_API_CONCURRENT_REQUESTS,
       function (timeSegment, callback) {
         count++;
-        $("#output").html(count + "/" + timeSegments.length + " time segments");
+        jQuery("#output").html(count + "/" + timeSegments.length + " time segments");
         // TODO cache old segments (but not new ones!)
         var params = [
           new URLParameter("user", username),
@@ -154,7 +154,7 @@ export default class LastFm implements DataSource {
         var requestURL = self.api.getAPIRequestURL(groupByCategory, params);
 
         // Make the request
-        $.get(requestURL, function(data) {
+        jQuery.get(requestURL, function(data) {
           if (!data.error) {
             // Parse through the data
             var parsedData = self.api.parseResponseJSON(data);

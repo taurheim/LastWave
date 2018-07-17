@@ -8,21 +8,25 @@ defaultStartDate.setMonth(today.getMonth() - 1);
 export default [
   new Option(
     "last.fm username",
+    "username",
     "string",
     "Taurheim",
   ),
   new Option(
     "Timespan start",
+    "time_start",
     "date",
     defaultStartDate.toLocaleDateString("en-US"),
   ),
   new Option(
     "Timespan end",
+    "time_end",
     "date",
     today.toLocaleDateString("en-US"),
   ),
   new Option(
     "Group By",
+    "group_by",
     "dropdown",
     "week",
     [
@@ -32,21 +36,24 @@ export default [
   ),
   new Option(
     "Minimum Plays",
+    "min_plays",
     "int",
     "10",
   ),
   new Option(
     "Data Set",
+    "method",
     "dropdown",
-    "tag",
+    "artist",
     [
-      "tag",
       "artist",
       "album",
+      "tag",
     ]
   ),
   new Option(
     "Cache last.fm responses",
+    "use_localstorage",
     "toggle",
     "checked",
   )

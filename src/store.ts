@@ -13,10 +13,10 @@ export default new Vuex.Store({
       state.dataSourceOptions = {};
     },
     updateRendererOption(state: any, payload: any) {
-      state.rendererOptions[payload.title] = payload.value;
+      state.rendererOptions[payload.alias] = payload.value;
     },
     updateDataSourceOption(state: any, payload:any) {
-      state.dataSourceOptions[payload.title] = payload.value;
+      state.dataSourceOptions[payload.alias] = payload.value;
     }
   },
   actions: {

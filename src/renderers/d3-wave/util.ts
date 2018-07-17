@@ -1,5 +1,7 @@
+import jQuery from 'jquery';
+
 export function getTextDimensions(text: string, font: string, fontSize: number) {
-  var temp = $("<div>" + text + "</div>")
+  var temp = jQuery("<div>" + text + "</div>")
     .css({
       position: "absolute",
       float: "left", 
@@ -7,7 +9,7 @@ export function getTextDimensions(text: string, font: string, fontSize: number) 
       font: fontSize + "px " + font,
       visibility: "hidden",
     })
-    .appendTo($("body"));
+    .appendTo(jQuery("body"));
   temp.css("line-height", "1em");
   var width = temp.width();
   var height = temp.height();

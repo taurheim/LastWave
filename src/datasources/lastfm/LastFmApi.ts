@@ -22,10 +22,11 @@ export default class LastFmApi {
     url += "&format=json";
 
     url = url.replace("{method}", this.METHODS[method]);
-    for (var k in additionalParams) {
+
+    additionalParams.forEach((param) => {
       // TODO encode additionalParams
-      url += "&" + k + "=" + additionalParams[k];
-    }
+      url += "&" + param.paramName + "=" + param.paramValue;
+    });
     return encodeURI(url);
   }
 

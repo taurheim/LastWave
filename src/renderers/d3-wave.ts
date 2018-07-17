@@ -1,4 +1,5 @@
 import Rickshaw, { RickshawRippleData, RickshawStackData } from 'rickshaw';
+import jQuery from 'jquery';
 import Renderer from '@/models/Renderer';
 import Option from '@/models/Option';
 import D3Options from './d3-wave/Options';
@@ -40,7 +41,7 @@ export default class WaveGraph implements Renderer {
     console.log("Rendering Visualization");
 
     // Grab the correct color scheme
-    var schemeName = options["Color Scheme"];
+    var schemeName = options["color_scheme"];
     var schemeColors = colorSchemes[schemeName];
     var colorCount = schemeColors.length;
     var currentColor = 0;
@@ -87,10 +88,10 @@ export default class WaveGraph implements Renderer {
     var graphHeight = options.height;
 
     // Create the wave graph using Rickshaw/d3
-    $("#output").html("Rendering graph...");
-    $("#" + this.DIV_ID).html("");
+    jQuery("#output").html("Rendering graph...");
+    jQuery("#" + this.DIV_ID).html("");
     var graph = new Rickshaw.Graph({
-      element: $("#" + this.DIV_ID)[0],
+      element: jQuery("#" + this.DIV_ID)[0],
       width: graphWidth,
       height: graphHeight,
       renderer: this.RICKSHAW_RENDERER,
@@ -112,7 +113,7 @@ export default class WaveGraph implements Renderer {
       var count = 0;
       async.each(graph.series, function(rippleData, callback) {
         count++;
-        $("#output").html("Adding label to ripple " + count + "/" + rickshawData.length);
+        jQuery("#output").html("Adding label to ripple " + count + "/" + rickshawData.length);
 
         if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
           DebugWave.enable();
