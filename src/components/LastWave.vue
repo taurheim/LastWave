@@ -1,5 +1,8 @@
 <template>
   <div class="lastwave-control">
+    <span v-if="currentStage !== undefined">
+      {{ currentStage.stageName }} - {{ currentStage.currentSegment }} / {{ currentStage.stageSegments}}
+    </span>
     <div class="viz-select">
       Data Source:
       <select @change="chooseDataSource">
@@ -46,6 +49,7 @@ import WaveAction from '@/models/WaveAction';
 import Option from '@/models/Option';
 import Renderer from '@/models/Renderer';
 import DataSource from '@/models/DataSource';
+import LoadingStage from '@/models/LoadingStage';
 
 export default Vue.extend({
   components: {
@@ -80,6 +84,12 @@ export default Vue.extend({
     },
     chooseDataSource: () => {
       console.log("Chose datasource");
+    }
+  },
+  computed: {
+    currentStage(): LoadingStage {
+      const currentStage: LoadingStage = store.state.stages[store.state.currentStage];
+      return currentStage;
     }
   }
   

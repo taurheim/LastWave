@@ -15,6 +15,8 @@ import { isXType, getXLabel } from './d3-wave/waveX';
 import { isYType, getYLabel } from './d3-wave/waveY';
 import { isZType, getZLabel } from './d3-wave/waveZ';
 import colorSchemes from '@/config/colors.json';
+import LoadingStage from '@/models/LoadingStage';
+import store from '@/store';
 
 export default class WaveGraph implements Renderer {
   MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
@@ -23,10 +25,32 @@ export default class WaveGraph implements Renderer {
   DIV_ID = "visualization";
   MULTILINE_LINE_HEIGHT = "1em";
   MINIMUM_FONT_SIZE_PIXELS = 8;
+  STAGE_NAMES = {
+    DRAWING: "Drawing Wave...",
+    LABELS: "Adding labels...",
+    MONTHS: "Adding month names...",
+  }
   title: string = "Wave Graph";
 
   getOptions(): Option[] {
     return D3Options;
+  }
+
+  getLoadingStages(options: any): LoadingStage[] {
+    return [
+      new LoadingStage(
+        this.STAGE_NAMES.DRAWING,
+        15,
+      ),
+      new LoadingStage(
+        this.STAGE_NAMES.LABELS,
+        80,
+      ),
+      new LoadingStage(
+        this.STAGE_NAMES.MONTHS,
+        5,
+      )
+    ];
   }
 
   /*
@@ -38,7 +62,7 @@ export default class WaveGraph implements Renderer {
     }
   */
   renderVisualization(data: SeriesData[], options: any) {
-    console.log("Rendering Visualization");
+    store.commit("startNextStage", 1);
 
     // Grab the correct color scheme
     var schemeName = options["color_scheme"];
@@ -102,18 +126,20 @@ export default class WaveGraph implements Renderer {
     });
     graph.render();
 
+    store.commit("progressCurrentStage");
+
     if (DebugWave.isEnabled || DebugWave.debugRippleName) {
       DebugWave.setSvgDiv(d3.select("#" + this.DIV_ID).select("svg"));
     }
 
     // Add ripple labels (e.g. Artist Names)
     if (options.add_labels) {
+
+      store.commit("startNextStage", graph.series.length);
       var scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
 
-      var count = 0;
       async.each(graph.series, function(rippleData, callback) {
-        count++;
-        jQuery("#output").html("Adding label to ripple " + count + "/" + rickshawData.length);
+        store.commit("progressCurrentStage");
 
         if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
           DebugWave.enable();

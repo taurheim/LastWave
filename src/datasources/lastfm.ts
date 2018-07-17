@@ -1,5 +1,6 @@
 import DataSource from 'src/models/DataSource';
 import SeriesData from 'src/models/SeriesData';
+import LoadingStage from '@/models/LoadingStage';
 import async from 'async';
 import jQuery from 'jquery';
 import LastFmApi from './lastfm/LastFmApi';
@@ -11,6 +12,7 @@ import ArtistTags from '@/datasources/lastfm/models/ArtistTags';
 import { getTopTags, combineArtistTags, splitTimeSpan, joinSegments, DateStringToUnix, cleanByMinPlays, cleanByTopN } from './lastfm/util';
 import TimeSpan from '@/datasources/lastfm/models/TimeSpan';
 import SegmentData from '@/models/SegmentData';
+import store from '@/store';
 
 
 export default class LastFm implements DataSource {
@@ -38,6 +40,7 @@ export default class LastFm implements DataSource {
     // TODO instead of using localstorage as a request cache, make it smaller
     // by only caching the responses we care about (e.g. if we had a request for
     // RHCP plays, we would cache just the number of plays)
+
     var firstMethod = (method === "tag") ? "artist" : method;
     this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan, function(err: any, data: any) {
       switch(method) {
@@ -70,6 +73,27 @@ export default class LastFm implements DataSource {
     return LastFmOptions;
   }
 
+  getLoadingStages(options: any) : LoadingStage[] {
+    switch(options.method) {
+      case "tag":
+        return [
+
+        ];
+      break;
+      case "artist":
+      case "album":
+        return [
+          new LoadingStage(
+            "Getting data...",
+            100,
+          )
+        ];
+      break;
+      default:
+        return [];
+    }
+  }
+
   getTagsForArtistData(artistData: SeriesData[], useLocalStorage: boolean): Promise<SeriesData[]> {
     // TODO Promisify
     // TODO use config file
@@ -83,11 +107,12 @@ export default class LastFm implements DataSource {
       });
       var tagData: {[key: string]: ArtistTags} = {};
 
+      store.commit("startNextStage", artists.length);
       async.eachLimit(
         artists,
         1, // LFM_CONCURRENT_API_REQUESTS
         function(artistName, callback) {
-          count++;
+          store.commit("progressCurrentStage");
           // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
           var artistTags = new ArtistTags(artistName);
@@ -133,18 +158,18 @@ export default class LastFm implements DataSource {
 
   getDataForTimeSpan(username: string, groupByCategory: string, groupByTime: string, timeSpan: TimeSpan, callback: any) {
     var timeSegments = splitTimeSpan(groupByTime, timeSpan);
-    var count = 0;
     var segmentData: SegmentData[][] = [];
     var LAST_FM_API_CONCURRENT_REQUESTS = 1;
     var LAST_FM_API_CADENCE_MS = 150;
     var self = this;
 
+    store.commit("startNextStage", timeSegments.length);
+
     async.eachLimit(
       timeSegments,
       LAST_FM_API_CONCURRENT_REQUESTS,
       function (timeSegment, callback) {
-        count++;
-        jQuery("#output").html(count + "/" + timeSegments.length + " time segments");
+        store.commit("progressCurrentStage");
         // TODO cache old segments (but not new ones!)
         var params = [
           new URLParameter("user", username),
