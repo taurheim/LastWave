@@ -23,11 +23,34 @@ export default Vue.extend({
 
     this.optionData = this.$props.option;
     this.optionData.defaultValue = defaultValue;
-    
-    // Broadcast default value
-    this.optionChanged(this.optionData.defaultValue);
+
+    // Set the default value in the data store
+    let dataStore;
+    if (this.$props.owner === "renderer") {
+      dataStore = this.$store.state.rendererOptions;
+    } else {
+      dataStore = this.$store.state.dataSourceOptions;
+    }
+    Vue.set(dataStore, this.optionData.alias, defaultValue);
   },
-  data(): any {
+  computed: {
+    currentValue(): string {
+      const alias = this.$props.option.alias;
+      let currentValue;
+      if (this.$props.owner === "renderer") {
+        currentValue = (<any> store).state.rendererOptions[this.optionData.alias];
+      } else {
+        currentValue = (<any> store).state.dataSourceOptions[this.optionData.alias];
+      }
+
+      console.log("Current value: " + currentValue);
+      return currentValue;
+    },
+    demoValue(): string {
+      return (<any> store).state.demo[this.optionData.alias];
+    }
+  },
+  data(): {[key: string]: any} {
     return {
       optionData: {},
     }
@@ -39,16 +62,10 @@ export default Vue.extend({
     optionChanged: function(newValue: any) {
       switch(this.$props.owner) {
         case "dataSource":
-          store.commit('updateDataSourceOption', {
-            alias: this.$props.option.alias,
-            value: newValue,
-          });
+          Vue.set(this.$store.state.dataSourceOptions, this.optionData.alias, newValue);
         break;
         case "renderer":
-          store.commit('updateRendererOption', {
-            alias: this.$props.option.alias,
-            value: newValue,
-          });
+          Vue.set(this.$store.state.rendererOptions, this.optionData.alias, newValue);
         break;
       }
     }

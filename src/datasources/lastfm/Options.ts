@@ -1,9 +1,16 @@
 import Option from '@/models/Option';
-var today = new Date();
-var defaultStartDate = new Date();
-defaultStartDate.setDate(today.getDate() - 1);
-defaultStartDate.setMonth(today.getMonth() - 1);
-// defaultStartDate.setFullYear(today.getFullYear() - 1);
+import EasyDates from '@/config/easyDates.json';
+
+const fromDate = new Option(
+  "Timespan start",
+  "time_start",
+  "date",
+);
+const toDate = new Option(
+  "Timespan end",
+  "time_end",
+  "date",
+);
 
 export default [
   new Option(
@@ -13,17 +20,18 @@ export default [
     "Taurheim",
   ),
   new Option(
-    "Timespan start",
-    "time_start",
-    "date",
-    defaultStartDate.toLocaleDateString("en-US"),
+    "Date range",
+    "customrange",
+    "easydate",
+    EasyDates["Last 3 months"],
+    undefined,
+    true,
+    [
+      fromDate, toDate
+    ]
   ),
-  new Option(
-    "Timespan end",
-    "time_end",
-    "date",
-    today.toLocaleDateString("en-US"),
-  ),
+  fromDate,
+  toDate,
   new Option(
     "Group By",
     "group_by",

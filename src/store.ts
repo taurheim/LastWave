@@ -13,18 +13,13 @@ export default new Vuex.Store({
     isCreatingWave: false,
     currentStage: -1,
     stages: [],
+    
+    // DEMO
+    demo: {
+      "test": "",
+    },
   },
   mutations: {
-    clearOptions(state) {
-      state.rendererOptions = {};
-      state.dataSourceOptions = {};
-    },
-    updateRendererOption(state: any, payload: any) {
-      state.rendererOptions[payload.alias] = payload.value;
-    },
-    updateDataSourceOption(state: any, payload:any) {
-      state.dataSourceOptions[payload.alias] = payload.value;
-    },
     setStages(state: any, stages: LoadingStage[]) {
       state.stages = stages;
       state.currentStage = -1;

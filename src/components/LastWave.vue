@@ -18,6 +18,9 @@
         </option>
       </select>
     </div>
+    <div class="main-options">
+
+    </div>
     <div class="options">
       Data Source Options:
       <template v-for="opt in dataSourceOptions">
@@ -65,8 +68,15 @@ export default Vue.extend({
     }
   },
   mounted() {
-    this.$data.rendererOptions = this.$data.renderers[0].getOptions();
-    this.$data.dataSourceOptions = this.$data.dataSources[0].getOptions();
+    let rendererOptions: Option[] = this.$data.renderers[0].getOptions();
+    let dataSourceOptions: Option[] = this.$data.dataSources[0].getOptions();
+    let mainOptions: Option[] = [];
+
+    // Remove all the options that should be in main options
+
+
+    this.$data.rendererOptions = rendererOptions;
+    this.$data.dataSourceOptions = dataSourceOptions;
   },
   methods: {
     createWave: function(evnt: any) {

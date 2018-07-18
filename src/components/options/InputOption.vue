@@ -1,7 +1,7 @@
 <template>
   <span>
     {{ optionData.title }}:
-    <input type="text" v-bind:value="optionData.defaultValue" @keyup="optionChanged($event.target.value)">
+    <input type="text" v-bind:value="currentValue" @keyup="optionChanged($event.target.value)">
   </span>
 </template>
 <script lang="ts">

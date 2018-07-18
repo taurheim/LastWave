@@ -20,8 +20,12 @@
       <DateOption v-bind:owner="owner" v-bind:option="option">
       </DateOption>
     </template>
+    <template v-else-if="option.type === 'easydate'">
+      <EasyDateOption v-bind:owner="owner" v-bind:option="option">
+      </EasyDateOption>
+    </template>
     <template v-else>
-      Not supported.
+      Not supported: {{ option.type }}
     </template>
   </div>
 </template>
@@ -31,6 +35,7 @@ import DropdownOption from '@/components/options/DropdownOption.vue';
 import InputOption from '@/components/options/InputOption.vue';
 import ToggleOption from '@/components/options/ToggleOption.vue';
 import DateOption from '@/components/options/DateOption.vue';
+import EasyDateOption from '@/components/options/EasyDateOption.vue';
 
 export default Vue.extend({
   components: {
@@ -38,6 +43,7 @@ export default Vue.extend({
     InputOption,
     ToggleOption,
     DateOption,
+    EasyDateOption,
   },
   props: ["option", "owner"],
 })

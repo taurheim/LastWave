@@ -1,7 +1,7 @@
 <template>
   <span>
     {{ optionData.title }}:
-    <input type="checkbox" v-if="optionData.defaultValue === 'checked'" checked @change="optionChanged($event.target.checked)">
+    <input type="checkbox" v-if="currentValue === 'checked'" checked @change="optionChanged($event.target.checked)">
     <input type="checkbox" v-else @change="optionChanged($event.target.checked)">
   </span>
 </template>

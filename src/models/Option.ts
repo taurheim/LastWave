@@ -1,3 +1,4 @@
+// TODO this would probably be a lot better if we just subclassed it
 export default class Option {
   constructor(
     public title: string, // What is shown to the user
@@ -5,6 +6,8 @@ export default class Option {
     public type: string,
     public defaultValue?: string,
     public options?: string[],
+    public mainView?: boolean,
+    public connectedOptions?: Option[],
   ) {
   }
 }
