@@ -1,7 +1,7 @@
 <template>
   <span>
-    {{ option.title }}:
-    <input type="checkbox" v-if="option.defaultValue === 'checked'" checked @change="optionChanged($event.target.checked)">
+    {{ optionData.title }}:
+    <input type="checkbox" v-if="optionData.defaultValue === 'checked'" checked @change="optionChanged($event.target.checked)">
     <input type="checkbox" v-else @change="optionChanged($event.target.checked)">
   </span>
 </template>
@@ -10,6 +10,5 @@ import Vue from 'vue';
 import OptionBase from './OptionBase.vue';
 export default Vue.extend({
   extends: OptionBase,
-  props: ["title", "defaultValue"],
 })
 </script>

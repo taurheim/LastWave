@@ -1,8 +1,8 @@
 <template>
   <span>
-    {{ option.title }}: 
+    {{ optionData.title }}: 
     <select @change="optionChanged($event.target.value)">
-      <option v-for="opt in option.options" :key="opt">
+      <option v-for="opt in optionData.options" :key="opt">
         {{ opt }}
       </option>
     </select>

@@ -71,8 +71,6 @@ export default Vue.extend({
   methods: {
     createWave: function(evnt: any) {
       console.log("Creating wave");
-      console.log(store.state.dataSourceOptions);
-      console.log(store.state.rendererOptions);
 
       const engine = new LastWaveEngine();
       const dataSource = this.$data.dataSources[0];
