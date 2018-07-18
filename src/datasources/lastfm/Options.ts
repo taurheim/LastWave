@@ -1,5 +1,4 @@
 import Option from '@/models/Option';
-import EasyDates from '@/config/easyDates.json';
 
 const fromDate = new Option(
   "Timespan start",
@@ -23,7 +22,7 @@ export default [
     "Date range",
     "customrange",
     "easydate",
-    EasyDates["Last 3 months"],
+    "Last 3 months",
     undefined,
     true,
     [

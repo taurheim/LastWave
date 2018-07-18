@@ -13,7 +13,7 @@ export default Vue.extend({
   // DefaultValue:
   // Owner: "renderer" or "dataSource"
   props: ["option", "owner"],
-  mounted() {
+  created() {
     // Set the default value
     let defaultValue = this.$props.option.defaultValue;
     if (this.$route.query[this.$props.option.alias]) {
