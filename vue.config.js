@@ -7,5 +7,12 @@ module.exports = {
         safari10: true,
       }
     }
-  }
+  },
+  baseUrl: undefined, // "/lastwave"
+  outputDir: undefined,
+  assetsDir: undefined,
+  runtimeCompiler: undefined,
+  productionSourceMap: undefined,
+  parallel: undefined,
+  css: undefined
 };
