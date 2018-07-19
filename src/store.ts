@@ -13,11 +13,6 @@ export default new Vuex.Store({
     isCreatingWave: false,
     currentStage: -1,
     stages: [],
-    
-    // DEMO
-    demo: {
-      "test": "",
-    },
   },
   mutations: {
     setStages(state: any, stages: LoadingStage[]) {

@@ -19,7 +19,9 @@
       </select>
     </div>
     <div class="main-options">
-
+      <template v-for="opt in mainOptions">
+        <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
+      </template>
     </div>
     <div class="options">
       Data Source Options:
@@ -38,6 +40,9 @@
     <div id="visualization">
 
     </div>
+    <pre>
+      {{ $store.state }}
+    </pre>
   </div>
 </template>
 
@@ -64,19 +69,36 @@ export default Vue.extend({
       renderers: [new WaveGraph()],
       dataSourceOptions: [],
       rendererOptions: [],
+      mainOptions: [],
       actions: [],
     }
   },
   mounted() {
-    let rendererOptions: Option[] = this.$data.renderers[0].getOptions();
     let dataSourceOptions: Option[] = this.$data.dataSources[0].getOptions();
+    let rendererOptions: Option[] = this.$data.renderers[0].getOptions();
     let mainOptions: Option[] = [];
 
+    // Tag them
+    // TODO this is awful - we shouldn't have to pass around which type of option it is.
+    dataSourceOptions.forEach(opt => {
+      opt.owner = "dataSource";
+    });
+    rendererOptions.forEach(opt => {
+      opt.owner = "renderer";
+    });
+
     // Remove all the options that should be in main options
+    mainOptions = dataSourceOptions.filter(option => option.mainView);
+    mainOptions = mainOptions.concat(rendererOptions.filter(option => option.mainView));
 
+    console.log(mainOptions);
 
-    this.$data.rendererOptions = rendererOptions;
+    dataSourceOptions = dataSourceOptions.filter(option => !option.mainView);
+    rendererOptions = rendererOptions.filter(option => !option.mainView);
+
     this.$data.dataSourceOptions = dataSourceOptions;
+    this.$data.rendererOptions = rendererOptions;
+    this.$data.mainOptions = mainOptions;
   },
   methods: {
     createWave: function(evnt: any) {

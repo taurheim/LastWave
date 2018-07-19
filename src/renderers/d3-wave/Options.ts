@@ -10,6 +10,7 @@ export default [
     [
       "lastwave",
     ],
+    true,
   ),
   new Option(
     "Graph Width",

@@ -17,6 +17,8 @@ export default [
     "username",
     "string",
     "Taurheim",
+    undefined,
+    true,
   ),
   new Option(
     "Date range",

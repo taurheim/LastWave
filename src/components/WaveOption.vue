@@ -1,27 +1,27 @@
 <template>
   <div class="option">
     <template v-if="option.type === 'dropdown'">
-      <DropdownOption v-bind:owner="owner" v-bind:option="option">
+      <DropdownOption v-bind:option="option">
       </DropdownOption>
     </template>
     <template v-else-if="option.type === 'int'">
-      <InputOption v-bind:owner="owner" v-bind:option="option">
+      <InputOption v-bind:option="option">
       </InputOption>
     </template>
     <template v-else-if="option.type === 'toggle'">
-      <ToggleOption v-bind:owner="owner" v-bind:option="option">
+      <ToggleOption v-bind:option="option">
       </ToggleOption>
     </template>
     <template v-else-if="option.type === 'string'">
-      <InputOption v-bind:owner="owner" v-bind:option="option">
+      <InputOption v-bind:option="option">
       </InputOption>
     </template>
     <template v-else-if="option.type === 'date'">
-      <DateOption v-bind:owner="owner" v-bind:option="option">
+      <DateOption v-bind:option="option">
       </DateOption>
     </template>
     <template v-else-if="option.type === 'easydate'">
-      <EasyDateOption v-bind:owner="owner" v-bind:option="option">
+      <EasyDateOption v-bind:option="option">
       </EasyDateOption>
     </template>
     <template v-else>
@@ -45,7 +45,7 @@ export default Vue.extend({
     DateOption,
     EasyDateOption,
   },
-  props: ["option", "owner"],
+  props: ["option"],
 })
 </script>
 

@@ -11,8 +11,7 @@ export default Vue.extend({
   // Title:
   // Options:
   // DefaultValue:
-  // Owner: "renderer" or "dataSource"
-  props: ["option", "owner"],
+  props: ["option"],
   created() {
     // Set the default value
     let defaultValue = this.$props.option.defaultValue;
@@ -26,7 +25,7 @@ export default Vue.extend({
 
     // Set the default value in the data store
     let dataStore;
-    if (this.$props.owner === "renderer") {
+    if (this.optionData.owner === "renderer") {
       dataStore = this.$store.state.rendererOptions;
     } else {
       dataStore = this.$store.state.dataSourceOptions;
@@ -37,18 +36,14 @@ export default Vue.extend({
     currentValue(): string {
       const alias = this.$props.option.alias;
       let currentValue;
-      if (this.$props.owner === "renderer") {
+      if (this.optionData.owner === "renderer") {
         currentValue = (<any> store).state.rendererOptions[this.optionData.alias];
       } else {
         currentValue = (<any> store).state.dataSourceOptions[this.optionData.alias];
       }
 
-      console.log("Current value: " + currentValue);
       return currentValue;
     },
-    demoValue(): string {
-      return (<any> store).state.demo[this.optionData.alias];
-    }
   },
   data(): {[key: string]: any} {
     return {
@@ -60,13 +55,15 @@ export default Vue.extend({
       this.optionData = option;
     },
     optionChanged: function(newValue: any) {
-      switch(this.$props.owner) {
+      switch(this.optionData.owner) {
         case "dataSource":
           Vue.set(this.$store.state.dataSourceOptions, this.optionData.alias, newValue);
         break;
         case "renderer":
           Vue.set(this.$store.state.rendererOptions, this.optionData.alias, newValue);
         break;
+        default:
+        throw new Error("No owner!");
       }
     }
   },

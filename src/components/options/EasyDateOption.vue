@@ -35,10 +35,9 @@ export default Vue.extend({
       const optionData: Option = (<any> this).optionData;
 
       if (!optionData.connectedOptions || optionData.connectedOptions.length !== 2) {
-        return;
+        throw new Error('Not enough connected options');
       }
 
-      console.log(EasyDates);
       const offsets = this.easyDates[chosen];
       const startDateMs = ((new Date()).valueOf() - offsets[0]);
       const endDateMs = ((new Date()).valueOf() - offsets[1]);
@@ -48,7 +47,7 @@ export default Vue.extend({
       const startDateAlias = optionData.connectedOptions[0].alias;
       const endDateAlias = optionData.connectedOptions[1].alias;
 
-      if (this.$props.owner === "dataSource") {
+      if ((<any> this).optionData.owner === "dataSource") {
         Vue.set(this.$store.state.dataSourceOptions, startDateAlias, startDateString);
         Vue.set(this.$store.state.dataSourceOptions, endDateAlias, endDateString);
       } else {
