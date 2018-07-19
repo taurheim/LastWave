@@ -64,10 +64,14 @@ export function getZLabel(peak: Peak, text: string, font: string): Label | null 
 
     var checkIntersect = checkLine.getIntersect(againstLine);
 
-    var verticalDistance = Math.abs(checkIntersect.y - centerPoint.y);
+    // If there is no intersect, we don't have to worry about that
+    // line segment reducing the space for our text.
+    if (checkIntersect) {
+      var verticalDistance = Math.abs(checkIntersect.y - centerPoint.y);
 
-    if (verticalDistance < minVerticalDistance) {
-      minVerticalDistance = verticalDistance;
+      if (verticalDistance < minVerticalDistance) {
+        minVerticalDistance = verticalDistance;
+      }
     }
   }
 

@@ -17,6 +17,7 @@ import { isZType, getZLabel } from './d3-wave/waveZ';
 import colorSchemes from '@/config/colors.json';
 import LoadingStage from '@/models/LoadingStage';
 import store from '@/store';
+import { resolve } from 'url';
 
 export default class WaveGraph implements Renderer {
   MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
@@ -61,106 +62,108 @@ export default class WaveGraph implements Renderer {
         indices, each representing how many plays that week had
     }
   */
-  renderVisualization(data: SeriesData[], options: any) {
-    store.commit("startNextStage", 1);
+  renderVisualization(data: SeriesData[], options: any): Promise<void> {
+    return new Promise((resolve, reject) => {
+      store.commit("startNextStage", 1);
 
-    // Grab the correct color scheme
-    var schemeName = options["color_scheme"];
-    var schemeColors = colorSchemes[schemeName];
-    var colorCount = schemeColors.length;
-    var currentColor = 0;
-    var self = this;
+      // Grab the correct color scheme
+      var schemeName = options["color_scheme"];
+      var schemeColors = colorSchemes[schemeName];
+      var colorCount = schemeColors.length;
+      var currentColor = 0;
+      var self = this;
 
-    // Parse ripple data into rickshaw format
-    /*
-      [{
-        color: "#ffffff",
-        data: [{
-          x: <int, which time segment?>
-          y: <int, count in that time segment>
-        }],
-        name: "Caribou"
-      }]
-    */
-    var rickshawData: RickshawRippleData[] = [];
-    for(var i = 0; i < data.length; i++) {
-      var dataPoint = data[i];
-      var title = dataPoint.title;
-      var color = schemeColors[currentColor++ % colorCount];
+      // Parse ripple data into rickshaw format
+      /*
+        [{
+          color: "#ffffff",
+          data: [{
+            x: <int, which time segment?>
+            y: <int, count in that time segment>
+          }],
+          name: "Caribou"
+        }]
+      */
+      var rickshawData: RickshawRippleData[] = [];
+      for(var i = 0; i < data.length; i++) {
+        var dataPoint = data[i];
+        var title = dataPoint.title;
+        var color = schemeColors[currentColor++ % colorCount];
 
-      var counts = dataPoint.counts;
-      var rickshawSeriesData = [];
-      for (var j = 0; j < counts.length; j++) {
-        rickshawSeriesData.push({
-          x: j,
-          y: counts[j],
+        var counts = dataPoint.counts;
+        var rickshawSeriesData = [];
+        for (var j = 0; j < counts.length; j++) {
+          rickshawSeriesData.push({
+            x: j,
+            y: counts[j],
+          });
+        }
+
+        rickshawData.push({
+          name: title,
+          data: rickshawSeriesData,
+          color: color,
         });
       }
 
-      rickshawData.push({
-        name: title,
-        data: rickshawSeriesData,
-        color: color,
+      // Calculate the width if it hasn't been set
+      var graphWidth = options.width;
+      if (!graphWidth) {
+        graphWidth = data[0].counts.length * this.DEFAULT_WIDTH_PER_PEAK;
+      }
+      var graphHeight = options.height;
+
+      // Create the wave graph using Rickshaw/d3
+      jQuery("#output").html("Rendering graph...");
+      jQuery("#" + this.DIV_ID).html("");
+      var graph = new Rickshaw.Graph({
+        element: jQuery("#" + this.DIV_ID)[0],
+        width: graphWidth,
+        height: graphHeight,
+        renderer: this.RICKSHAW_RENDERER,
+        offset: options.offset,
+        stroke: options.stroke,
+        preserve: true, // Leave our original data as it is
+        series: rickshawData,
       });
-    }
+      graph.render();
 
-    // Calculate the width if it hasn't been set
-    var graphWidth = options.width;
-    if (!graphWidth) {
-      graphWidth = data[0].counts.length * this.DEFAULT_WIDTH_PER_PEAK;
-    }
-    var graphHeight = options.height;
+      store.commit("progressCurrentStage");
 
-    // Create the wave graph using Rickshaw/d3
-    jQuery("#output").html("Rendering graph...");
-    jQuery("#" + this.DIV_ID).html("");
-    var graph = new Rickshaw.Graph({
-      element: jQuery("#" + this.DIV_ID)[0],
-      width: graphWidth,
-      height: graphHeight,
-      renderer: this.RICKSHAW_RENDERER,
-      offset: options.offset,
-      stroke: options.stroke,
-      preserve: true, // Leave our original data as it is
-      series: rickshawData,
+      if (DebugWave.isEnabled || DebugWave.debugRippleName) {
+        DebugWave.setSvgDiv(d3.select("#" + this.DIV_ID).select("svg"));
+      }
+
+      // Add ripple labels (e.g. Artist Names)
+      if (options.add_labels) {
+
+        store.commit("startNextStage", graph.series.length);
+        var scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
+
+        async.each(graph.series, function(rippleData, callback) {
+          store.commit("progressCurrentStage");
+
+          if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
+            DebugWave.enable();
+          }
+
+          self.addGraphLabels(options.font, rippleData, scalingValues);
+
+          if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
+            DebugWave.disable();
+          }
+
+          callback();
+        }, function() {
+          resolve();
+        });
+      }
+
+      // Add month names
+
+      // Add watermark
+
     });
-    graph.render();
-
-    store.commit("progressCurrentStage");
-
-    if (DebugWave.isEnabled || DebugWave.debugRippleName) {
-      DebugWave.setSvgDiv(d3.select("#" + this.DIV_ID).select("svg"));
-    }
-
-    // Add ripple labels (e.g. Artist Names)
-    if (options.add_labels) {
-
-      store.commit("startNextStage", graph.series.length);
-      var scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
-
-      async.each(graph.series, function(rippleData, callback) {
-        store.commit("progressCurrentStage");
-
-        if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
-          DebugWave.enable();
-        }
-
-        self.addGraphLabels(options.font, rippleData, scalingValues);
-
-        if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
-          DebugWave.disable();
-        }
-
-        callback();
-      }, function() {
-        console.log("Finished.");
-        console.log(data);
-      });
-    }
-
-    // Add month names
-
-    // Add watermark
   }
 
   /*

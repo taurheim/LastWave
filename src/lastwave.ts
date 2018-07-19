@@ -3,24 +3,30 @@ import Renderer from '@/models/Renderer';
 import SeriesData from '@/models/SeriesData';
 import jQuery from 'jquery';
 import store from '@/store';
+import WaveAction from '@/models/WaveAction';
 
 export default class LastWaveEngine {
 	// Loading times
 	DATA_SOURCE_TO_RENDERER_RATIO: number = 0.8;
 
-	CreateWave(dataSource: DataSource, renderer: Renderer, dataSourceOptions: any, rendererOptions: any) {
-		console.log("Creating Wave");
-		console.log("Perform validation");
+	CreateWave(dataSource: DataSource, renderer: Renderer, dataSourceOptions: any, rendererOptions: any): Promise<void> {
+		return new Promise((resolve, reject) => {
+			console.log("Creating Wave");
+			console.log("Perform validation");
 
-		this.setupLoadingStages(dataSource, renderer, dataSourceOptions, rendererOptions);
+			this.setupLoadingStages(dataSource, renderer, dataSourceOptions, rendererOptions);
 
-		dataSource.loadData(dataSourceOptions, function(err: any, musicData: SeriesData[]) {
-			if (err) {
-				console.log("Error encountered: " + err);
-			}
-			console.log("Rendering visualization...");
-			renderer.renderVisualization(musicData, rendererOptions);
-			console.log("Visualization finished rendering.");
+			dataSource.loadData(dataSourceOptions, function(err: any, musicData: SeriesData[]) {
+				if (err) {
+					console.log("Error encountered: " + err);
+				}
+				console.log("Rendering visualization...");
+
+				renderer.renderVisualization(musicData, rendererOptions).then(() => {
+					console.log("Visualization finished rendering.");
+					resolve();
+				});
+			});
 		});
 	}
 

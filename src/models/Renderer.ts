@@ -6,5 +6,5 @@ export default interface Renderer {
   title: string;
   getOptions(): Option[],
   getLoadingStages(options: any): LoadingStage[],
-  renderVisualization(data: SeriesData[], options: any): void,
+  renderVisualization(data: SeriesData[], options: any): Promise<void>,
 }

@@ -3,6 +3,8 @@
     <span v-if="currentStage !== undefined">
       {{ currentStage.stageName }} - {{ currentStage.currentSegment }} / {{ currentStage.stageSegments}}
     </span>
+    <!--
+      Once more renderers/data sources have been added, use this dropdown
     <div class="viz-select">
       Data Source:
       <select @change="chooseDataSource">
@@ -18,21 +20,26 @@
         </option>
       </select>
     </div>
+    -->
     <div class="main-options">
       <template v-for="opt in mainOptions">
         <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
       </template>
     </div>
+    <hr>
     <div class="options">
       Data Source Options:
       <template v-for="opt in dataSourceOptions">
         <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="dataSource"></WaveOption>
       </template>
-      <br>
+      <hr>
       Renderer Options:
       <template v-for="opt in rendererOptions">
         <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="renderer"></WaveOption>
       </template>
+    </div>
+    <div id="actions">
+
     </div>
     <div class="submit">
       <button v-on:click="createWave">Submit</button>
@@ -51,13 +58,16 @@ import Vue from 'vue'
 import store from '@/store';
 import WaveOption from '@/components/WaveOption.vue';
 import LastWaveEngine from '@/lastwave';
-import LastFm from '@/datasources/lastfm';
-import WaveGraph from '@/renderers/d3-wave';
 import WaveAction from '@/models/WaveAction';
 import Option from '@/models/Option';
 import Renderer from '@/models/Renderer';
 import DataSource from '@/models/DataSource';
 import LoadingStage from '@/models/LoadingStage';
+import jQuery from 'jquery';
+
+import LastFm from '@/datasources/lastfm';
+import WaveGraph from '@/renderers/d3-wave';
+import SaveAsFile from '@/actions/saveAsFile.vue';
 
 export default Vue.extend({
   components: {
@@ -67,10 +77,10 @@ export default Vue.extend({
     return {
       dataSources: [new LastFm()],
       renderers: [new WaveGraph()],
+      actions: [SaveAsFile],
       dataSourceOptions: [],
       rendererOptions: [],
       mainOptions: [],
-      actions: [],
     }
   },
   mounted() {
@@ -91,8 +101,6 @@ export default Vue.extend({
     mainOptions = dataSourceOptions.filter(option => option.mainView);
     mainOptions = mainOptions.concat(rendererOptions.filter(option => option.mainView));
 
-    console.log(mainOptions);
-
     dataSourceOptions = dataSourceOptions.filter(option => !option.mainView);
     rendererOptions = rendererOptions.filter(option => !option.mainView);
 
@@ -110,7 +118,15 @@ export default Vue.extend({
       const renderer = this.$data.renderers[0];
       const renderOptions = store.state.rendererOptions;
 
-      engine.CreateWave(dataSource, renderer, dsOptions, renderOptions);
+      engine.CreateWave(dataSource, renderer, dsOptions, renderOptions).then(() => {
+        // Display actions
+        this.actions.forEach(action => {
+          const newInstance = new action();
+          newInstance.$mount();
+          jQuery("#actions").append(newInstance.$el);
+        });
+
+      });
     },
     chooseDataSource: () => {
       console.log("Chose datasource");

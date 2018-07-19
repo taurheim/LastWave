@@ -4,7 +4,7 @@ import SegmentData from '@/models/SegmentData';
 export default class LastFmApi {
   apiKey: string;
   ALBUM_NAME_FORMAT: string = "{album}<br>{artist}";
-  API_BASE_URL: string = "http://ws.audioscrobbler.com/2.0/";
+  API_BASE_URL: string = "https://ws.audioscrobbler.com/2.0/";
   METHODS: any = {
     artist: "user.getweeklyartistchart",
     album: "user.getweeklyalbumchart",

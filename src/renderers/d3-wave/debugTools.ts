@@ -6,7 +6,7 @@ import d3 from 'd3';
 
 class WaveDebugger {
   isEnabled: boolean = false;
-  debugRippleName: string = "female vocalists";
+  debugRippleName: string = "";
 
   svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any> | undefined;
   graphHeight: number = 0;
