@@ -26,16 +26,22 @@
 <script lang="ts">
 import Vue from 'vue';
 import VueGallery from 'vue-gallery';
+import jQuery from 'jquery';
 
 export default Vue.extend({
+  mounted() {
+    jQuery.get("https://res.cloudinary.com/lastwave/image/list/browser_upload.json", (res) => {
+      res.resources.forEach((imageResource: any) => {
+        const version = imageResource.version;
+        const imageName = imageResource.public_id;
+        this.images.push(`https://res.cloudinary.com/lastwave/image/upload/${imageName}.svg`);
+      });
+      console.log(res);
+    });
+  },
   data: function () {
     return {
-      images: [
-        'https://dummyimage.com/800/ffffff/000000',
-        'https://dummyimage.com/1600/ffffff/000000',
-        'https://dummyimage.com/1280/000000/ffffff',
-        'https://dummyimage.com/400/000000/ffffff',
-      ],
+      images: <string[]> [],
       index: null
     };
   },
