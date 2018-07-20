@@ -67,7 +67,8 @@ import jQuery from 'jquery';
 
 import LastFm from '@/datasources/lastfm';
 import WaveGraph from '@/renderers/d3-wave';
-import SaveAsFile from '@/actions/saveAsFile.vue';
+import ImageActions from '@/actions/imageActions.vue';
+import ConfigActions from '@/actions/configActions.vue';
 
 export default Vue.extend({
   components: {
@@ -77,7 +78,7 @@ export default Vue.extend({
     return {
       dataSources: [new LastFm()],
       renderers: [new WaveGraph()],
-      actions: [SaveAsFile],
+      actions: [ImageActions, ConfigActions],
       dataSourceOptions: [],
       rendererOptions: [],
       mainOptions: [],
@@ -125,7 +126,6 @@ export default Vue.extend({
           newInstance.$mount();
           jQuery("#actions").append(newInstance.$el);
         });
-
       });
     },
     chooseDataSource: () => {

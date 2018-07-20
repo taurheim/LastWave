@@ -8,7 +8,7 @@ module.exports = {
       }
     }
   },
-  baseUrl: undefined, // "/lastwave"
+  baseUrl: "/lastwave_v3", // "/lastwave"
   outputDir: undefined,
   assetsDir: undefined,
   runtimeCompiler: undefined,

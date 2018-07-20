@@ -15,7 +15,6 @@
 <script lang="ts">
 import Vue from 'vue'
 import jQuery from 'jquery';
-import Cloudinary from 'cloudinary-jquery';
 
 export default Vue.extend({
   mounted() {
