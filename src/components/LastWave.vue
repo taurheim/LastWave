@@ -24,8 +24,8 @@
           <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
         </template>
       </div>
-      <md-button @click="showAdvancedOptions">Advanced Options +</md-button>
-      <div id="advanced-options" class="md-layout md-gutter">
+      <md-button @click="showAdvancedOptions">Advanced Options {{ advancedOptionsIcon }}</md-button>
+      <div id="advanced-options" class="md-layout md-gutter" style="display: none;">
         <div class="md-layout-item">
           Data Source Options
           <template v-for="opt in dataSourceOptions">
@@ -52,14 +52,15 @@
     </div>
     <div id="visualization">
     </div>
-    <pre>
-      {{ $store.state }}
-    </pre>
   </div>
 </template>
 <style>
   #lastwave-control {
     text-align: center;
+  }
+  #options {
+    width: 800px;
+    margin: 0 auto;
   }
 </style>
 <script lang="ts">
@@ -93,7 +94,8 @@ export default Vue.extend({
       dataSourceOptions: [],
       rendererOptions: [],
       mainOptions: [],
-    }
+      advancedOptionsIcon: '+',
+    };
   },
   mounted() {
     let dataSourceOptions: Option[] = this.$data.dataSources[0].getOptions();
@@ -148,9 +150,11 @@ export default Vue.extend({
     chooseDataSource: () => {
       console.log("Chose datasource");
     },
-    showAdvancedOptions: () => {
+    showAdvancedOptions() {
       jQuery("#advanced-options").toggle(1000);
-    }
+      // TODO this should just read from state instead
+      this.$data.advancedOptionsIcon = this.$data.advancedOptionsIcon === '+' ? '-' : '+';
+    },
   },
   computed: {
     currentStage(): LoadingStage {

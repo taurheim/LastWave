@@ -857,6 +857,10 @@
   version "9.6.23"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.23.tgz#fc429962c1b75f32bd66214a3997f660e8434f0d"
 
+"@typopro/web-titillium@^3.7.5":
+  version "3.7.5"
+  resolved "https://registry.yarnpkg.com/@typopro/web-titillium/-/web-titillium-3.7.5.tgz#75eb7bfd167b11e725a78c05726597dd14066988"
+
 "@vue/babel-preset-app@^3.0.0-rc.3":
   version "3.0.0-rc.3"
   resolved "https://registry.yarnpkg.com/@vue/babel-preset-app/-/babel-preset-app-3.0.0-rc.3.tgz#e4f5f884448489b1b4651c986548639f3bec823f"
