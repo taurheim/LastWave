@@ -1,9 +1,7 @@
 <template>
-  <span>
-    {{ optionData.title }}:
-    <input type="checkbox" v-if="currentValue === 'checked'" checked @change="optionChanged($event.target.checked)">
-    <input type="checkbox" v-else @change="optionChanged($event.target.checked)">
-  </span>
+<md-checkbox v-model="currentValue">
+  {{ optionData.title }}:
+</md-checkbox>
 </template>
 <script lang="ts">
 import Vue from 'vue';

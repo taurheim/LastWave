@@ -7,7 +7,7 @@ export default class Option {
     public title: string, // What is shown to the user
     public alias: string, // What is used on the back end
     public type: string,
-    public defaultValue?: string,
+    public defaultValue?: string | boolean,
     public options?: string[],
     public mainView?: boolean,
     public connectedOptions?: Option[],

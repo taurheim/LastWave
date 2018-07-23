@@ -1,8 +1,9 @@
 <template>
-  <span>
-    {{ optionData.title }}:
-    <input type="text" v-bind:value="currentValue" @keyup="optionChanged($event.target.value)">
-  </span>
+  <md-datepicker v-model="currentValue" md-immediately>
+    <label>
+      {{ optionData.title }}:
+    </label>
+  </md-datepicker>
 </template>
 <script lang="ts">
 import Vue from 'vue'
@@ -10,5 +11,5 @@ import OptionBase from './OptionBase.vue';
 
 export default Vue.extend({
   extends: OptionBase,
-})
+});
 </script>

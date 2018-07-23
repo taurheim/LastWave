@@ -1,8 +1,5 @@
 <template>
-  <div class="lastwave-control">
-    <span v-if="currentStage !== undefined">
-      {{ currentStage.stageName }} - {{ currentStage.currentSegment }} / {{ currentStage.stageSegments}}
-    </span>
+  <div id="lastwave-control">
     <!--
       Once more renderers/data sources have been added, use this dropdown
     <div class="viz-select">
@@ -21,38 +18,50 @@
       </select>
     </div>
     -->
-    <div class="main-options">
-      <template v-for="opt in mainOptions">
-        <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
-      </template>
+    <div id="options" v-show="showOptions">
+      <div id="main-options">
+        <template v-for="opt in mainOptions">
+          <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
+        </template>
+      </div>
+      <md-button @click="showAdvancedOptions">Advanced Options +</md-button>
+      <div id="advanced-options" class="md-layout md-gutter">
+        <div class="md-layout-item">
+          Data Source Options
+          <template v-for="opt in dataSourceOptions">
+            <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="dataSource"></WaveOption>
+          </template>
+        </div>
+        <div class="md-layout-item">
+          Renderer Options
+          <template v-for="opt in rendererOptions">
+            <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="renderer"></WaveOption>
+          </template>
+        </div>
+      </div>
+      <div class="submit">
+        <md-button class="md-raised md-primary" v-on:click="createWave">
+          Submit
+        </md-button>
+      </div>
     </div>
-    <hr>
-    <div class="options">
-      Data Source Options:
-      <template v-for="opt in dataSourceOptions">
-        <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="dataSource"></WaveOption>
-      </template>
-      <hr>
-      Renderer Options:
-      <template v-for="opt in rendererOptions">
-        <WaveOption v-bind:key="opt.title" v-bind:option="opt" owner="renderer"></WaveOption>
-      </template>
+    <div id="loading" v-show="showLoadingBar">
+      <StageLoadingBar></StageLoadingBar>
     </div>
-    <div id="actions">
-
-    </div>
-    <div class="submit">
-      <button v-on:click="createWave">Submit</button>
+    <div id="actions" v-show="showActions">
     </div>
     <div id="visualization">
-
     </div>
     <pre>
       {{ $store.state }}
     </pre>
   </div>
 </template>
-
+<style>
+  #lastwave-control {
+    text-align: center;
+  }
+</style>
 <script lang="ts">
 import Vue from 'vue'
 import store from '@/store';
@@ -64,6 +73,7 @@ import Renderer from '@/models/Renderer';
 import DataSource from '@/models/DataSource';
 import LoadingStage from '@/models/LoadingStage';
 import jQuery from 'jquery';
+import StageLoadingBar from '@/components/StageLoadingBar.vue';
 
 import LastFm from '@/datasources/lastfm';
 import WaveGraph from '@/renderers/d3-wave';
@@ -73,6 +83,7 @@ import ConfigActions from '@/actions/configActions.vue';
 export default Vue.extend({
   components: {
     WaveOption,
+    StageLoadingBar,
   },
   data() {
     return {
@@ -119,9 +130,15 @@ export default Vue.extend({
       const renderer = this.$data.renderers[0];
       const renderOptions = store.state.rendererOptions;
 
+      store.commit('hideOptions');
+      store.commit('showLoadingBar');
+
       engine.CreateWave(dataSource, renderer, dsOptions, renderOptions).then(() => {
-        // Display actions
+        store.commit('hideLoadingBar');
+        store.commit('showActions');
+        console.log("BEFORE");
         this.actions.forEach(action => {
+          console.log("Adding action");
           const newInstance = new action();
           newInstance.$mount();
           jQuery("#actions").append(newInstance.$el);
@@ -130,15 +147,28 @@ export default Vue.extend({
     },
     chooseDataSource: () => {
       console.log("Chose datasource");
+    },
+    showAdvancedOptions: () => {
+      jQuery("#advanced-options").toggle(1000);
     }
   },
   computed: {
     currentStage(): LoadingStage {
       const currentStage: LoadingStage = store.state.stages[store.state.currentStage];
       return currentStage;
-    }
-  }
-  
-})
-
+    },
+    showLoadingBar(): boolean {
+      return store.state.showLoadingBar;
+    },
+    showOptions(): boolean {
+      return store.state.showOptions;
+    },
+    showVisualization(): boolean {
+      return store.state.showVisualization;
+    },
+    showActions(): boolean {
+      return store.state.showActions;
+    },
+  },
+});
 </script>

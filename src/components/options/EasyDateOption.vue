@@ -1,12 +1,14 @@
 <template>
-  <span>
+<md-field>
+  <label>
     {{ optionData.title }}: 
-    <select @change="choseEasyDate($event.target.value)">
-      <option v-for="(dates, name) in easyDates" v-bind:key="name">
-        {{ name }}
-      </option>
-    </select>
-  </span>
+  </label>
+  <md-select v-model="currentValue" v-on:md-selected="choseEasyDate($event)">
+    <md-option v-for="(dates, name) in easyDates" :key="name" :value="name">
+      {{ name }}
+    </md-option>
+  </md-select>
+</md-field>
 </template>
 <script lang="ts">
 // All of these easy dates are offset from today, in ms
@@ -22,7 +24,7 @@ export default Vue.extend({
   mounted() {
     const optionData: Option = (<any> this).optionData;
     if (optionData.defaultValue) {
-      this.choseEasyDate(optionData.defaultValue);
+      this.choseEasyDate(optionData.defaultValue as string);
     }
   },
   data() {
@@ -41,8 +43,8 @@ export default Vue.extend({
       const offsets = this.easyDates[chosen];
       const startDateMs = ((new Date()).valueOf() - offsets[0]);
       const endDateMs = ((new Date()).valueOf() - offsets[1]);
-      const startDateString = new Date(startDateMs).toLocaleDateString();
-      const endDateString = new Date(endDateMs).toLocaleDateString();
+      const startDateString = new Date(startDateMs);
+      const endDateString = new Date(endDateMs);
 
       const startDateAlias = optionData.connectedOptions[0].alias;
       const endDateAlias = optionData.connectedOptions[1].alias;

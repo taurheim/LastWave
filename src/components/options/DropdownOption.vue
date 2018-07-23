@@ -1,12 +1,14 @@
 <template>
-  <span>
-    {{ optionData.title }}: 
-    <select @change="optionChanged($event.target.value)">
-      <option v-for="opt in optionData.options" :key="opt">
-        {{ opt }}
-      </option>
-    </select>
-  </span>
+<md-field>
+  <label>
+    {{ optionData.title }}
+  </label>
+  <md-select v-model="currentValue">
+    <md-option v-for="opt in optionData.options" :key="opt" :value="opt">
+      {{ opt }}
+    </md-option>
+  </md-select>
+</md-field>
 </template>
 <script lang="ts">
 import Vue from 'vue'

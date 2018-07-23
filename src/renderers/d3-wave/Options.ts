@@ -39,7 +39,7 @@ export default [
     "Ripple border",
     "stroke",
     "toggle",
-    "checked",
+    true,
   ),
   new Option(
     "Font",
@@ -51,6 +51,6 @@ export default [
     "Add labels",
     "add_labels",
     "toggle",
-    "checked",
+    true,
   ),
 ];

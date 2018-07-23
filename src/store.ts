@@ -9,8 +9,12 @@ export default new Vuex.Store({
     rendererOptions: {},
     dataSourceOptions: {},
 
+    // Maybe this should use a state machine instead?
+    showOptions: true,
+    showLoadingBar: false,
+    showActions: false,
+
     // Used for loading bars
-    isCreatingWave: false,
     currentStage: -1,
     stages: [],
   },
@@ -29,6 +33,24 @@ export default new Vuex.Store({
     progressCurrentStage(state: any) {
       let currentStage: LoadingStage = state.stages[state.currentStage];
       currentStage.currentSegment++;
+    },
+    showOptions(state: any) {
+      state.showOptions = true;
+    },
+    hideOptions(state: any) {
+      state.showOptions = false;
+    },
+    showLoadingBar(state: any) {
+      state.showLoadingBar = true;
+    },
+    hideLoadingBar(state: any) {
+      state.showLoadingBar = false;
+    },
+    showActions(state: any) {
+      state.showActions = true;
+    },
+    hideActions(state: any) {
+      state.showActions = false;
     },
   },
   actions: {

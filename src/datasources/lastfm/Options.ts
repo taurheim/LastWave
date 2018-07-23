@@ -64,6 +64,6 @@ export default [
     "Cache last.fm responses",
     "use_localstorage",
     "toggle",
-    "checked",
+    true,
   )
 ]

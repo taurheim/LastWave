@@ -160,6 +160,8 @@ export default class WaveGraph implements Renderer {
       }
 
       // Add month names
+      store.commit("startNextStage", 1);
+      store.commit("progressCurrentStage");
 
       // Add watermark
 

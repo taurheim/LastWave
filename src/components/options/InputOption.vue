@@ -1,13 +1,16 @@
 <template>
-  <span>
-    {{ optionData.title }}:
-    <input type="text" v-bind:value="currentValue" @keyup="optionChanged($event.target.value)">
-  </span>
+<md-field>
+  <label>
+    {{ optionData.title }}
+  </label>
+  <md-input v-model="currentValue">
+  </md-input>
+</md-field>
 </template>
 <script lang="ts">
 import Vue from 'vue';
 import OptionBase from './OptionBase.vue';
 export default Vue.extend({
   extends: OptionBase,
-})
+});
 </script>
