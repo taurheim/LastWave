@@ -8,7 +8,7 @@ export default class Option {
     public alias: string, // What is used on the back end
     public type: string,
     public defaultValue?: string | boolean,
-    public options?: string[],
+    public options?: any[],
     public mainView?: boolean,
     public connectedOptions?: Option[],
   ) {

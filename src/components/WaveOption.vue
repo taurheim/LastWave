@@ -1,6 +1,10 @@
 <template>
   <div class="option">
-    <template v-if="option.type === 'dropdown'">
+    <template v-if="option.mainView && option.type === 'string'">
+      <BigInput :option="option">
+      </BigInput>
+    </template>
+    <template v-else-if="option.type === 'dropdown'">
       <DropdownOption v-bind:option="option">
       </DropdownOption>
     </template>
@@ -21,8 +25,12 @@
       </DateOption>
     </template>
     <template v-else-if="option.type === 'easydate'">
-      <EasyDateOption v-bind:option="option">
-      </EasyDateOption>
+      <BigEasyDate v-bind:option="option">
+      </BigEasyDate>
+    </template>
+    <template v-else-if="option.type === 'optiongallery'">
+      <OptionGallery v-bind:option="option">
+      </OptionGallery>
     </template>
     <template v-else>
       Not supported: {{ option.type }}
@@ -35,7 +43,9 @@ import DropdownOption from '@/components/options/DropdownOption.vue';
 import InputOption from '@/components/options/InputOption.vue';
 import ToggleOption from '@/components/options/ToggleOption.vue';
 import DateOption from '@/components/options/DateOption.vue';
-import EasyDateOption from '@/components/options/EasyDateOption.vue';
+import BigEasyDate from '@/components/options/BigEasyDate.vue';
+import BigInput from './options/BigInput.vue';
+import OptionGallery from './options/OptionGallery.vue';
 
 export default Vue.extend({
   components: {
@@ -43,7 +53,9 @@ export default Vue.extend({
     InputOption,
     ToggleOption,
     DateOption,
-    EasyDateOption,
+    BigEasyDate,
+    BigInput,
+    OptionGallery,
   },
   props: ["option"],
 })

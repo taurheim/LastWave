@@ -26,10 +26,10 @@
 
 #titlebar {
   font-size: 64px;
-  margin: 0px auto 50px auto;
+  margin: 0px auto 75px auto;
   text-align: center;
   font-weight: 100;
-  padding-top: 25px;
+  padding-top: 75px;
 }
 
 #titlebar img {
@@ -38,7 +38,7 @@
 
 #nav {
   font-size: 26px;
-  margin: 10px auto;
+  margin: 10px 0 30px 0;
   text-align: center;
 }
 

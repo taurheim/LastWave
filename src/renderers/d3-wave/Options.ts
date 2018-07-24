@@ -5,7 +5,7 @@ export default [
   new Option(
     "Color Scheme",
     "color_scheme",
-    "dropdown",
+    "optiongallery",
     "lastwave",
     [
       "lastwave",

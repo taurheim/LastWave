@@ -16,7 +16,7 @@ export default [
     "last.fm username",
     "username",
     "string",
-    "Taurheim",
+    undefined,
     undefined,
     true,
   ),

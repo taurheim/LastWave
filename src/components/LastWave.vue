@@ -59,7 +59,11 @@
     text-align: center;
   }
   #options {
-    width: 800px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .md-layout.md-gutter>.md-layout-item {
+    max-width: 400px;
     margin: 0 auto;
   }
 </style>

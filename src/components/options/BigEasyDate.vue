@@ -1,15 +1,31 @@
 <template>
-<md-field>
-  <label>
-    {{ optionData.title }}: 
-  </label>
-  <md-select v-model="currentValue" v-on:md-selected="choseEasyDate($event)">
-    <md-option v-for="(dates, name) in easyDates" :key="name" :value="name">
+<div>
+  <select v-model="currentValue" v-on:change="choseEasyDate($event.target.value)">
+    <option v-for="(dates, name) in easyDates" :key="name" :value="name">
       {{ name }}
-    </md-option>
-  </md-select>
-</md-field>
+    </option>
+  </select>
+  </div>
 </template>
+<style>
+select {
+  border: 0px;
+  height: 64px;
+  font-size: 24px;
+  width: 250px;
+  text-align: center;
+}
+select:focus {
+  outline: thin;
+}
+option, select {
+  font-weight: 300;
+  font-family: "Roboto";
+}
+option {
+  font-size: 20px;
+}
+</style>
 <script lang="ts">
 // All of these easy dates are offset from today, in ms
 // Each is an array of [FROM_OFFSET, TO_OFFSET]
@@ -18,9 +34,10 @@ import Vue from 'vue'
 import OptionBase from './OptionBase.vue';
 import Option from '@/models/Option';
 
-
 export default Vue.extend({
   extends: OptionBase,
+  components: {
+  },
   mounted() {
     const optionData: Option = (<any> this).optionData;
     if (optionData.defaultValue) {
