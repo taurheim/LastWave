@@ -23,7 +23,7 @@ export default class WaveGraph implements Renderer {
   MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
   DEFAULT_WIDTH_PER_PEAK = 150;
   RICKSHAW_RENDERER = "area";
-  DIV_ID = "visualization";
+  DIV_ID = "svg-wrapper";
   MULTILINE_LINE_HEIGHT = "1em";
   MINIMUM_FONT_SIZE_PIXELS = 8;
   STAGE_NAMES = {
@@ -130,8 +130,13 @@ export default class WaveGraph implements Renderer {
 
       store.commit("progressCurrentStage");
 
+      // Autoscale options
+      const svgDiv = d3.select("#" + this.DIV_ID).select("svg");
+      svgDiv.attr('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
+      svgDiv.attr('preserveAspectRatio', 'none');
+
       if (DebugWave.isEnabled || DebugWave.debugRippleName) {
-        DebugWave.setSvgDiv(d3.select("#" + this.DIV_ID).select("svg"));
+        DebugWave.setSvgDiv(svgDiv);
       }
 
       // Add ripple labels (e.g. Artist Names)

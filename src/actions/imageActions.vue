@@ -33,7 +33,7 @@ export default Vue.extend({
   data() {
     return {
       svgFile: "",
-    }
+    };
   },
   methods:  {
     cloudinaryUpload: function() {

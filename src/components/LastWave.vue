@@ -51,10 +51,14 @@
     <div id="actions" v-show="showActions">
     </div>
     <div id="visualization">
+      <div id="svg-wrapper" :class="(showFullSvg ? '' : 'scaled')">
+      </div>
+      <div id="visualization-options" v-if="showSvgOptions">
+        <md-button class="md-raised md-primary" v-on:click="toggleFullSvg">
+          Show full size
+        </md-button>
+      </div>
     </div>
-    <pre>
-      {{ this.$store.state }}
-    </pre>
   </div>
 </template>
 <style>
@@ -68,6 +72,12 @@
   .md-layout.md-gutter>.md-layout-item {
     max-width: 400px;
     margin: 0 auto;
+  }
+  #svg-wrapper svg {
+    height: 100%;
+  }
+  .scaled svg {
+    width: 100%;
   }
 </style>
 <script lang="ts">
@@ -89,6 +99,10 @@ import WaveGraph from '@/renderers/d3-wave';
 import ImageActions from '@/actions/imageActions.vue';
 import ConfigActions from '@/actions/configActions.vue';
 
+const ACTIONS_DIV = '#actions';
+const ADVANCED_OPTIONS_DIV = '#advanced-options';
+const SVG_WRAPPER_DIV = '#svg-wrapper';
+
 export default Vue.extend({
   components: {
     WaveOption,
@@ -103,6 +117,8 @@ export default Vue.extend({
       rendererOptions: [],
       mainOptions: [],
       advancedOptionsIcon: '+',
+      showFullSvg: false,
+      showSvgOptions: false,
     };
   },
   mounted() {
@@ -145,22 +161,24 @@ export default Vue.extend({
       engine.CreateWave(dataSource, renderer, dsOptions, renderOptions).then(() => {
         store.commit('hideLoadingBar');
         store.commit('showActions');
-        console.log("BEFORE");
+        this.showSvgOptions = true;
         this.actions.forEach(action => {
-          console.log("Adding action");
           const newInstance = new action();
           newInstance.$mount();
-          jQuery("#actions").append(newInstance.$el);
+          jQuery(ACTIONS_DIV).append(newInstance.$el);
         });
       });
     },
     chooseDataSource: () => {
-      console.log("Chose datasource");
+      return;
     },
     showAdvancedOptions() {
-      jQuery("#advanced-options").toggle(1000);
+      jQuery(ADVANCED_OPTIONS_DIV).toggle(1000);
       // TODO this should just read from state instead
       this.$data.advancedOptionsIcon = this.$data.advancedOptionsIcon === '+' ? '-' : '+';
+    },
+    toggleFullSvg() {
+      this.$data.showFullSvg = !this.$data.showFullSvg;
     },
   },
   computed: {

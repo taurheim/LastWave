@@ -5,13 +5,24 @@ import Image from '@/models/options/Image';
 import StringChoiceOption from '@/models/options/StringChoiceOption';
 import BooleanOption from '@/models/options/BooleanOption';
 
+/*
+  https://stackoverflow.com/a/42441396
+*/
+const LastWaveSchemeImagePath = require('@/assets/lastwave-scheme.png');
+const CarpetSchemeImagePath = require('@/assets/carpet-scheme.png');
+
 const DEFAULT_GRAPH_HEIGHT = 600;
 
 const COLOR_SCHEMES = [
   new Image(
     'Lastwave',
     'lastwave',
-    'https://savas.ca/lastwave/images/examples/lastwave.png',
+    LastWaveSchemeImagePath,
+  ),
+  new Image(
+    'Carpet',
+    'carpet',
+    CarpetSchemeImagePath,
   ),
 ];
 
