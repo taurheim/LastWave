@@ -33,27 +33,29 @@ import EasyDates from '@/config/easyDates.json';
 import Vue from 'vue'
 import OptionBase from './OptionBase.vue';
 import Option from '@/models/Option';
+import EasyDateOption from '@/models/options/EasyDateOption';
+import MODULE from '@/models/MODULE';
 
 export default Vue.extend({
   extends: OptionBase,
   components: {
   },
   mounted() {
-    const optionData: Option = (<any> this).optionData;
+    const optionData: EasyDateOption = (this as any).optionData;
     if (optionData.defaultValue) {
-      this.choseEasyDate(optionData.defaultValue as string);
+      this.choseEasyDate(optionData.defaultValue);
     }
   },
   data() {
     return {
       easyDates: EasyDates,
-    }
+    };
   },
   methods: {
     choseEasyDate(chosen: string) {
-      const optionData: Option = (<any> this).optionData;
+      const optionData: EasyDateOption = (this as any).optionData;
 
-      if (!optionData.connectedOptions || optionData.connectedOptions.length !== 2) {
+      if (!optionData.linkedDateOptions || optionData.linkedDateOptions.length !== 2) {
         throw new Error('Not enough connected options');
       }
 
@@ -63,17 +65,17 @@ export default Vue.extend({
       const startDateString = new Date(startDateMs);
       const endDateString = new Date(endDateMs);
 
-      const startDateAlias = optionData.connectedOptions[0].alias;
-      const endDateAlias = optionData.connectedOptions[1].alias;
+      const startDateAlias = optionData.linkedDateOptions[0].alias;
+      const endDateAlias = optionData.linkedDateOptions[1].alias;
 
-      if ((<any> this).optionData.owner === "dataSource") {
+      if (optionData.module === MODULE.DATA_SOURCE) {
         Vue.set(this.$store.state.dataSourceOptions, startDateAlias, startDateString);
         Vue.set(this.$store.state.dataSourceOptions, endDateAlias, endDateString);
       } else {
         Vue.set(this.$store.state.rendererOptions, startDateAlias, startDateString);
         Vue.set(this.$store.state.rendererOptions, endDateAlias, endDateString);
       }
-    }
-  }
-})
+    },
+  },
+});
 </script>

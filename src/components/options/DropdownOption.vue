@@ -4,8 +4,8 @@
     {{ optionData.title }}
   </label>
   <md-select v-model="currentValue">
-    <md-option v-for="opt in optionData.options" :key="opt" :value="opt">
-      {{ opt }}
+    <md-option v-for="choice in optionData.choices" :key="choice" :value="choice">
+      {{ choice }}
     </md-option>
   </md-select>
 </md-field>

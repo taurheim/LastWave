@@ -21,7 +21,7 @@
     <div id="options" v-show="showOptions">
       <div id="main-options">
         <template v-for="opt in mainOptions">
-          <WaveOption v-bind:key="opt.title" v-bind:option="opt"></WaveOption>
+          <WaveOption :key="opt.title" :option="opt"></WaveOption>
         </template>
       </div>
       <md-button @click="showAdvancedOptions">Advanced Options {{ advancedOptionsIcon }}</md-button>
@@ -79,6 +79,7 @@ import DataSource from '@/models/DataSource';
 import LoadingStage from '@/models/LoadingStage';
 import jQuery from 'jquery';
 import StageLoadingBar from '@/components/StageLoadingBar.vue';
+import MODULE from '@/models/MODULE';
 
 import LastFm from '@/datasources/lastfm';
 import WaveGraph from '@/renderers/d3-wave';
@@ -106,21 +107,20 @@ export default Vue.extend({
     let rendererOptions: Option[] = this.$data.renderers[0].getOptions();
     let mainOptions: Option[] = [];
 
-    // Tag them
-    // TODO this is awful - we shouldn't have to pass around which type of option it is.
-    dataSourceOptions.forEach(opt => {
-      opt.owner = "dataSource";
+    // Tag all of the options
+    dataSourceOptions.forEach((option) => {
+      option.module = MODULE.DATA_SOURCE;
     });
-    rendererOptions.forEach(opt => {
-      opt.owner = "renderer";
+    rendererOptions.forEach((option) => {
+      option.module = MODULE.RENDERER;
     });
 
     // Remove all the options that should be in main options
-    mainOptions = dataSourceOptions.filter(option => option.mainView);
-    mainOptions = mainOptions.concat(rendererOptions.filter(option => option.mainView));
+    mainOptions = dataSourceOptions.filter(option => option.isImportant);
+    mainOptions = mainOptions.concat(rendererOptions.filter(option => option.isImportant));
 
-    dataSourceOptions = dataSourceOptions.filter(option => !option.mainView);
-    rendererOptions = rendererOptions.filter(option => !option.mainView);
+    dataSourceOptions = dataSourceOptions.filter(option => !option.isImportant);
+    rendererOptions = rendererOptions.filter(option => !option.isImportant);
 
     this.$data.dataSourceOptions = dataSourceOptions;
     this.$data.rendererOptions = rendererOptions;

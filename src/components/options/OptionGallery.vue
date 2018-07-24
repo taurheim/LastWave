@@ -21,7 +21,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import OptionBase from './OptionBase.vue';
-import VueSelectImage from 'vue-select-image'
+import VueSelectImage from 'vue-select-image';
 import 'vue-select-image/dist/vue-select-image.css';
 
 export default Vue.extend({
@@ -74,7 +74,7 @@ export default Vue.extend({
   },
   methods: {
     onSelectImage(s: any) {
-      this.currentValue = s.id;
+      (this as any).currentValue = s.id;
     }
   }
 })

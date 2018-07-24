@@ -1,16 +1,18 @@
+import MODULE from './MODULE';
+
 // TODO this would probably be a lot better if we just subclassed it
 export default class Option {
-  // Set in getOptions()
-  // TODO this entire part where we pass around who owns the option is actually garbage
-  public owner: string = "";
+  public module: MODULE = MODULE.NONE;
+
   constructor(
-    public title: string, // What is shown to the user
-    public alias: string, // What is used on the back end
-    public type: string,
-    public defaultValue?: string | boolean,
-    public options?: any[],
-    public mainView?: boolean,
-    public connectedOptions?: Option[],
+  // This is what the user sees
+  public title: string,
+
+  // This is what the data source, renderer, or action sees
+  public alias: string,
+
+  // This controls whether it should be prioritized as an option to the user
+  public isImportant: boolean,
   ) {
   }
 }

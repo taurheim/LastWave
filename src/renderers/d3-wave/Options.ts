@@ -1,56 +1,69 @@
 import Option from '@/models/Option';
+import StringOption from '@/models/options/StringOption';
+import ImageChoiceOption from '@/models/options/ImageChoiceOption';
+import Image from '@/models/options/Image';
+import StringChoiceOption from '@/models/options/StringChoiceOption';
+import BooleanOption from '@/models/options/BooleanOption';
 
 const DEFAULT_GRAPH_HEIGHT = 600;
+
+const COLOR_SCHEMES = [
+  new Image(
+    'Lastwave',
+    'lastwave',
+    'https://savas.ca/lastwave/images/examples/lastwave.png',
+  ),
+];
+
 export default [
-  new Option(
-    "Color Scheme",
-    "color_scheme",
-    "optiongallery",
-    "lastwave",
-    [
-      "lastwave",
-    ],
+  new ImageChoiceOption(
+    'Color Scheme',
+    'color_scheme',
     true,
+    'lastwave',
+    COLOR_SCHEMES,
   ),
-  new Option(
-    "Graph Width",
-    "width",
-    "int",
+  // TODO need an IntegerOption
+  new StringOption(
+    'Graph width',
+    'width',
+    false,
   ),
-  new Option(
-    "Graph Height",
-    "height",
-    "int",
+  new StringOption(
+    'Graph Height',
+    'height',
+    false,
     DEFAULT_GRAPH_HEIGHT.toString(),
   ),
-  new Option(
-    "Graph type",
-    "offset",
-    "dropdown",
-    "silhouette",
+  // TODO this should be an ImageChoiceOption tbh
+  new StringChoiceOption(
+    'Graph type',
+    'offset',
+    false,
+    'silhouette',
     [
-      "silhouette",
-      "wiggle",
-      "expand",
-      "zero",
+      'silhouette',
+      'wiggle',
+      'expand',
+      'zero',
     ],
   ),
-  new Option(
-    "Ripple border",
-    "stroke",
-    "toggle",
+  new StringOption(
+    'Font',
+    'font',
+    false,
+    'Roboto',
+  ),
+  new BooleanOption(
+    'Ripple border',
+    'stroke',
+    false,
     true,
   ),
-  new Option(
-    "Font",
-    "font",
-    "string",
-    "Roboto",
-  ),
-  new Option(
-    "Add labels",
-    "add_labels",
-    "toggle",
+  new BooleanOption(
+    'Add labels',
+    'add_labels',
+    false,
     true,
   ),
 ];
