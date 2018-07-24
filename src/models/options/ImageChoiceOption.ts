@@ -6,7 +6,8 @@ export default class ImageChoiceOption extends Option {
     public title: string,
     public alias: string,
     public isImportant: boolean,
-    public defaultImageAlias: string,
+    // Alias of the default image
+    public defaultValue: string,
     public choices: Image[],
   ) {
     super(title, alias, isImportant);

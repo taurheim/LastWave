@@ -52,6 +52,9 @@
     </div>
     <div id="visualization">
     </div>
+    <pre>
+      {{ this.$store.state }}
+    </pre>
   </div>
 </template>
 <style>
