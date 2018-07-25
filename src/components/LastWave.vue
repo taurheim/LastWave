@@ -54,8 +54,8 @@
       <div id="svg-wrapper" :class="(showFullSvg ? '' : 'scaled')">
       </div>
       <div id="visualization-options" v-if="showSvgOptions">
-        <md-button class="md-raised md-primary" v-on:click="toggleFullSvg">
-          Show full size
+        <md-button class="md-primary" v-on:click="toggleFullSvg">
+          {{ showFullSvg ? 'Hide' : 'Show'}} full size
         </md-button>
       </div>
     </div>
@@ -107,6 +107,7 @@ export default Vue.extend({
   components: {
     WaveOption,
     StageLoadingBar,
+    ConfigActions,
   },
   data() {
     return {
@@ -162,7 +163,7 @@ export default Vue.extend({
         store.commit('hideLoadingBar');
         store.commit('showActions');
         this.showSvgOptions = true;
-        this.actions.forEach(action => {
+        this.actions.forEach((action: any) => {
           const newInstance = new action();
           newInstance.$mount();
           jQuery(ACTIONS_DIV).append(newInstance.$el);

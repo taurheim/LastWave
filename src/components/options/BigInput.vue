@@ -1,7 +1,7 @@
 <template>
   <input v-model="currentValue" :placeholder="optionData.title">
 </template>
-<style>
+<style scoped>
 /* TODO use SCSS */
   input {
     height: 75px;

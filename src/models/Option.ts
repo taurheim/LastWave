@@ -1,6 +1,5 @@
 import MODULE from './MODULE';
 
-// TODO this would probably be a lot better if we just subclassed it
 export default class Option {
   public module: MODULE = MODULE.NONE;
 
@@ -14,5 +13,10 @@ export default class Option {
   // This controls whether it should be prioritized as an option to the user
   public isImportant: boolean,
   ) {
+  }
+
+  // Override this
+  public convertToOptionType(stringValue: string): any {
+    return stringValue;
   }
 }

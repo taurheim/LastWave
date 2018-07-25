@@ -17,13 +17,14 @@ export default Vue.extend({
   ],
   created() {
     // Set the default value
-    let defaultValue = this.$props.option.defaultValue;
+    this.optionData = this.$props.option as Option;
+    let defaultValue = this.optionData.defaultValue;
     if (this.$route.query[this.$props.option.alias]) {
       // Can be provided in url
-      defaultValue = this.$route.query[this.$props.option.alias];
+      const urlValue = this.$route.query[this.$props.option.alias];
+      defaultValue = this.optionData.convertToOptionType(urlValue);
     }
 
-    this.optionData = this.$props.option as Option;
     this.optionData.defaultValue = defaultValue;
 
     // Set the default value in the data store

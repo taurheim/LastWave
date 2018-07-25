@@ -9,4 +9,8 @@ export default class DateOption extends Option {
   ) {
     super(title, alias, isImportant);
   }
+
+  public convertToOptionType(stringValue: string): any {
+    return new Date(parseInt(stringValue, 10));
+  }
 }

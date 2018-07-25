@@ -1,70 +1,90 @@
 <template>
   <div>
+    <md-dialog-alert
+      :md-active.sync="showDialog"
+      :md-content="cloudinaryDialogHtml"
+    />
     <a
       href-lang="image/svg+xml"
       :href="svgFile"
       title="LastWave.svg"
       download="LastWave.svg"
     >
-    Download SVG
+      <md-button class="md-raised">
+        Download SVG
+      </md-button>
     </a>
-    <br>
-    <a @click="cloudinaryUpload" href="#">Upload to cloudinary</a>
+    <a @click="cloudinaryUpload" href="#">
+      <md-button class="md-raised">
+        <md-progress-spinner v-if="uploadInProgress" :md-diameter="20" :md-stroke="3" md-mode="indeterminate"></md-progress-spinner>
+        <span v-else>
+          Get image link
+        </span>
+      </md-button>
+    </a>
   </div>
 </template>
+<style scoped>
+.md-button {
+  display: inline-block;
+}
+</style>
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import jQuery from 'jquery';
+import CloudinaryAPI from '@/actions/CloudinaryAPI';
+
+/*
+  These image actions are grouped because they both require a base64
+  representation of our image.
+
+  TODO split these into two components with shared state
+*/
 
 export default Vue.extend({
   mounted() {
-    // SVG -> Base64
-    const svgWrapperElement = document.getElementById("visualization");
+    // Determine the Base64 representation
+    const svgWrapperElement = document.getElementById('visualization');
     if (!svgWrapperElement) {
       return;
     }
 
-    const svgElement = svgWrapperElement.getElementsByTagName("svg")[0];
-    const svgData = (new XMLSerializer).serializeToString(svgElement);
-    const svgBase64 = Buffer.from(svgData).toString("base64");
-    const file = "data:image/svg+xml;base64," + svgBase64;
+    const svgElement = svgWrapperElement.getElementsByTagName('svg')[0];
+    const svgData = (new XMLSerializer()).serializeToString(svgElement);
+    const svgBase64 = Buffer.from(svgData).toString('base64');
+    const file = 'data:image/svg+xml;base64,' + svgBase64;
     this.svgFile = file;
   },
   data() {
     return {
-      svgFile: "",
+      svgFile: '',
+      sharingLink: '',
+      showDialog: false,
+      uploadInProgress: false,
     };
   },
+  computed: {
+    cloudinaryDialogHtml: function() {
+      const selectAllOnClick = 'this.setSelectionRange(0, this.value.length)';
+      const inputHtml = `<input type="text" value="${this.$data.sharingLink}" onClick="${selectAllOnClick}" />`;
+      return `Share this wave: <br><br>${inputHtml}`;
+    }
+  },
   methods:  {
-    cloudinaryUpload: function() {
-      // Build the form data that will make cloudinary happy
-      // TODO move this into its own file
-      const url = "https://api.cloudinary.com/v1_1/lastwave/upload";
-      const unsignedUploadPreset = "lastwave_unsigned_upload";
-      let xhr = new XMLHttpRequest();
-      let fd = new FormData();
-      xhr.open("POST", url, true);
-      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-      xhr.onreadystatechange = function(e) {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-          // File uploaded successfully
-          var response = JSON.parse(xhr.responseText);
-          // https://res.cloudinary.com/cloudName/image/upload/v1483481128/public_id.jpg
-          var url = response.secure_url;
-          // Create a thumbnail of the uploaded image, with 150px width
-          var tokens = url.split('/');
-          tokens.splice(-2, 0, 'w_150,c_scale');
-          var img = new Image(); // HTML5 Constructor
-          img.src = tokens.join('/');
-          img.alt = response.public_id;
-          document.body.appendChild(img);
-        }
-      };
+    cloudinaryUpload() {
+      if (this.sharingLink === '') {
+        this.uploadInProgress = true;
+        const api = new CloudinaryAPI();
 
-      fd.append('upload_preset', unsignedUploadPreset);
-      fd.append('tags', 'browser_upload'); // Optional - add tag for image admin in Cloudinary
-      fd.append('file', this.svgFile);
-      xhr.send(fd);
+        // TODO handle errors
+        api.uploadBase64Svg(this.svgFile).then((url: string) => {
+          this.sharingLink = url.replace('.svg', '.png');
+          this.showDialog = true;
+          this.uploadInProgress = false;
+        });
+      } else {
+        this.showDialog = true;
+      }
     }
   },
 })

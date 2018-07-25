@@ -9,4 +9,8 @@ export default class BooleanOption extends Option {
   ) {
     super(title, alias, isImportant);
   }
+
+  public convertToOptionType(stringValue: string): any {
+    return stringValue === 'true';
+  }
 }
