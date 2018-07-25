@@ -7,10 +7,15 @@ import WaveAction from '@/models/WaveAction';
 
 export default class LastWaveEngine {
   // Loading times
-  DATA_SOURCE_TO_RENDERER_RATIO: number = 0.8;
-  LOADING_STAGE_PRECISION: number = 2;
+  private DATA_SOURCE_TO_RENDERER_RATIO: number = 0.8;
+  private LOADING_STAGE_PRECISION: number = 2;
 
-  CreateWave(dataSource: DataSource, renderer: Renderer, dataSourceOptions: any, rendererOptions: any): Promise<void> {
+  public CreateWave(
+    dataSource: DataSource,
+    renderer: Renderer,
+    dataSourceOptions: any,
+    rendererOptions: any,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       console.log("Creating Wave");
       console.log("Perform validation");
@@ -41,7 +46,8 @@ export default class LastWaveEngine {
 
     rendererStages.forEach(stage => {
       // Doing this in a stupid way so we prevent weird floating point things
-      stage.stageWeight *= stage.stageWeight - (stage.stageWeight * this.DATA_SOURCE_TO_RENDERER_RATIO);
+      stage.stageWeight -= (stage.stageWeight * this.DATA_SOURCE_TO_RENDERER_RATIO);
+      console.log(stage.stageWeight);
     });
 
     const allStages = dataSourceStages.concat(rendererStages);

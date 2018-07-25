@@ -1,7 +1,10 @@
 <template>
   <div>
+    <md-button class="md-raised" @click="backToOptions">
+      &lt; Modify options
+    </md-button>
     <md-button class="md-raised" @click="showConfigString">
-      Get Configuration Link
+      Export options
     </md-button>
     <md-dialog-alert
       :md-active.sync="showDialog"
@@ -77,6 +80,12 @@ export default Vue.extend({
       });
 
       this.$data.configString = encodeURI(configString);
+    },
+    backToOptions() {
+      store.commit('showOptions');
+      store.commit('hideLoadingBar');
+      store.commit('hideActions');
+      store.commit('hideVisualization');
     },
   },
 });

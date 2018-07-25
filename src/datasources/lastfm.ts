@@ -9,60 +9,80 @@ import Option from '@/models/Option';
 
 import LastFmOptions from './lastfm/Options';
 import ArtistTags from '@/datasources/lastfm/models/ArtistTags';
-import { getTopTags, combineArtistTags, splitTimeSpan, joinSegments, DateStringToUnix, cleanByMinPlays, cleanByTopN } from './lastfm/util';
+import {
+  getTopTags,
+  combineArtistTags,
+  splitTimeSpan,
+  joinSegments,
+  DateStringToUnix,
+  cleanByMinPlays,
+  cleanByTopN,
+} from './lastfm/util';
 import TimeSpan from '@/datasources/lastfm/models/TimeSpan';
 import SegmentData from '@/models/SegmentData';
 import store from '@/store';
 
-
 export default class LastFm implements DataSource {
-  title: string;
-  api: LastFmApi;
+  public title: string;
+  private api: LastFmApi;
+  private dataCache: any = {};
 
   constructor() {
-    this.title = "last.fm";
-    this.api = new LastFmApi("27ca6b1a0750cf3fb3e1f0ec5b432b72");
+    this.title = 'last.fm';
+    this.api = new LastFmApi('27ca6b1a0750cf3fb3e1f0ec5b432b72');
   }
 
-  loadData(options: any, callback: any): void {
-    var unixStart = DateStringToUnix(options["time_start"]);
-    var unixEnd = DateStringToUnix(options["time_end"]);
-    var username = options["username"];
-    var groupBy = options["group_by"];
-    var minPlays = options["min_plays"];
-    var method = options["method"];
-    var useLocalStorage = options["use_localstorage"];
-    var timeSpan = new TimeSpan(unixStart, unixEnd);
-    var TAG_TOP_N_COUNT = 10;
-    var self = this;
+  public loadData(options: any, callback: any): void {
+    const unixStart = DateStringToUnix(options.time_start);
+    const unixEnd = DateStringToUnix(options.time_end);
+    const username = options.username;
+    const groupBy = options.group_by;
+    const minPlays = options.min_plays;
+    const method = options.method;
+    const useLocalStorage = options.use_localstorage;
+    const timeSpan = new TimeSpan(unixStart, unixEnd);
+    const TAG_TOP_N_COUNT = 10;
+    const self = this;
+
+    const cachedData = this.getCachedData(options);
+    if (cachedData) {
+      console.log('Found cached data');
+      // Need to progress the stages
+      this.getLoadingStages(options).forEach(() => {
+        store.commit('startNextStage', 1);
+        store.commit('progressCurrentStage');
+      });
+      callback(null, cachedData);
+      return;
+    }
 
     // TODO error checking (date in future, etc.)
-    // TODO instead of using localstorage as a request cache, make it smaller
-    // by only caching the responses we care about (e.g. if we had a request for
-    // RHCP plays, we would cache just the number of plays)
 
-    var firstMethod = (method === "tag") ? "artist" : method;
-    this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan, function(err: any, data: any) {
-      switch(method) {
-        case "artist":
-        case "album":
-          var cleanedData = cleanByMinPlays(data, minPlays);
+    const firstMethod = (method === 'tag') ? 'artist' : method;
+
+    this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan, (err: any, data: any) => {
+      switch (method) {
+        case 'artist':
+        case 'album':
+          const cleanedData = cleanByMinPlays(data, minPlays);
+          this.cacheData(options, cleanedData);
           callback(err, cleanedData);
           break;
-        case "tag":
+        case 'tag':
           // Now that we have the artist data, we need to get the tags.
-          self.getTagsForArtistData(data, useLocalStorage).then(tagData => {
-            var cleanedData = cleanByTopN(tagData, TAG_TOP_N_COUNT);
+          self.getTagsForArtistData(data, useLocalStorage).then((tagData) => {
+            const cleanedData = cleanByTopN(tagData, TAG_TOP_N_COUNT);
+            this.cacheData(options, cleanedData);
             callback(err, cleanedData);
           });
           break;
         default:
-          callback("Method not recognized: " + method);
+          callback(`Method not recognized: ${method}`);
       }
     });
   }
 
-  getOptions(): Option[] {
+  public getOptions(): Option[] {
     var today = new Date();
     var defaultStartDate = new Date();
     defaultStartDate.setDate(today.getDate() - 1);
@@ -73,13 +93,13 @@ export default class LastFm implements DataSource {
     return LastFmOptions;
   }
 
-  getLoadingStages(options: any) : LoadingStage[] {
-    switch(options.method) {
+  public getLoadingStages(options: any): LoadingStage[] {
+    switch (options.method) {
       case "tag":
         return [
 
         ];
-      break;
+        break;
       case "artist":
       case "album":
         return [
@@ -88,13 +108,13 @@ export default class LastFm implements DataSource {
             100,
           )
         ];
-      break;
+        break;
       default:
         return [];
     }
   }
 
-  getTagsForArtistData(artistData: SeriesData[], useLocalStorage: boolean): Promise<SeriesData[]> {
+  private getTagsForArtistData(artistData: SeriesData[], useLocalStorage: boolean): Promise<SeriesData[]> {
     // TODO Promisify
     // TODO use config file
     var LAST_FM_API_CADENCE_MS = 150;
@@ -102,16 +122,16 @@ export default class LastFm implements DataSource {
     return new Promise((resolve) => {
       var count = 0;
       // Make an array of artists
-      var artists = artistData.map(function(artistObject) {
+      var artists = artistData.map(function (artistObject) {
         return artistObject.title;
       });
-      var tagData: {[key: string]: ArtistTags} = {};
+      var tagData: { [key: string]: ArtistTags } = {};
 
       store.commit("startNextStage", artists.length);
       async.eachLimit(
         artists,
         1, // LFM_CONCURRENT_API_REQUESTS
-        function(artistName, callback) {
+        function (artistName, callback) {
           store.commit("progressCurrentStage");
           // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
@@ -129,7 +149,7 @@ export default class LastFm implements DataSource {
             new URLParameter("artist", artistName),
           ];
           var requestURL = self.api.getAPIRequestURL("tag", requestParams);
-          jQuery.get(requestURL, function(data) {
+          jQuery.get(requestURL, function (data) {
             if (!data.error) {
               var allTags = self.api.parseResponseJSON(data);
               var topTags = getTopTags(allTags);
@@ -143,12 +163,12 @@ export default class LastFm implements DataSource {
             }
 
             setTimeout(callback, LAST_FM_API_CADENCE_MS);
-          }).fail(function(err) {
+          }).fail(function (err) {
             // Ignore failures
             callback();
           });
         },
-        function(err) {
+        function (err) {
           var combinedData = combineArtistTags(artistData, tagData);
           resolve(combinedData);
         }
@@ -156,7 +176,13 @@ export default class LastFm implements DataSource {
     });
   }
 
-  getDataForTimeSpan(username: string, groupByCategory: string, groupByTime: string, timeSpan: TimeSpan, callback: any) {
+  private getDataForTimeSpan(
+    username: string,
+    groupByCategory: string,
+    groupByTime: string,
+    timeSpan: TimeSpan,
+    callback: any
+  ) {
     var timeSegments = splitTimeSpan(groupByTime, timeSpan);
     var segmentData: SegmentData[][] = [];
     var LAST_FM_API_CONCURRENT_REQUESTS = 1;
@@ -179,7 +205,7 @@ export default class LastFm implements DataSource {
         var requestURL = self.api.getAPIRequestURL(groupByCategory, params);
 
         // Make the request
-        jQuery.get(requestURL, function(data) {
+        jQuery.get(requestURL, function (data) {
           if (!data.error) {
             // Parse through the data
             var parsedData = self.api.parseResponseJSON(data);
@@ -187,16 +213,30 @@ export default class LastFm implements DataSource {
           }
 
           setTimeout(callback, LAST_FM_API_CADENCE_MS);
-        }).fail(function(err) {
+        }).fail(function (err) {
           // Ignore failures
           callback();
         });
       },
-      function(err) {
+      function (err) {
         // All requests finished.
         var joinedSegments = joinSegments(segmentData);
         callback(err, joinedSegments);
       }
     );
+  }
+
+  private cacheData(options: any, data: any) {
+    const key = JSON.stringify(options);
+    this.dataCache[key] = data;
+  }
+
+  private getCachedData(options: any) {
+    const key = JSON.stringify(options);
+    if (this.dataCache[key]) {
+      return this.dataCache[key];
+    } else {
+      return false;
+    }
   }
 }

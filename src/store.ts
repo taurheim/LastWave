@@ -13,6 +13,7 @@ export default new Vuex.Store({
     showOptions: true,
     showLoadingBar: false,
     showActions: false,
+    showVisualization: false,
 
     // Used for loading bars
     currentStage: -1,
@@ -51,6 +52,12 @@ export default new Vuex.Store({
     },
     hideActions(state: any) {
       state.showActions = false;
+    },
+    showVisualization(state: any) {
+      state.showVisualization = true;
+    },
+    hideVisualization(state: any) {
+      state.showVisualization = false;
     },
   },
   actions: {

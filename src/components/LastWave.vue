@@ -50,7 +50,7 @@
     </div>
     <div id="actions" v-show="showActions">
     </div>
-    <div id="visualization">
+    <div id="visualization" v-show="showVisualization">
       <div id="svg-wrapper" :class="(showFullSvg ? '' : 'scaled')">
       </div>
       <div id="visualization-options" v-if="showSvgOptions">
@@ -59,6 +59,9 @@
         </md-button>
       </div>
     </div>
+    <pre>
+      {{ this.$store.state }}
+    </pre>
   </div>
 </template>
 <style>
@@ -97,7 +100,7 @@ import MODULE from '@/models/MODULE';
 import LastFm from '@/datasources/lastfm';
 import WaveGraph from '@/renderers/d3-wave';
 import ImageActions from '@/actions/imageActions.vue';
-import ConfigActions from '@/actions/configActions.vue';
+import OptionActions from '@/actions/optionActions.vue';
 
 const ACTIONS_DIV = '#actions';
 const ADVANCED_OPTIONS_DIV = '#advanced-options';
@@ -107,19 +110,22 @@ export default Vue.extend({
   components: {
     WaveOption,
     StageLoadingBar,
-    ConfigActions,
   },
   data() {
     return {
       dataSources: [new LastFm()],
       renderers: [new WaveGraph()],
-      actions: [ImageActions, ConfigActions],
+      actions: [
+        OptionActions,
+        ImageActions,
+      ],
       dataSourceOptions: [],
       rendererOptions: [],
       mainOptions: [],
       advancedOptionsIcon: '+',
       showFullSvg: false,
       showSvgOptions: false,
+      liveActionComponents: [] as Vue[],
     };
   },
   mounted() {
@@ -145,6 +151,11 @@ export default Vue.extend({
     this.$data.dataSourceOptions = dataSourceOptions;
     this.$data.rendererOptions = rendererOptions;
     this.$data.mainOptions = mainOptions;
+
+    store.commit('showOptions');
+    store.commit('hideLoadingBar');
+    store.commit('hideActions');
+    store.commit('hideVisualization');
   },
   methods: {
     createWave: function(evnt: any) {
@@ -162,9 +173,27 @@ export default Vue.extend({
       engine.CreateWave(dataSource, renderer, dsOptions, renderOptions).then(() => {
         store.commit('hideLoadingBar');
         store.commit('showActions');
+        store.commit('showVisualization');
         this.showSvgOptions = true;
+
+        if (!jQuery(ADVANCED_OPTIONS_DIV).is(':visible')) {
+          this.showAdvancedOptions();
+        }
+
+        // TODO this is definitely not a vue-friendly way of doing this
+        // Essentially we need to have a list of actions that get refreshed every time
+        // a new wave is created
+
+        // Destroy old actions
+        this.liveActionComponents.forEach((component: Vue) => {
+          component.$destroy();
+        });
+        jQuery(ACTIONS_DIV).empty();
+
+        // Add new actions
         this.actions.forEach((action: any) => {
           const newInstance = new action();
+          this.liveActionComponents.push(newInstance);
           newInstance.$mount();
           jQuery(ACTIONS_DIV).append(newInstance.$el);
         });

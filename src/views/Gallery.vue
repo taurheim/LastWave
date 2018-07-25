@@ -1,24 +1,52 @@
 <template>
   <div class="gallery">
-    <gallery :images="thisPageImages" :index="index" @close="index = null"></gallery>
-    <div
-      class="image"
-      v-for="(image, imageIndex) in thisPageImages"
-      :key="imageIndex"
-      @click="index = imageIndex"
-      :style="{ backgroundImage: 'url(' + image + ')', width: '300px', height: '200px' }"
-    ></div>
+    <div id="gallery-nav">
+      <md-button :disabled="currentPage === 0" class='md-primary' v-on:click="currentPage -= 1">Previous Page</md-button>
+      <md-button :disabled="currentPage === pageCount - 1" class='md-primary' v-on:click="currentPage += 1">Next Page</md-button>
+    </div>
+    <div id="gallery-wrapper">
+      <gallery :images="thisPageImages" :index="index" @close="index = null"></gallery>
+      <div
+        class="image"
+        v-for="(image, imageIndex) in thisPageImages"
+        :key="imageIndex"
+        @click="index = imageIndex"
+        :style="{ backgroundImage: 'url(' + image + ')', width: '200px', height: '150px' }"
+      ></div>
+    </div>
+    <div id="gallery-footer">
+      Page {{ currentPage + 1 }} / {{ pageCount }}
+    </div>
   </div>
 </template>
 
 <style scoped>
 .image {
-  float: left;
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center center;
   border: 1px solid #ebebeb;
   margin: 5px;
+  display: inline-block;
+  cursor: pointer;
+}
+
+#gallery-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 800px;
+  justify-content: center;
+  flex: 0 1 auto;
+  margin: 0 auto;
+}
+
+#gallery-nav {
+  text-align: center;
+}
+
+#gallery-footer {
+  text-align: center;
 }
 </style>
 
@@ -28,7 +56,14 @@ import Vue from 'vue';
 import VueGallery from 'vue-gallery';
 import jQuery from 'jquery';
 
-const IMAGES_PER_PAGE = 20;
+const IMAGES_PER_PAGE = 9;
+
+/*
+  TODOs
+  - Fix the infinite scrolling on the gallery so that pages are switched automatically
+  - Add loading spinner while things are loading
+  - Add pages in the url so you can jump around
+*/
 
 export default Vue.extend({
   mounted() {
@@ -53,9 +88,12 @@ export default Vue.extend({
       const lastImage = firstImage + IMAGES_PER_PAGE;
       return this.allImages.slice(firstImage, lastImage);
     },
+    pageCount(): number {
+      return Math.ceil(this.allImages.length / IMAGES_PER_PAGE);
+    },
   },
   components: {
-    'gallery': VueGallery
+    gallery: VueGallery,
   },
 });
 </script>
