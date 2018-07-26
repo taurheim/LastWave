@@ -67,4 +67,8 @@ body {
   text-align: center;
 }
 
+h1, h2 {
+  font-weight: 300;
+}
+
 </style>

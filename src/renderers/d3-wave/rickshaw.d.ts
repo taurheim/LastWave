@@ -21,6 +21,7 @@ declare module 'rickshaw' {
     constructor(obj: any)
     render(): void
     series: RickshawStackData[]
+    element: HTMLElement
   }
 
   export class RickshawRippleData {

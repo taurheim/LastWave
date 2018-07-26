@@ -20,7 +20,6 @@ export default [
     'last.fm username',
     'username',
     true,
-    'Taurheim',
   ),
   new EasyDateOption(
     'Date range',

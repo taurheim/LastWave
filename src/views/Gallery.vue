@@ -67,7 +67,7 @@ const IMAGES_PER_PAGE = 9;
 
 export default Vue.extend({
   mounted() {
-    jQuery.get("https://res.cloudinary.com/lastwave/image/list/browser_upload.json", (res) => {
+    jQuery.get('https://res.cloudinary.com/lastwave/image/list/browser_upload.json', (res) => {
       res.resources.forEach((imageResource: any) => {
         const version = imageResource.version;
         const imageName = imageResource.public_id;
@@ -75,7 +75,7 @@ export default Vue.extend({
       });
     });
   },
-  data: function () {
+  data() {
     return {
       allImages: [] as string[],
       index: null,

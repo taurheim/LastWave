@@ -6,6 +6,10 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    // TODO I'm sure there's a better solution for logging. For now we need this
+    // to track issues with the beta
+    logs: [] as string[],
+
     rendererOptions: {},
     dataSourceOptions: {},
 
@@ -24,15 +28,15 @@ export default new Vuex.Store({
       state.stages = stages;
       state.currentStage = -1;
     },
-    startNextStage(state:any, segmentCount: number) {
+    startNextStage(state: any, segmentCount: number) {
       state.currentStage++;
 
-      let currentStage: LoadingStage = state.stages[state.currentStage];
+      const currentStage: LoadingStage = state.stages[state.currentStage];
       currentStage.currentSegment = 0;
       currentStage.stageSegments = segmentCount;
     },
     progressCurrentStage(state: any) {
-      let currentStage: LoadingStage = state.stages[state.currentStage];
+      const currentStage: LoadingStage = state.stages[state.currentStage];
       currentStage.currentSegment++;
     },
     showOptions(state: any) {
@@ -58,6 +62,9 @@ export default new Vuex.Store({
     },
     hideVisualization(state: any) {
       state.showVisualization = false;
+    },
+    log(state: any, logString: string) {
+      state.logs.push(logString);
     },
   },
   actions: {

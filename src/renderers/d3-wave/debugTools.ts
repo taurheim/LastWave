@@ -3,6 +3,7 @@ import InfiniteLine from './models/InfiniteLine';
 import LineSegment from './models/LineSegment';
 import Point from './models/Point';
 import d3 from 'd3';
+import Peak from '@/renderers/d3-wave/models/Peak';
 
 class WaveDebugger {
   isEnabled: boolean = false;
@@ -76,6 +77,13 @@ class WaveDebugger {
       .attr("font-size", FONT_SIZE)
       .attr("fill", FONT_COLOR)
       .attr("font-family", FONT_FAMILY);
+  }
+
+  public drawPeak(peak: Peak): void {
+    DebugWave.drawLine(peak.A, 'red');
+    DebugWave.drawLine(peak.B, 'blue');
+    DebugWave.drawLine(peak.C, 'green');
+    DebugWave.drawLine(peak.D, 'yellow');
   }
 }
 
