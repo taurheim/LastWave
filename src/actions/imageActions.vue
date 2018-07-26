@@ -16,7 +16,7 @@
     </a>
     <a @click="cloudinaryUpload" href="#">
       <md-button class="md-primary md-raised">
-        <md-progress-spinner md-class="md-accent" v-if="uploadInProgress" :md-diameter="20" :md-stroke="3" md-mode="indeterminate"></md-progress-spinner>
+        <md-progress-spinner class="md-accent" v-if="uploadInProgress" :md-diameter="20" :md-stroke="3" md-mode="indeterminate"></md-progress-spinner>
         <span v-else>
           Get image link
         </span>
