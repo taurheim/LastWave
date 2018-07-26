@@ -43,7 +43,7 @@ export default class LastFm implements DataSource {
     const method = options.method;
     const useLocalStorage = options.use_localstorage;
     const timeSpan = new TimeSpan(unixStart, unixEnd);
-    const TAG_TOP_N_COUNT = 10;
+    const TAG_TOP_N_COUNT = 15;
     const self = this;
 
     const cachedData = this.getCachedData(options);

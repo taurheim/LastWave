@@ -2,62 +2,62 @@ import URLParameter from './models/URLParameter';
 import SegmentData from '@/models/SegmentData';
 
 export default class LastFmApi {
-  apiKey: string;
-  ALBUM_NAME_FORMAT: string = "{album}<br>{artist}";
-  API_BASE_URL: string = "https://ws.audioscrobbler.com/2.0/";
-  METHODS: any = {
-    artist: "user.getweeklyartistchart",
-    album: "user.getweeklyalbumchart",
-    tag: "artist.gettoptags",
+  private apiKey: string;
+  private ALBUM_NAME_FORMAT: string = '{album}<br>{artist}';
+  private API_BASE_URL: string = 'https://ws.audioscrobbler.com/2.0/';
+  private METHODS: any = {
+    artist: 'user.getweeklyartistchart',
+    album: 'user.getweeklyalbumchart',
+    tag: 'artist.gettoptags',
   };
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
   }
 
-  getAPIRequestURL(method: string, additionalParams: URLParameter[]) {
-    var url = this.API_BASE_URL;
-    url += "?method={method}";
-    url += "&api_key=" + this.apiKey;
-    url += "&format=json";
+  public getAPIRequestURL(method: string, additionalParams: URLParameter[]) {
+    let url = this.API_BASE_URL;
+    url += '?method={method}';
+    url += '&api_key=' + this.apiKey;
+    url += '&format=json';
 
-    url = url.replace("{method}", this.METHODS[method]);
+    url = url.replace('{method}', this.METHODS[method]);
 
     additionalParams.forEach((param) => {
       // TODO encode additionalParams
-      url += "&" + param.paramName + "=" + param.paramValue;
+      url += `&${param.paramName}=${param.paramValue}`;
     });
     return encodeURI(url);
   }
 
-  parseResponseJSON(responseJSON: any): SegmentData[] {
-    var rootKey = Object.keys(responseJSON)[0];
-    var secondKey = Object.keys(responseJSON[rootKey])[0];
-    var responseData = responseJSON[rootKey][secondKey];
-    var counts = [];
+  public parseResponseJSON(responseJSON: any): SegmentData[] {
+    const rootKey = Object.keys(responseJSON)[0];
+    const secondKey = Object.keys(responseJSON[rootKey])[0];
+    const responseData = responseJSON[rootKey][secondKey];
+    const counts: SegmentData[] = [];
 
-    for (var i = 0; i < responseData.length; i++) {
-      var segmentData = responseData[i];
-      var name = segmentData.name;
+    responseData.forEach((segmentData: any) => {
+      let name = segmentData.name;
 
       // If we're getting albums, get both the artist and album name
-      if (secondKey === "album") {
-        var albumArtist = segmentData.artist["#text"];
-        var albumName = name;
+      if (secondKey === 'album') {
+        const albumArtist = segmentData.artist['#text'];
+        const albumName = name;
         name = this.ALBUM_NAME_FORMAT;
-        name = name.replace("{album}", albumName);
-        name = name.replace("{artist}", albumArtist);
+        name = name.replace('{album}', albumName);
+        name = name.replace('{artist}', albumArtist);
       }
 
-      var count;
-      if (secondKey === "tag") {
+      let count;
+      if (secondKey === 'tag') {
         count = segmentData.count; 
       } else {
         count = segmentData.playcount;
       }
 
-      counts.push(new SegmentData(name, parseInt(count)));
-    }
+      counts.push(new SegmentData(name, parseInt(count, 10)));
+
+    });
 
     return counts;
   }
