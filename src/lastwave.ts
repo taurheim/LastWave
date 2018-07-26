@@ -47,7 +47,6 @@ export default class LastWaveEngine {
     rendererStages.forEach(stage => {
       // Doing this in a stupid way so we prevent weird floating point things
       stage.stageWeight -= (stage.stageWeight * this.DATA_SOURCE_TO_RENDERER_RATIO);
-      console.log(stage.stageWeight);
     });
 
     const allStages = dataSourceStages.concat(rendererStages);

@@ -18,26 +18,28 @@ import colorSchemes from '@/config/colors.json';
 import LoadingStage from '@/models/LoadingStage';
 import store from '@/store';
 import { resolve } from 'url';
+import { convertSeriesToRickshawFormat, drawRickshawGraph } from '@/renderers/d3-wave/rickshawUtil';
+import Promise from 'bluebird';
 
 export default class WaveGraph implements Renderer {
-  MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
-  DEFAULT_WIDTH_PER_PEAK = 150;
-  RICKSHAW_RENDERER = "area";
-  DIV_ID = "svg-wrapper";
-  MULTILINE_LINE_HEIGHT = "1em";
-  MINIMUM_FONT_SIZE_PIXELS = 8;
-  STAGE_NAMES = {
-    DRAWING: "Drawing Wave...",
-    LABELS: "Adding labels...",
-    MONTHS: "Adding month names...",
-  }
-  title: string = "Wave Graph";
+  public title: string = 'Wave Graph';
+  private MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
+  private DEFAULT_WIDTH_PER_PEAK = 150;
+  private RICKSHAW_RENDERER = 'area';
+  private DIV_ID = 'svg-wrapper';
+  private MULTILINE_LINE_HEIGHT = '1em';
+  private MINIMUM_FONT_SIZE_PIXELS = 8;
+  private STAGE_NAMES = {
+    DRAWING: 'Drawing Wave...',
+    LABELS: 'Adding labels...',
+    MONTHS: 'Adding month names...',
+  };
 
-  getOptions(): Option[] {
+  public getOptions(): Option[] {
     return D3Options;
   }
 
-  getLoadingStages(options: any): LoadingStage[] {
+  public getLoadingStages(options: any): LoadingStage[] {
     return [
       new LoadingStage(
         this.STAGE_NAMES.DRAWING,
@@ -62,76 +64,36 @@ export default class WaveGraph implements Renderer {
         indices, each representing how many plays that week had
     }
   */
-  renderVisualization(data: SeriesData[], options: any): Promise<void> {
+  public renderVisualization(data: SeriesData[], options: any): Promise<void> {
     return new Promise((resolve, reject) => {
-      store.commit("startNextStage", 1);
+      store.commit('startNextStage', 1);
 
       // Grab the correct color scheme
-      var schemeName = options["color_scheme"];
-      var schemeColors = colorSchemes[schemeName];
-      var colorCount = schemeColors.length;
-      var currentColor = 0;
-      var self = this;
-
-      // Parse ripple data into rickshaw format
-      /*
-        [{
-          color: "#ffffff",
-          data: [{
-            x: <int, which time segment?>
-            y: <int, count in that time segment>
-          }],
-          name: "Caribou"
-        }]
-      */
-      var rickshawData: RickshawRippleData[] = [];
-      for(var i = 0; i < data.length; i++) {
-        var dataPoint = data[i];
-        var title = dataPoint.title;
-        var color = schemeColors[currentColor++ % colorCount];
-
-        var counts = dataPoint.counts;
-        var rickshawSeriesData = [];
-        for (var j = 0; j < counts.length; j++) {
-          rickshawSeriesData.push({
-            x: j,
-            y: counts[j],
-          });
-        }
-
-        rickshawData.push({
-          name: title,
-          data: rickshawSeriesData,
-          color: color,
-        });
-      }
-
+      const schemeName = options.color_scheme;
+      const schemeColors = colorSchemes[schemeName];
+      const self = this;
+      const graphHeight = options.height;
       // Calculate the width if it hasn't been set
-      var graphWidth = options.width;
+      let graphWidth = options.width;
       if (!graphWidth) {
         graphWidth = data[0].counts.length * this.DEFAULT_WIDTH_PER_PEAK;
       }
-      var graphHeight = options.height;
 
-      // Create the wave graph using Rickshaw/d3
-      jQuery("#output").html("Rendering graph...");
-      jQuery("#" + this.DIV_ID).html("");
-      var graph = new Rickshaw.Graph({
-        element: jQuery("#" + this.DIV_ID)[0],
-        width: graphWidth,
-        height: graphHeight,
-        renderer: this.RICKSHAW_RENDERER,
-        offset: options.offset,
-        stroke: options.stroke,
-        preserve: true, // Leave our original data as it is
-        series: rickshawData,
-      });
-      graph.render();
+      const rickshawData = convertSeriesToRickshawFormat(data, schemeColors);
+      const graph = drawRickshawGraph(
+        rickshawData,
+        jQuery('#' + this.DIV_ID)[0],
+        graphWidth,
+        graphHeight,
+        this.RICKSHAW_RENDERER,
+        options.offset,
+        options.stroke,
+      );
 
-      store.commit("progressCurrentStage");
+      store.commit('progressCurrentStage');
 
       // Autoscale options
-      const svgDiv = d3.select("#" + this.DIV_ID).select("svg");
+      const svgDiv = d3.select(`#${this.DIV_ID}`).select('svg');
       svgDiv.attr('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
       svgDiv.attr('preserveAspectRatio', 'none');
 
@@ -141,12 +103,11 @@ export default class WaveGraph implements Renderer {
 
       // Add ripple labels (e.g. Artist Names)
       if (options.add_labels) {
+        store.commit('startNextStage', graph.series.length);
+        const scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
 
-        store.commit("startNextStage", graph.series.length);
-        var scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
-
-        async.each(graph.series, function(rippleData, callback) {
-          store.commit("progressCurrentStage");
+        Promise.each(graph.series, (rippleData) => {
+          store.commit('progressCurrentStage');
 
           if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
             DebugWave.enable();
@@ -157,19 +118,21 @@ export default class WaveGraph implements Renderer {
           if (DebugWave.debugRippleName && DebugWave.debugRippleName == rippleData.name) {
             DebugWave.disable();
           }
+        }).then(() => {
+          // Add month names
+          if (options.add_months) {
+            // TODO hack
+            // The way I have options set up in general is kind of dumb. Maybe options should just be a single object
+            // that gets shared between the renderer and data source? Or maybe it's better if there's a way to grab
+            // them from the renderer if it exists or something, dunno
+            const dateStart = store.state.dataSourceOptions.time_start;
+            const dateEnd = store.state.dataSourceOptions.time_end;
+            this.addMonthNames(svgDiv, dateStart, dateEnd);
+          }
 
-          callback();
-        }, function() {
           resolve();
         });
       }
-
-      // Add month names
-      store.commit("startNextStage", 1);
-      store.commit("progressCurrentStage");
-
-      // Add watermark
-
     });
   }
 
@@ -311,5 +274,71 @@ export default class WaveGraph implements Renderer {
       x: graphWidth / (rickshawData[0].stack.length - 1),
       y: graphHeight / maxy0,
     }
+  }
+
+  private addMonthNames(
+    svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
+    dateStart: Date,
+    dateEnd: Date,
+  ) {
+    // TODO hack
+    // d3 doesn't support prepend so we append a div for the months to the first <g> in the svg
+    const monthsDiv = svgDiv.select('g').append('g');
+    monthsDiv.attr('id', 'months');
+    const graphWidth = parseInt(svgDiv.attr('width'), 10);
+    const graphHeight = parseInt(svgDiv.attr('height'), 10);
+    const MS_TO_PX_RATIO = (dateEnd.getTime() - dateStart.getTime()) / graphWidth;
+
+    // For now, synchronous and one step
+    store.commit('startNextStage', 1);
+
+    // Find the first month boundary
+
+    let currentDate = dateStart;
+    const endTime = dateEnd.getTime();
+    while (currentDate.getTime() < endTime) {
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+
+      const monthName = currentDate.toLocaleString('en-us', { month: 'long'});
+      const msFromStart = currentDate.getTime() - dateStart.getTime();
+      const pxFromLeft = Math.floor(msFromStart / MS_TO_PX_RATIO);
+
+      // Draw a line
+      this.drawMonthLine(monthsDiv, monthName, pxFromLeft, graphHeight);
+    }
+
+    // Finished
+    store.commit('progressCurrentStage');
+  }
+
+  private drawMonthLine(
+    monthDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
+    monthName: string,
+    pxFromLeft: number,
+    graphHeight: number,
+  ) {
+    const MONTH_FONT_FAMILY = 'Roboto';
+    const MONTH_FONT_SIZE = 30;
+    const STROKE_WIDTH = 5;
+    const STROKE_OPACITY = 0.2;
+    const COLOR = '#AAA';
+    const LINE_BOTTOM_PADDING = 50;
+    const TEXT_BOTTOM_PADDING = 10;
+    const textDimensions = getTextDimensions(monthName, MONTH_FONT_FAMILY, MONTH_FONT_SIZE);
+
+    monthDiv.append('line')
+      .attr('x1', pxFromLeft)
+      .attr('y1', 0)
+      .attr('x2', pxFromLeft)
+      .attr('y2', graphHeight - LINE_BOTTOM_PADDING)
+      .attr('style', `stroke:${COLOR};stroke-width:${STROKE_WIDTH};stroke-opacity:${STROKE_OPACITY};`);
+
+    monthDiv.append('text')
+      .text(monthName)
+      .attr('x', pxFromLeft - textDimensions.width / 2)
+      .attr('y', graphHeight - TEXT_BOTTOM_PADDING - MONTH_FONT_SIZE)
+      .attr('fill', COLOR)
+      .attr('font-family', MONTH_FONT_FAMILY)
+      .attr('font-size', MONTH_FONT_SIZE);
   }
 }

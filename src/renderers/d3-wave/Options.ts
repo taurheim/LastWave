@@ -77,4 +77,10 @@ export default [
     false,
     true,
   ),
+  new BooleanOption(
+    'Add month names',
+    'add_months',
+    false,
+    true,
+  ),
 ];

@@ -59,9 +59,6 @@
         </md-button>
       </div>
     </div>
-    <pre>
-      {{ this.$store.state }}
-    </pre>
   </div>
 </template>
 <style>
