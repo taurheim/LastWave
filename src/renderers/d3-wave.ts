@@ -20,6 +20,7 @@ import store from '@/store';
 import { resolve } from 'url';
 import { convertSeriesToRickshawFormat, drawRickshawGraph } from '@/renderers/d3-wave/rickshawUtil';
 import Promise from 'bluebird';
+const WatermarkLogoPath = require('@/assets/logo.svg');
 
 export default class WaveGraph implements Renderer {
   public title: string = 'Wave Graph';
@@ -129,6 +130,8 @@ export default class WaveGraph implements Renderer {
             const dateEnd = store.state.dataSourceOptions.time_end;
             this.addMonthNames(svgDiv, dateStart, dateEnd);
           }
+
+          this.drawWatermark(svgDiv);
 
           resolve();
         });
@@ -340,5 +343,39 @@ export default class WaveGraph implements Renderer {
       .attr('fill', COLOR)
       .attr('font-family', MONTH_FONT_FAMILY)
       .attr('font-size', MONTH_FONT_SIZE);
+  }
+
+  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>) {
+    // TODO scale watermark based on svg size
+    const WATERMARK_TEXT = 'savas.ca/lastwave';
+    const WATERMARK_FONT = 'Roboto';
+    const WATERMARK_FONT_WEIGHT = '100';
+    const WATERMARK_FONT_SIZE = 40;
+    const WATERMARK_BOTTOM_PADDING = 10;
+    const WATERMARK_OPACITY = 0.4;
+    const WATERMARK_LOGO = WatermarkLogoPath;
+    const WATERMARK_LOGO_HEIGHT = 30;
+    const WATERMARK_LOGO_WIDTH = 50;
+    const WATERMARK_LOGO_OPACITY = 0.8;
+    const watermarkDimensions = getTextDimensions(WATERMARK_TEXT, WATERMARK_FONT, WATERMARK_FONT_SIZE);
+    const graphWidth = parseInt(svgDiv.attr('width'), 10);
+    const graphHeight = parseInt(svgDiv.attr('height'), 10);
+
+    svgDiv.append('text')
+      .text(WATERMARK_TEXT)
+      .attr('x', graphWidth - watermarkDimensions.width)
+      .attr('y', graphHeight - WATERMARK_BOTTOM_PADDING)
+      .attr('font-size', WATERMARK_FONT_SIZE)
+      .attr('font-family', WATERMARK_FONT)
+      .attr('font-weight', WATERMARK_FONT_WEIGHT)
+      .style('opacity', WATERMARK_OPACITY);
+
+    svgDiv.append('svg:image')
+      .attr('xlink:href', WATERMARK_LOGO)
+      .attr('x', graphWidth - watermarkDimensions.width - WATERMARK_LOGO_WIDTH)
+      .attr('y', graphHeight - WATERMARK_BOTTOM_PADDING - WATERMARK_LOGO_HEIGHT)
+      .attr('height', WATERMARK_LOGO_HEIGHT)
+      .attr('width', WATERMARK_LOGO_WIDTH)
+      .attr('opacity', WATERMARK_LOGO_OPACITY);
   }
 }
