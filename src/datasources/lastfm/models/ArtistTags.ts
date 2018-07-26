@@ -1,25 +1,25 @@
 export default class ArtistTags  {
-  artistName: string;
-  tags: string[];
+  public artistName: string;
+  public tags: string[];
 
   constructor(artistName: string) {
     this.artistName = artistName;
     this.tags = [];
   }
 
-  setTags(tags: string[]) {
+  public setTags(tags: string[]) {
     this.tags = tags;
   }
 
-  cache(): void {
+  public cache(): void {
     window.localStorage[this.artistName] = JSON.stringify(this.tags);
   }
 
-  loadFromCache(): void {
+  public loadFromCache(): void {
     this.setTags(JSON.parse(window.localStorage[this.artistName]));
   }
 
-  isInCache(): boolean {
+  public isInCache(): boolean {
     return window.localStorage[this.artistName] != null;
   }
 }

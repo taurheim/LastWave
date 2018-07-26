@@ -1,8 +1,6 @@
 import DataSource from 'src/models/DataSource';
 import SeriesData from 'src/models/SeriesData';
 import LoadingStage from '@/models/LoadingStage';
-import async from 'async';
-import jQuery from 'jquery';
 import LastFmApi from './lastfm/LastFmApi';
 import URLParameter from './lastfm/models/URLParameter';
 import Option from '@/models/Option';
@@ -21,7 +19,6 @@ import {
   cleanByTopN,
 } from './lastfm/util';
 import TimeSpan from '@/datasources/lastfm/models/TimeSpan';
-import SegmentData from '@/models/SegmentData';
 import store from '@/store';
 
 export default class LastFm implements DataSource {
@@ -128,11 +125,9 @@ export default class LastFm implements DataSource {
     const artists = artistData.map((artistObject) => {
       return artistObject.title;
     });
-    const tagData: { [key: string]: ArtistTags } = {};
 
     store.commit('startNextStage', artists.length);
-
-    await Bluebird.map(artists, async (artistName) => {
+    const tagData = await Bluebird.map(artists, async (artistName) => {
         store.commit('progressCurrentStage');
         // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
@@ -141,8 +136,7 @@ export default class LastFm implements DataSource {
         // Check the cache if necessary
         if (useLocalStorage && artistTags.isInCache()) {
           artistTags.loadFromCache();
-          tagData[artistName] = artistTags;
-          return;
+          return artistTags;
         }
 
         // Make the request
@@ -153,12 +147,12 @@ export default class LastFm implements DataSource {
         const data = await Request(requestURL, {
           json: true,
         });
+
         if (!data.error) {
             const allTags = this.api.parseResponseJSON(data);
             const topTags = getTopTags(allTags);
 
             artistTags.setTags(topTags);
-            tagData[artistName] = artistTags;
 
             if (useLocalStorage) {
               artistTags.cache();
@@ -166,12 +160,20 @@ export default class LastFm implements DataSource {
         }
 
         // https://esdiscuss.org/topic/await-settimeout-in-async-functions
-        return new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+        await new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+
+        return artistTags;
     }, {
       concurrency: 1,
     });
 
-    const combinedData = combineArtistTags(artistData, tagData);
+    // TODO this is kind of ugly
+    const tagMap: { [key: string]: ArtistTags } = {};
+    tagData.forEach((data) => {
+      tagMap[data.artistName] = data;
+    });
+
+    const combinedData = combineArtistTags(artistData, tagMap);
     return combinedData;
   }
 
@@ -182,13 +184,12 @@ export default class LastFm implements DataSource {
     timeSpan: TimeSpan,
   ) {
     const timeSegments = splitTimeSpan(groupByTime, timeSpan);
-    const segmentData: SegmentData[][] = [];
     const LAST_FM_API_CONCURRENT_REQUESTS = 1;
     const LAST_FM_API_CADENCE_MS = 150;
 
     store.commit('startNextStage', timeSegments.length);
 
-    const test = await Bluebird.map(timeSegments, async (timeSegment) => {
+    const segmentData = await Bluebird.map(timeSegments, async (timeSegment) => {
       store.commit('progressCurrentStage');
       // TODO cache old segments (but not new ones!)
       const params = [
@@ -202,14 +203,16 @@ export default class LastFm implements DataSource {
       const data = await Request(requestURL, {
         json: true,
       });
-      if (!data.error) {
-        // Parse through the data
-        const parsedData = this.api.parseResponseJSON(data);
-        segmentData.push(parsedData);
+
+      if (data.error) {
+        throw new Error(data.error);
       }
+      const parsedData = this.api.parseResponseJSON(data);
 
       // https://esdiscuss.org/topic/await-settimeout-in-async-functions
-      return new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+      await new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+
+      return parsedData;
     }, {
       concurrency: LAST_FM_API_CONCURRENT_REQUESTS,
     });

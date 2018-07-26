@@ -69,7 +69,7 @@ export function drawRickshawGraph(
   graph.render();
 
   // Add the background rect
-  const backgroundDiv = d3.select(graph.element).select('g').append('g');
+  const backgroundDiv = d3.select(graph.element).select('svg').insert('g', ':first-child');
   backgroundDiv.append('rect')
     .attr('width', '100%')
     .attr('height', '100%')

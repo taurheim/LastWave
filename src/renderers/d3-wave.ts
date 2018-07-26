@@ -148,7 +148,7 @@ export default class WaveGraph implements Renderer {
   ) {
     // TODO hack
     // d3 doesn't support prepend so we append a div for the months to the first <g> in the svg
-    const monthsDiv = svgDiv.select('g').append('g');
+    const monthsDiv = svgDiv.insert('g', ':nth-child(2)');
     monthsDiv.attr('id', 'months');
     const graphWidth = parseInt(svgDiv.attr('width'), 10);
     const graphHeight = parseInt(svgDiv.attr('height'), 10);
