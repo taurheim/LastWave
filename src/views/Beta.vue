@@ -1,9 +1,12 @@
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
+  <div class="beta">
+    <h1>Thanks for checking out the v3 beta!</h1>
+    <h2>What's new</h2>
   </div>
 </template>
+<style>
 
+</style>
 <script lang="ts">
 import Vue from 'vue';
 export default Vue.extend({

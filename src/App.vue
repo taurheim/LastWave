@@ -1,8 +1,17 @@
 <template>
   <div id="app">
     <div id="titlebar">
-    <img src="@/assets/logo.svg">
-    LastWave
+      <div>
+        <img src="@/assets/logo.svg">
+      </div>
+      <div>
+        LastWave
+        <div class="foot">
+          <router-link to="/beta">
+            v3 beta
+          </router-link>
+        </div>
+      </div>
     </div>
 
     <div id="nav">
@@ -23,6 +32,11 @@
 ));
 
 @import "~vue-material/dist/theme/all"; // Apply the theme
+@import '~@typopro/web-roboto/TypoPRO-Roboto.css';
+
+body {
+  font-family: "Roboto", "Open Sans", sans-serif;
+}
 
 #titlebar {
   font-size: 64px;
@@ -32,8 +46,19 @@
   padding-top: 75px;
 }
 
+#titlebar>div {
+  display: inline-block;
+}
+
 #titlebar img {
   height: 64px;
+}
+
+#titlebar .foot {
+  font-size: 20px;
+  line-height: 0px; /* Probably shouldn't do this */
+  position: relative;
+  top: 24px;
 }
 
 #nav {
