@@ -6,6 +6,8 @@ import jQuery from 'jquery';
 import LastFmApi from './lastfm/LastFmApi';
 import URLParameter from './lastfm/models/URLParameter';
 import Option from '@/models/Option';
+import Bluebird from 'bluebird';
+import Request from 'request-promise';
 
 import LastFmOptions from './lastfm/Options';
 import ArtistTags from '@/datasources/lastfm/models/ArtistTags';
@@ -32,7 +34,7 @@ export default class LastFm implements DataSource {
     this.api = new LastFmApi('27ca6b1a0750cf3fb3e1f0ec5b432b72');
   }
 
-  public loadData(options: any, callback: any): void {
+  public async loadData(options: any): Promise<SeriesData[]> {
     const unixStart = DateStringToUnix(options.time_start);
     const unixEnd = DateStringToUnix(options.time_end);
     const username = options.username;
@@ -46,45 +48,42 @@ export default class LastFm implements DataSource {
 
     const cachedData = this.getCachedData(options);
     if (cachedData) {
-      console.log('Found cached data');
       // Need to progress the stages
       this.getLoadingStages(options).forEach(() => {
         store.commit('startNextStage', 1);
         store.commit('progressCurrentStage');
       });
-      callback(null, cachedData);
-      return;
+      return cachedData;
     }
 
     // TODO error checking (date in future, etc.)
 
     const firstMethod = (method === 'tag') ? 'artist' : method;
 
-    this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan, (err: any, data: any) => {
-      switch (method) {
-        case 'artist':
-        case 'album':
-          const cleanedData = cleanByMinPlays(data, minPlays);
-          this.cacheData(options, cleanedData);
-          callback(err, cleanedData);
-          break;
-        case 'tag':
-          // Now that we have the artist data, we need to get the tags.
-          self.getTagsForArtistData(data, useLocalStorage).then((tagData) => {
-            const cleanedData = cleanByTopN(tagData, TAG_TOP_N_COUNT);
-            this.cacheData(options, cleanedData);
-            callback(err, cleanedData);
-          });
-          break;
-        default:
-          callback(`Method not recognized: ${method}`);
-      }
-    });
+    const data = await this.getDataForTimeSpan(username, firstMethod, groupBy, timeSpan);
+    let cleanedData;
+    switch (method) {
+      case 'artist':
+      case 'album':
+        cleanedData = cleanByMinPlays(data, minPlays);
+        this.cacheData(options, cleanedData);
+        return cleanedData;
+        break;
+      case 'tag':
+        // Now that we have the artist data, we need to get the tags.
+        const tagData = await self.getTagsForArtistData(data, useLocalStorage);
+        cleanedData = cleanByTopN(tagData, TAG_TOP_N_COUNT);
+        this.cacheData(options, cleanedData);
+        return cleanedData;
+        break;
+      default:
+        throw new Error(`Method not recognized: ${method}`);
+    }
   }
 
   public getOptions(): Option[] {
-    var today = new Date();
-    var defaultStartDate = new Date();
+    const today = new Date();
+    const defaultStartDate = new Date();
     defaultStartDate.setDate(today.getDate() - 1);
     defaultStartDate.setMonth(today.getMonth() - 1);
     // defaultStartDate.setFullYear(today.getFullYear() - 1);
@@ -95,18 +94,25 @@ export default class LastFm implements DataSource {
 
   public getLoadingStages(options: any): LoadingStage[] {
     switch (options.method) {
-      case "tag":
-        return [
-
-        ];
-        break;
-      case "artist":
-      case "album":
+      case 'tag':
         return [
           new LoadingStage(
-            "Getting data...",
+            'Fetching artist data...',
+            50,
+          ),
+          new LoadingStage(
+            'Fetching tag data (this will be slow the first time)',
+            50,
+          ),
+        ];
+        break;
+      case 'artist':
+      case 'album':
+        return [
+          new LoadingStage(
+            'Getting data...',
             100,
-          )
+          ),
         ];
         break;
       default:
@@ -114,116 +120,102 @@ export default class LastFm implements DataSource {
     }
   }
 
-  private getTagsForArtistData(artistData: SeriesData[], useLocalStorage: boolean): Promise<SeriesData[]> {
+  private async getTagsForArtistData(artistData: SeriesData[], useLocalStorage: boolean): Promise<SeriesData[]> {
     // TODO Promisify
     // TODO use config file
-    var LAST_FM_API_CADENCE_MS = 150;
-    var self = this;
-    return new Promise((resolve) => {
-      var count = 0;
-      // Make an array of artists
-      var artists = artistData.map(function (artistObject) {
-        return artistObject.title;
-      });
-      var tagData: { [key: string]: ArtistTags } = {};
-
-      store.commit("startNextStage", artists.length);
-      async.eachLimit(
-        artists,
-        1, // LFM_CONCURRENT_API_REQUESTS
-        function (artistName, callback) {
-          store.commit("progressCurrentStage");
-          // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
-
-          var artistTags = new ArtistTags(artistName);
-
-          // Check the cache if necessary
-          if (useLocalStorage && artistTags.isInCache()) {
-            artistTags.loadFromCache();
-            tagData[artistName] = artistTags;
-            return callback();
-          }
-
-          // Make the request
-          var requestParams = [
-            new URLParameter("artist", artistName),
-          ];
-          var requestURL = self.api.getAPIRequestURL("tag", requestParams);
-          jQuery.get(requestURL, function (data) {
-            if (!data.error) {
-              var allTags = self.api.parseResponseJSON(data);
-              var topTags = getTopTags(allTags);
-
-              artistTags.setTags(topTags);
-              tagData[artistName] = artistTags;
-
-              if (useLocalStorage) {
-                artistTags.cache();
-              }
-            }
-
-            setTimeout(callback, LAST_FM_API_CADENCE_MS);
-          }).fail(function (err) {
-            // Ignore failures
-            callback();
-          });
-        },
-        function (err) {
-          var combinedData = combineArtistTags(artistData, tagData);
-          resolve(combinedData);
-        }
-      );
+    const LAST_FM_API_CADENCE_MS = 150;
+    // Make an array of artists
+    const artists = artistData.map((artistObject) => {
+      return artistObject.title;
     });
+    const tagData: { [key: string]: ArtistTags } = {};
+
+    store.commit('startNextStage', artists.length);
+
+    await Bluebird.map(artists, async (artistName) => {
+        store.commit('progressCurrentStage');
+        // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
+
+        const artistTags = new ArtistTags(artistName);
+
+        // Check the cache if necessary
+        if (useLocalStorage && artistTags.isInCache()) {
+          artistTags.loadFromCache();
+          tagData[artistName] = artistTags;
+          return;
+        }
+
+        // Make the request
+        const requestParams = [
+          new URLParameter('artist', artistName),
+        ];
+        const requestURL = this.api.getAPIRequestURL('tag', requestParams);
+        const data = await Request(requestURL, {
+          json: true,
+        });
+        if (!data.error) {
+            const allTags = this.api.parseResponseJSON(data);
+            const topTags = getTopTags(allTags);
+
+            artistTags.setTags(topTags);
+            tagData[artistName] = artistTags;
+
+            if (useLocalStorage) {
+              artistTags.cache();
+            }
+        }
+
+        // https://esdiscuss.org/topic/await-settimeout-in-async-functions
+        return new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+    }, {
+      concurrency: 1,
+    });
+
+    const combinedData = combineArtistTags(artistData, tagData);
+    return combinedData;
   }
 
-  private getDataForTimeSpan(
+  private async getDataForTimeSpan(
     username: string,
     groupByCategory: string,
     groupByTime: string,
     timeSpan: TimeSpan,
-    callback: any
   ) {
-    var timeSegments = splitTimeSpan(groupByTime, timeSpan);
-    var segmentData: SegmentData[][] = [];
-    var LAST_FM_API_CONCURRENT_REQUESTS = 1;
-    var LAST_FM_API_CADENCE_MS = 150;
-    var self = this;
+    const timeSegments = splitTimeSpan(groupByTime, timeSpan);
+    const segmentData: SegmentData[][] = [];
+    const LAST_FM_API_CONCURRENT_REQUESTS = 1;
+    const LAST_FM_API_CADENCE_MS = 150;
 
-    store.commit("startNextStage", timeSegments.length);
+    store.commit('startNextStage', timeSegments.length);
 
-    async.eachLimit(
-      timeSegments,
-      LAST_FM_API_CONCURRENT_REQUESTS,
-      function (timeSegment, callback) {
-        store.commit("progressCurrentStage");
-        // TODO cache old segments (but not new ones!)
-        var params = [
-          new URLParameter("user", username),
-          new URLParameter("from", timeSegment.start.toString()),
-          new URLParameter("to", timeSegment.end.toString()),
-        ];
-        var requestURL = self.api.getAPIRequestURL(groupByCategory, params);
+    const test = await Bluebird.map(timeSegments, async (timeSegment) => {
+      store.commit('progressCurrentStage');
+      // TODO cache old segments (but not new ones!)
+      const params = [
+        new URLParameter('user', username),
+        new URLParameter('from', timeSegment.start.toString()),
+        new URLParameter('to', timeSegment.end.toString()),
+      ];
+      const requestURL = this.api.getAPIRequestURL(groupByCategory, params);
 
-        // Make the request
-        jQuery.get(requestURL, function (data) {
-          if (!data.error) {
-            // Parse through the data
-            var parsedData = self.api.parseResponseJSON(data);
-            segmentData.push(parsedData);
-          }
-
-          setTimeout(callback, LAST_FM_API_CADENCE_MS);
-        }).fail(function (err) {
-          // Ignore failures
-          callback();
-        });
-      },
-      function (err) {
-        // All requests finished.
-        var joinedSegments = joinSegments(segmentData);
-        callback(err, joinedSegments);
+      // Make the request
+      const data = await Request(requestURL, {
+        json: true,
+      });
+      if (!data.error) {
+        // Parse through the data
+        const parsedData = this.api.parseResponseJSON(data);
+        segmentData.push(parsedData);
       }
-    );
+
+      // https://esdiscuss.org/topic/await-settimeout-in-async-functions
+      return new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+    }, {
+      concurrency: LAST_FM_API_CONCURRENT_REQUESTS,
+    });
+
+    const joinedSegments = joinSegments(segmentData);
+    return joinedSegments;
   }
 
   private cacheData(options: any, data: any) {

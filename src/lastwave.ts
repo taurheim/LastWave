@@ -10,30 +10,21 @@ export default class LastWaveEngine {
   private DATA_SOURCE_TO_RENDERER_RATIO: number = 0.8;
   private LOADING_STAGE_PRECISION: number = 2;
 
-  public CreateWave(
+  public async CreateWave(
     dataSource: DataSource,
     renderer: Renderer,
     dataSourceOptions: any,
     rendererOptions: any,
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      console.log("Creating Wave");
-      console.log("Perform validation");
+    console.log('Creating Wave');
+    // TODO validate options
 
-      this.setupLoadingStages(dataSource, renderer, dataSourceOptions, rendererOptions);
+    this.setupLoadingStages(dataSource, renderer, dataSourceOptions, rendererOptions);
 
-      dataSource.loadData(dataSourceOptions, function(err: any, musicData: SeriesData[]) {
-        if (err) {
-          console.log("Error encountered: " + err);
-        }
-        console.log("Rendering visualization...");
-
-        renderer.renderVisualization(musicData, rendererOptions).then(() => {
-          console.log("Visualization finished rendering.");
-          resolve();
-        });
-      });
-    });
+    const musicData = await dataSource.loadData(dataSourceOptions);
+    console.log('Rendering visualization...');
+    await renderer.renderVisualization(musicData, rendererOptions);
+    console.log('Visualization finished rendering.');
   }
 
   setupLoadingStages(dataSource: DataSource, renderer: Renderer, dataSourceOptions: any, rendererOptions: any) {
