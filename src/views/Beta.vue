@@ -54,6 +54,7 @@
       <li>Some themes have been removed</li>
       <li>Normalizing artist order has been removed (default off for now)</li>
       <li>Scheme creation is not supported</li>
+      <li>Text placement has actually gotten slightly worse (but will be fixed soon!)</li>
     </ol>
     If you wish lastwave still had any of these features, please shoot an email to niko@savas.ca.
 
@@ -68,6 +69,7 @@
       <li>Links to the full resolution in the gallery</li>
       <li>Better tagging (last.fm's tags are pretty mediocre)</li>
       <li>Libre.fm integration (or other services)</li>
+      <li>Embed fonts into svg</li>
     </ul>
   </div>
 </template>

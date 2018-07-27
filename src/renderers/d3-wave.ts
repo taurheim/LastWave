@@ -59,6 +59,11 @@ export default class WaveGraph implements Renderer {
   public async renderVisualization(data: SeriesData[], options: any): Promise<void> {
     store.commit('startNextStage', 1);
 
+    // Make sure we actually have data
+    if (data.length === 0) {
+      throw new Error('No data found for the specified time range');
+    }
+
     // Grab the correct color scheme
     const scheme = colorSchemes[options.color_scheme];
     const font = new FontData(options.font, scheme.fontColor);
@@ -323,7 +328,7 @@ export default class WaveGraph implements Renderer {
     pxFromLeft: number,
     graphHeight: number,
   ) {
-    const MONTH_FONT_FAMILY = 'Roboto';
+    const MONTH_FONT_FAMILY = 'TypoPRO Roboto';
     const MONTH_FONT_SIZE = 30;
     const STROKE_WIDTH = 5;
     const STROKE_OPACITY = 0.2;
@@ -351,7 +356,7 @@ export default class WaveGraph implements Renderer {
   private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
-    const WATERMARK_FONT = 'Roboto';
+    const WATERMARK_FONT = 'TypoPRO Roboto';
     const WATERMARK_FONT_WEIGHT = '100';
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;

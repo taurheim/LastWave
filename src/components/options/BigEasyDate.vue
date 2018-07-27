@@ -14,13 +14,14 @@ select {
   font-size: 24px;
   width: 250px;
   text-align: center;
+  margin: 10px 0;
 }
 select:focus {
   outline: thin;
 }
 option, select {
   font-weight: 300;
-  font-family: "Roboto";
+  font-family: "TypoPRO Roboto";
 }
 option {
   font-size: 20px;

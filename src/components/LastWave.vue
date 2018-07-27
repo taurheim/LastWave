@@ -1,5 +1,11 @@
 <template>
   <div id="lastwave-control">
+    <md-dialog-alert
+      :md-active.sync="showError"
+      :md-content="`Something went wrong:<br><br><span style='font-family: monospace'>${error}</span><br><br>If this is unexpected, please let me know at niko@savas.ca`"
+      md-confirm-text="Ok"
+      @md-closed="backToOptions"
+      @md-clicked-outside="backToOptions"/>
     <!--
       Once more renderers/data sources have been added, use this dropdown
     <div class="viz-select">
@@ -123,6 +129,8 @@ export default Vue.extend({
       showFullSvg: false,
       showSvgOptions: false,
       liveActionComponents: [] as Vue[],
+      showError: false,
+      error: null,
     };
   },
   mounted() {
@@ -194,6 +202,10 @@ export default Vue.extend({
           newInstance.$mount();
           jQuery(ACTIONS_DIV).append(newInstance.$el);
         });
+      }).catch((e) => {
+        store.commit('log', e);
+        this.$data.showError = true;
+        this.$data.error = e;
       });
     },
     chooseDataSource: () => {
@@ -206,6 +218,12 @@ export default Vue.extend({
     },
     toggleFullSvg() {
       this.$data.showFullSvg = !this.$data.showFullSvg;
+    },
+    backToOptions() {
+      store.commit('showOptions');
+      store.commit('hideLoadingBar');
+      store.commit('hideActions');
+      store.commit('hideVisualization');
     },
   },
   computed: {

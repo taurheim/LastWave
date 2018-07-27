@@ -15,7 +15,7 @@
 input {
   height: 30px;
   width: 300px;
-  font-family: "Roboto";
+  font-family: "TypoPRO Roboto";
   border: 1px solid rgba(64, 196, 255, .5);
 }
 </style>

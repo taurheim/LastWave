@@ -63,19 +63,28 @@ export default class LastFm implements DataSource {
       case 'artist':
       case 'album':
         cleanedData = cleanByMinPlays(data, minPlays);
+
+        if (cleanedData.length === 0) {
+          throw new Error([
+            `Not enough data: found ${data.length} artists/albums`,
+            `but none that were over the minimum of ${minPlays} plays.`,
+            'Please go into advanced settings and lower your minimum plays option.',
+          ].join(' '));
+        }
+
         this.cacheData(options, cleanedData);
-        return cleanedData;
         break;
       case 'tag':
         // Now that we have the artist data, we need to get the tags.
         const tagData = await self.getTagsForArtistData(data, useLocalStorage);
         cleanedData = cleanByTopN(tagData, TAG_TOP_N_COUNT);
         this.cacheData(options, cleanedData);
-        return cleanedData;
         break;
       default:
         throw new Error(`Method not recognized: ${method}`);
     }
+
+    return cleanedData;
   }
 
   public getOptions(): Option[] {

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div id="titlebar">
-      <div>
+      <div class="logo">
         <img src="@/assets/logo.svg">
       </div>
       <div>
@@ -35,19 +35,26 @@
 @import '~@typopro/web-roboto/TypoPRO-Roboto.css';
 
 body {
-  font-family: "Roboto", "Open Sans", sans-serif;
+  font-family: "TypoPRO Roboto", "Open Sans", "Open Sans", sans-serif;
 }
 
 #titlebar {
   font-size: 64px;
-  margin: 0px auto 75px auto;
+  margin: 0 auto;
   text-align: center;
   font-weight: 100;
   padding-top: 75px;
 }
 
+@media only screen and (max-width: 400px) {
+  #titlebar {
+    padding-top: 20px;
+  }
+}
+
 #titlebar>div {
   display: inline-block;
+  height: 80px;
 }
 
 #titlebar img {

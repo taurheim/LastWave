@@ -68,7 +68,8 @@ export default Vue.extend({
       const selectAllOnClick = 'this.setSelectionRange(0, this.value.length)';
       const inputHtml = `<input type="text" value="${this.$data.sharingLink}" onClick="${selectAllOnClick}" />`;
       return `Share this wave: <br><br>${inputHtml}`;
-    }
+    },
+    
   },
   methods:  {
     cloudinaryUpload() {
@@ -77,10 +78,22 @@ export default Vue.extend({
         const api = new CloudinaryAPI();
 
         // TODO handle errors
+        // TODO use async/await
         api.uploadBase64Svg(this.svgFile).then((url: string) => {
           this.sharingLink = url.replace('.svg', '.png');
           this.showDialog = true;
           this.uploadInProgress = false;
+        }).then(() => {
+          /*
+          jQuery.ajax({
+            type: 'POST',
+            url: 'https://savas.ca/lastwave/add_img.php',
+            dataType: 'json',
+            data: {
+              user: 
+            },
+          });
+          */
         });
       } else {
         this.showDialog = true;

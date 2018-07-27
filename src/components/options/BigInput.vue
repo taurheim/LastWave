@@ -6,10 +6,11 @@
   input {
     height: 75px;
     width: 400px;
+    max-width: 90%;
     font-weight: 300;
     font-size: 32px;
     text-align: center;
-    font-family: "Roboto";
+    font-family: "TypoPRO Roboto";
     border: 1px solid rgba(64, 196, 255, .5);
   }
   input:focus {
