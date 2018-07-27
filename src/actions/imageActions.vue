@@ -5,6 +5,7 @@
       :md-content="cloudinaryDialogHtml"
     />
     <a
+      v-if="isDesktop"
       href-lang="image/svg+xml"
       :href="svgFile"
       :title="fileName + '.svg'"
@@ -34,6 +35,7 @@ import Vue from 'vue';
 import jQuery from 'jquery';
 import CloudinaryAPI from '@/actions/CloudinaryAPI';
 import store from '@/store';
+import mobile from 'is-mobile';
 
 /*
   These image actions are grouped because they both require a base64
@@ -65,10 +67,14 @@ export default Vue.extend({
     };
   },
   computed: {
+    isDesktop(): boolean {
+      return !mobile.isMobile();
+    },
     cloudinaryDialogHtml(): string {
       const selectAllOnClick = 'this.setSelectionRange(0, this.value.length)';
       const inputHtml = `<input type="text" value="${this.$data.sharingLink}" onClick="${selectAllOnClick}" />`;
-      return `Share this wave: <br><br>${inputHtml}`;
+      const directLink = `<a target="_blank" href="${this.$data.sharingLink}">Direct Link</a>`;
+      return `Share this wave: <br><br>${inputHtml}<br><br>${directLink}`;
     },
     fileName(): string {
       const username: string = store.state.dataSourceOptions.username;

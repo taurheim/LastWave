@@ -32,7 +32,9 @@ export default class CloudinaryAPI {
       formData.append('upload_preset', this.UPLOAD_PRESET);
       formData.append('tags', UPLOAD_TAGS.join(','));
       formData.append('file', b64Svg);
-      formData.append('public_id', fileName);
+
+      // Unsigned uploads will only keep the first version, so we're not actually using the fileName
+      // formData.append('public_id', fileName);
 
       xhr.send(formData);
     });

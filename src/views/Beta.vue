@@ -1,5 +1,6 @@
 <template>
   <div class="beta">
+    While v3 is in beta, you can still access the old version here: <a href="https://savas.ca/lastwave_v2">https://savas.ca/lastwave_v2</a>
     <h1>What's new</h1>
     At long last, version 3 of LastWave is out, and it's got some banging new features!
     <br><br>

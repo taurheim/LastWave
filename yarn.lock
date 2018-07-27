@@ -3904,6 +3904,10 @@ is-glob@^4.0.0:
   dependencies:
     is-extglob "^2.1.1"
 
+is-mobile@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/is-mobile/-/is-mobile-1.0.0.tgz#bc15893f90a669d33e18f718ee2baf850bd68d7a"
+
 is-number@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/is-number/-/is-number-2.1.0.tgz#01fcbbb393463a548f2f466cce16dece49db908f"

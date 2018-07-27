@@ -1,11 +1,17 @@
 <template>
-<div>
+<div class="option-gallery">
   Choose a {{ optionData.title }}:
   <VueSelectImage :dataImages="dataImages" :selectedImages="selectedImages" @onselectimage="onSelectImage" :useLabel="true">
   </VueSelectImage>
 </div>
 </template>
 <style>
+  .option-gallery {
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
   li.vue-select-image__item {
     margin: 0 5px 0 5px;
     width: 30%;
