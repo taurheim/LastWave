@@ -257,5 +257,84 @@
       "#3d1818",
       "#320a1b"
     ]
+  },
+  "pastel": {
+    "backgroundColor": "#004159",
+    "fontColor": "#000000",
+    "schemeColors": [
+      "#65A8C4",
+      "#AACEE2",
+      "#8C65D3",
+      "#9A93EC",
+      "#CAB9F1",
+      "#0052A5",
+      "#413BF7",
+      "#81CBF9",
+      "#00ADCE",
+      "#59DBF1",
+      "#9EE7FA",
+      "#00C590",
+      "#73EBAE",
+      "#B5F9D3"
+    ]
+  },
+  "gorgeous": {
+    "backgroundColor": "#000000",
+    "fontColor": "#000000",
+    "schemeColors": [
+      "#006884",
+      "#00909E",
+      "#89DBEC",
+      "#ED0026",
+      "#FA9D00",
+      "#FFD08D",
+      "#B00051",
+      "#F68370",
+      "#FEABB9",
+      "#6E006C",
+      "#91278F",
+      "#CF97D7",
+      "#5B5B5B",
+      "#D4D4D4"
+    ]
+  },
+  "elegant": {
+    "backgroundColor": "#C3C8CD",
+    "fontColor": "#FFFFFF",
+    "schemeColors": [
+      "#502812",
+      "#603618",
+      "#855723",
+      "#892034",
+      "#7A1A57",
+      "#6F256C",
+      "#00344D",
+      "#003066",
+      "#57527E",
+      "#004236",
+      "#404616",
+      "#9F9B74",
+      "#212930"
+    ]
+  },
+  "earthtones": {
+    "backgroundColor": "#A3ADB8",
+    "fontColor": "#000000",
+    "schemeColors": [
+      "#493829",
+      "#816C5B",
+      "#A9A18C",
+      "#613318",
+      "#855723",
+      "#B99C6B",
+      "#8F3B1B",
+      "#D57500",
+      "#DBCA60",
+      "#404F24",
+      "#668D3C",
+      "#BDD09F",
+      "#4E6172",
+      "#83929F"
+    ]
   }
 }

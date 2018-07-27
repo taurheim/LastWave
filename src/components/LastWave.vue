@@ -85,6 +85,11 @@
   .scaled svg {
     width: 100%;
   }
+
+  /* https://github.com/vuematerial/vue-material/issues/1794 */
+  .md-datepicker-dialog.md-theme-default {
+    height: 240px !important;
+  }
 </style>
 <script lang="ts">
 import Vue from 'vue'

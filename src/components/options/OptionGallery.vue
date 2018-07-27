@@ -6,7 +6,7 @@
 </template>
 <style>
   li.vue-select-image__item {
-    margin: 0 12px 12px 0;
+    margin: 0 5px 0 5px;
   }
   .vue-select-image {
     margin-left: auto;
@@ -23,6 +23,7 @@
   .vue-select-image__wrapper {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
   }
 </style>
 <script lang="ts">

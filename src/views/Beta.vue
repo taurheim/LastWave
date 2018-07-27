@@ -69,7 +69,7 @@
       <li>Links to the full resolution in the gallery</li>
       <li>Better tagging (last.fm's tags are pretty mediocre)</li>
       <li>Libre.fm integration (or other services)</li>
-      <li>Embed fonts into svg</li>
+      <li>Embed fonts into svg so that more fonts can be supported</li>
     </ul>
   </div>
 </template>

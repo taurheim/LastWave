@@ -10,6 +10,10 @@ import BooleanOption from '@/models/options/BooleanOption';
 */
 const LastWaveSchemeImagePath = require('@/assets/lastwave-scheme.png');
 const CarpetSchemeImagePath = require('@/assets/carpet-scheme.png');
+const PastelSchemeImagePath = require('@/assets/pastel-scheme.png');
+const GorgeousSchemeImagePath = require('@/assets/gorgeous-scheme.png');
+const ElegantSchemeImagePath = require('@/assets/elegant-scheme.png');
+const EarthtonesSchemeImagePath = require('@/assets/earthtones-scheme.png');
 
 const DEFAULT_GRAPH_HEIGHT = 600;
 
@@ -23,6 +27,26 @@ const COLOR_SCHEMES = [
     'Carpet',
     'carpet',
     CarpetSchemeImagePath,
+  ),
+  new Image(
+    'Pastel',
+    'pastel',
+    PastelSchemeImagePath,
+  ),
+  new Image(
+    'Gorgeous',
+    'gorgeous',
+    GorgeousSchemeImagePath,
+  ),
+  new Image(
+    'Elegant',
+    'elegant',
+    ElegantSchemeImagePath,
+  ),
+  new Image(
+    'Earthtones',
+    'earthtones',
+    EarthtonesSchemeImagePath,
   ),
 ];
 
@@ -72,7 +96,7 @@ export default [
     true,
   ),
   new BooleanOption(
-    'Add labels',
+    'Add artist/album/tag names',
     'add_labels',
     false,
     true,
