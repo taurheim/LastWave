@@ -100,7 +100,7 @@
   }
 </style>
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import store from '@/store';
 import WaveOption from '@/components/WaveOption.vue';
 import LastWaveEngine from '@/lastwave';
@@ -160,11 +160,11 @@ export default Vue.extend({
     });
 
     // Remove all the options that should be in main options
-    mainOptions = dataSourceOptions.filter(option => option.isImportant);
-    mainOptions = mainOptions.concat(rendererOptions.filter(option => option.isImportant));
+    mainOptions = dataSourceOptions.filter((option) => option.isImportant);
+    mainOptions = mainOptions.concat(rendererOptions.filter((option) => option.isImportant));
 
-    dataSourceOptions = dataSourceOptions.filter(option => !option.isImportant);
-    rendererOptions = rendererOptions.filter(option => !option.isImportant);
+    dataSourceOptions = dataSourceOptions.filter((option) => !option.isImportant);
+    rendererOptions = rendererOptions.filter((option) => !option.isImportant);
 
     this.$data.dataSourceOptions = dataSourceOptions;
     this.$data.rendererOptions = rendererOptions;
@@ -176,9 +176,7 @@ export default Vue.extend({
     store.commit('hideVisualization');
   },
   methods: {
-    createWave: function(evnt: any) {
-      console.log("Creating wave");
-
+    createWave(evnt: any) {
       const engine = new LastWaveEngine();
       const dataSource = this.$data.dataSources[0];
       const dsOptions = store.state.dataSourceOptions;

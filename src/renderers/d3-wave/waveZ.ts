@@ -32,60 +32,61 @@ export function isZType(peak: Peak) {
   4. Expand the text box from this point
 */
 export function getZLabel(peak: Peak, text: string, font: string): Label | null {
-  var TEST_FONT_SIZE = 3000;
+  const TEST_FONT_SIZE = 3000;
 
-  var rightMidpoint = new Point(peak.topRight.x, (peak.topRight.y + peak.bottomRight.y)/2);
-  var leftMidpoint = new Point(peak.topLeft.x, (peak.topLeft.y + peak.bottomLeft.y)/2);
-  var centerPoint = new Point(peak.top.x, (leftMidpoint.y + rightMidpoint.y)/2);
+  const rightMidpoint = new Point(peak.topRight.x, (peak.topRight.y + peak.bottomRight.y) / 2);
+  const leftMidpoint = new Point(peak.topLeft.x, (peak.topLeft.y + peak.bottomLeft.y) / 2);
+  const centerPoint = new Point(peak.top.x, (leftMidpoint.y + rightMidpoint.y) / 2);
 
   // Draw two lines from the center point:
   // Forward: Bottom left to top right
   // Backward: Top left to bottom right
-  var textDimensions = getTextDimensions(text, font, TEST_FONT_SIZE);
-  var forwardLine = new InfiniteLine(textDimensions.slope, centerPoint);
-  var backwardLine = new InfiniteLine(textDimensions.slope * -1, centerPoint);
+  const textDimensions = getTextDimensions(text, font, TEST_FONT_SIZE);
+  const forwardLine = new InfiniteLine(textDimensions.slope, centerPoint);
+  const backwardLine = new InfiniteLine(textDimensions.slope * -1, centerPoint);
 
 
   if (DebugWave.isEnabled) {
-    DebugWave.drawLine(forwardLine, "black");
-    DebugWave.drawLine(backwardLine, "white");
-    DebugWave.drawPoint(leftMidpoint, "red");
-    DebugWave.drawPoint(centerPoint, "green");
-    DebugWave.drawPoint(rightMidpoint, "blue");
+    DebugWave.drawLine(forwardLine, 'black');
+    DebugWave.drawLine(backwardLine, 'white');
+    DebugWave.drawPoint(leftMidpoint, 'red');
+    DebugWave.drawPoint(centerPoint, 'green');
+    DebugWave.drawPoint(rightMidpoint, 'blue');
   }
 
   // Check all intersections with the peak
   // TODO better naming here
-  var checkIntersections = ["A", "B", "C", "D"];
-  var minVerticalDistance = Number.MAX_VALUE;
-  for (var i = 0; i < checkIntersections.length; i++) {
-    var checkLine = (peak as any)[checkIntersections[i]];
-    var againstLine = (checkLine.slope < 0) ? forwardLine : backwardLine;
+  const checkIntersections = ['A', 'B', 'C', 'D'];
+  let minVerticalDistance = Number.MAX_VALUE;
+  checkIntersections.forEach((lineName) => {
+    const checkLine = (peak as any)[lineName];
+    const againstLine = (checkLine.slope < 0) ? forwardLine : backwardLine;
 
-    var checkIntersect = checkLine.getIntersect(againstLine);
+    const checkIntersect = checkLine.getIntersect(againstLine);
 
     // If there is no intersect, we don't have to worry about that
     // line segment reducing the space for our text.
     if (checkIntersect) {
-      var verticalDistance = Math.abs(checkIntersect.y - centerPoint.y);
+      const verticalDistance = Math.abs(checkIntersect.y - centerPoint.y);
 
       if (verticalDistance < minVerticalDistance) {
         minVerticalDistance = verticalDistance;
       }
     }
-  }
+
+  });
 
   // The min vertical distance gives us how much height we have to work with
-  var boxHeight = Math.floor(minVerticalDistance*2);
-  var heightToFontSizeRatio = textDimensions.height / TEST_FONT_SIZE;
-  var fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
+  const boxHeight = Math.floor(minVerticalDistance * 2);
+  const heightToFontSizeRatio = textDimensions.height / TEST_FONT_SIZE;
+  const fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
 
   // Position the text on the bottom left corner
-  var textPositionX = centerPoint.x - minVerticalDistance/textDimensions.slope;
-  var textPositionY = centerPoint.y - boxHeight/2;
+  const textPositionX = centerPoint.x - minVerticalDistance / textDimensions.slope;
+  const textPositionY = centerPoint.y - boxHeight / 2;
 
   if (DebugWave.isEnabled) {
-    DebugWave.drawPoint(new Point(textPositionX, textPositionY), "red");
+    DebugWave.drawPoint(new Point(textPositionX, textPositionY), 'red');
   }
 
   return new Label(text, textPositionX, textPositionY, font, fontSize);

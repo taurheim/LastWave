@@ -50,7 +50,7 @@ export default Vue.extend({
     };
   },
   computed: {
-    configDialogHtml: function() {
+    configDialogHtml(): string {
       const selectAllOnClick = 'this.setSelectionRange(0, this.value.length)';
       const inputHtml = `<input type="text" value="${this.$data.configString}" onClick="${selectAllOnClick}" />`;
       return `Use this path to share this configuration: <br><br>${inputHtml}`;

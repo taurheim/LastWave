@@ -32,7 +32,7 @@
 // All of these easy dates are offset from today, in ms
 // Each is an array of [FROM_OFFSET, TO_OFFSET]
 import EasyDates from '@/config/easyDates.json';
-import Vue from 'vue'
+import Vue from 'vue';
 import OptionBase from './OptionBase.vue';
 import Option from '@/models/Option';
 import EasyDateOption from '@/models/options/EasyDateOption';

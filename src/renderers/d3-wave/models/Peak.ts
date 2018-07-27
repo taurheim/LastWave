@@ -7,19 +7,19 @@ import LineSegment from '@/renderers/d3-wave/models/LineSegment';
 // For a graphical representation of each of the members of this
 // data structure, check GitHub
 export default class Peak {
-  top: Point;
-  bottom: Point;
-  topLeft: Point;
-  topRight: Point;
-  bottomLeft: Point;
-  bottomRight: Point;
-  A: LineSegment;
-  B: LineSegment;
-  C: LineSegment;
-  D: LineSegment;
+  public top: Point;
+  public bottom: Point;
+  public topLeft: Point;
+  public topRight: Point;
+  public bottomLeft: Point;
+  public bottomRight: Point;
+  public A: LineSegment;
+  public B: LineSegment;
+  public C: LineSegment;
+  public D: LineSegment;
 
   constructor(index: number, stack: RickshawStackPoint[]) {
-    var LEFT_RIGHT_SPREADING_FACTOR = 0.1;
+    const LEFT_RIGHT_SPREADING_FACTOR = 0.1;
 
     // 1. Grab all the surrounding points
     // y: The amount of vertical space that the ripple takes up
@@ -28,23 +28,23 @@ export default class Peak {
     this.bottom = new Point(stack[index].x, stack[index].y0);
 
     if (index === 0) {
-      var fakeX = -1 * LEFT_RIGHT_SPREADING_FACTOR;
-      var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
-      this.topLeft = new Point(fakeX, fakeY);
-      this.bottomLeft = new Point(fakeX, fakeY);
+      const fakeLeftX = -1 * LEFT_RIGHT_SPREADING_FACTOR;
+      const fakeLeftY = this.bottom.y + (this.top.y - this.bottom.y) / 2;
+      this.topLeft = new Point(fakeLeftX, fakeLeftY);
+      this.bottomLeft = new Point(fakeLeftX, fakeLeftY);
     } else {
-      this.topLeft = new Point(stack[index - 1].x, stack[index-1].y + stack[index-1].y0);
+      this.topLeft = new Point(stack[index - 1].x, stack[index - 1].y + stack[index - 1].y0);
       this.bottomLeft = new Point(stack[index - 1].x, stack[index - 1].y0);
     }
 
     if (index === stack.length - 1) {
-      var fakeX = this.top.x + LEFT_RIGHT_SPREADING_FACTOR;
-      var fakeY = this.bottom.y + (this.top.y - this.bottom.y)/2;
-      this.topRight = new Point(fakeX, fakeY);
-      this.bottomRight = new Point(fakeX, fakeY);
+      const fakeRightX = this.top.x + LEFT_RIGHT_SPREADING_FACTOR;
+      const fakeRightY = this.bottom.y + (this.top.y - this.bottom.y) / 2;
+      this.topRight = new Point(fakeRightX, fakeRightY);
+      this.bottomRight = new Point(fakeRightX, fakeRightY);
     } else {
-      this.topRight = new Point(stack[index + 1].x, stack[index+1].y + stack[index+1].y0);
-      this.bottomRight = new Point(stack[index + 1].x, stack[index+1].y0);
+      this.topRight = new Point(stack[index + 1].x, stack[index + 1].y + stack[index + 1].y0);
+      this.bottomRight = new Point(stack[index + 1].x, stack[index + 1].y0);
     }
 
     // 2. Add lines betwen points, labelled A/B/C/D
@@ -55,7 +55,7 @@ export default class Peak {
   }
 
   // 3. Allow for scaling by linear values
-  scale(x: number, y: number): void {
+  public scale(x: number, y: number): void {
     this.top.scale(x, y);
     this.bottom.scale(x, y);
     this.topLeft.scale(x, y);

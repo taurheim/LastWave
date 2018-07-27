@@ -34,7 +34,7 @@
   </div>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import DropdownOption from '@/components/options/DropdownOption.vue';
 import InputOption from '@/components/options/InputOption.vue';
 import Toggle from '@/components/options/ToggleOption.vue';

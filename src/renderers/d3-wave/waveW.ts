@@ -36,22 +36,26 @@ export function isWType(peak: Peak) {
 */
 export function getWLabel(peak: Peak, text: string, font: string): Label | null {
   // Config
-  var STARTING_FONT_SIZE = 5;
-  var FONT_SIZE_INTERVAL = 2;
-  var FONT_SIZE_SAFETY_SCALE = 0.9;
+  const STARTING_FONT_SIZE = 5;
+  const FONT_SIZE_INTERVAL = 2;
+  const FONT_SIZE_SAFETY_SCALE = 0.9;
 
-  var fontSize: number = STARTING_FONT_SIZE;
-  var leftCollision, rightCollision;
-  var verticalPointyBound, horizontalLeftBound, horizontalRightBound;
+  let fontSize: number = STARTING_FONT_SIZE;
+  let leftCollision;
+  let rightCollision;
+  let verticalPointyBound;
+  let horizontalLeftBound;
+  let horizontalRightBound;
+  let textDimensions;
 
   // If we don't have enough space, don't even bother
-  var minimumHeightRequired = getTextDimensions(text, font, fontSize).height;
+  const minimumHeightRequired = getTextDimensions(text, font, fontSize).height;
   if ((peak.top.y - peak.bottom.y) < minimumHeightRequired) {
     return null;
   }
 
   // Slightly different code for "w1" vs "w2"
-  var isW1 = (peak.A.slope <= 0);
+  const isW1 = (peak.A.slope <= 0);
 
   // We never go past the pointy bound. We expand up/down from it.
   if (isW1) {
@@ -68,8 +72,8 @@ export function getWLabel(peak: Peak, text: string, font: string): Label | null 
   // Loop
   // TODO explain
   while (true) {
-    var verticalInnerBound;
-    var textDimensions = getTextDimensions(text, font, fontSize);
+    let verticalInnerBound;
+    textDimensions = getTextDimensions(text, font, fontSize);
     if (isW1) {
       verticalInnerBound = verticalPointyBound - textDimensions.height;
     } else {
@@ -84,20 +88,24 @@ export function getWLabel(peak: Peak, text: string, font: string): Label | null 
     // If we draw a line above our text box, how far can it stretch
     // to the left and right before it hits the sides
     // of our text box?
-    var topLine = new InfiniteLine(0, new Point(0, verticalInnerBound));
+    const topLine = new InfiniteLine(0, new Point(0, verticalInnerBound));
     leftCollision = topLine.getIntersect(horizontalLeftBound);
     rightCollision = topLine.getIntersect(horizontalRightBound);
 
-    if (!leftCollision) leftCollision = new Point(peak.topLeft.x, verticalInnerBound);
-    if (!rightCollision) rightCollision = new Point(peak.topRight.x, verticalInnerBound);
+    if (!leftCollision) {
+      leftCollision = new Point(peak.topLeft.x, verticalInnerBound);
+    }
+    if (!rightCollision) {
+      rightCollision = new Point(peak.topRight.x, verticalInnerBound);
+    }
 
     // This is the available width at this font size
-    var availableWidth = rightCollision.x - leftCollision.x;
+    const availableWidth = rightCollision.x - leftCollision.x;
 
-    if(DebugWave.isEnabled) {
-      DebugWave.drawLine(topLine, "black");
-      DebugWave.drawPoint(leftCollision, "red");
-      DebugWave.drawPoint(rightCollision, "green");
+    if (DebugWave.isEnabled) {
+      DebugWave.drawLine(topLine, 'black');
+      DebugWave.drawPoint(leftCollision, 'red');
+      DebugWave.drawPoint(rightCollision, 'green');
       DebugWave.drawTextBelowPoint(rightCollision, fontSize.toString());
     }
 
@@ -109,10 +117,10 @@ export function getWLabel(peak: Peak, text: string, font: string): Label | null 
   }
 
   fontSize *= FONT_SIZE_SAFETY_SCALE;
-  
+
   // Center the text vertically
-  var textDimensions = getTextDimensions(text, font, fontSize);
-  var labelY;
+  textDimensions = getTextDimensions(text, font, fontSize);
+  let labelY;
   if (isW1) {
     labelY = peak.top.y - textDimensions.height;
   } else {
@@ -124,7 +132,7 @@ export function getWLabel(peak: Peak, text: string, font: string): Label | null 
     return null;
   }
 
-  var labelX = leftCollision.x;
+  const labelX = leftCollision.x;
 
   return new Label(text, labelX, labelY, font, fontSize);
 }

@@ -1,7 +1,7 @@
 <template>
 </template>
 <script lang="ts">
-import Vue from 'vue'
+import Vue from 'vue';
 import store from '@/store';
 import LastFm from '@/datasources/lastfm';
 import Option from '@/models/Option';
@@ -57,7 +57,7 @@ export default Vue.extend({
           Vue.set(this.$store.state.rendererOptions, this.optionData.alias, newValue);
         }
       },
-    }
+    },
   },
   data(): {[key: string]: any} {
     return {

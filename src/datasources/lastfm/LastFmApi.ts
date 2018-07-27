@@ -50,7 +50,7 @@ export default class LastFmApi {
 
       let count;
       if (secondKey === 'tag') {
-        count = segmentData.count; 
+        count = segmentData.count;
       } else {
         count = segmentData.playcount;
       }

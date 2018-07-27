@@ -8,12 +8,12 @@ import BooleanOption from '@/models/options/BooleanOption';
 /*
   https://stackoverflow.com/a/42441396
 */
-const LastWaveSchemeImagePath = require('@/assets/lastwave-scheme.png');
-const CarpetSchemeImagePath = require('@/assets/carpet-scheme.png');
-const PastelSchemeImagePath = require('@/assets/pastel-scheme.png');
-const GorgeousSchemeImagePath = require('@/assets/gorgeous-scheme.png');
-const ElegantSchemeImagePath = require('@/assets/elegant-scheme.png');
-const EarthtonesSchemeImagePath = require('@/assets/earthtones-scheme.png');
+const LastWaveSchemeImagePath = require('@/assets/lastwave-scheme.png'); // tslint:disable-line
+const CarpetSchemeImagePath = require('@/assets/carpet-scheme.png'); // tslint:disable-line
+const PastelSchemeImagePath = require('@/assets/pastel-scheme.png'); // tslint:disable-line
+const GorgeousSchemeImagePath = require('@/assets/gorgeous-scheme.png'); // tslint:disable-line
+const ElegantSchemeImagePath = require('@/assets/elegant-scheme.png'); // tslint:disable-line
+const EarthtonesSchemeImagePath = require('@/assets/earthtones-scheme.png'); // tslint:disable-line
 
 const DEFAULT_GRAPH_HEIGHT = 600;
 

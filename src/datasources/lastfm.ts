@@ -137,44 +137,44 @@ export default class LastFm implements DataSource {
 
     store.commit('startNextStage', artists.length);
     const tagData = await Bluebird.map(artists, async (artistName) => {
-        store.commit('progressCurrentStage');
-        // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
+      store.commit('progressCurrentStage');
+      // jQuery("#output").html(count + "/" + artists.length + " artist tags fetched.");
 
-        const artistTags = new ArtistTags(artistName);
+      const artistTags = new ArtistTags(artistName);
 
-        // Check the cache if necessary
-        if (useLocalStorage && artistTags.isInCache()) {
-          artistTags.loadFromCache();
-          return artistTags;
-        }
-
-        // Make the request
-        const requestParams = [
-          new URLParameter('artist', artistName),
-        ];
-        const requestURL = this.api.getAPIRequestURL('tag', requestParams);
-        const data = await Request(requestURL, {
-          json: true,
-        });
-
-        if (!data.error) {
-            const allTags = this.api.parseResponseJSON(data);
-            const topTags = getTopTags(allTags);
-
-            artistTags.setTags(topTags);
-
-            if (useLocalStorage) {
-              artistTags.cache();
-            }
-        }
-
-        // https://esdiscuss.org/topic/await-settimeout-in-async-functions
-        await new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
-
+      // Check the cache if necessary
+      if (useLocalStorage && artistTags.isInCache()) {
+        artistTags.loadFromCache();
         return artistTags;
+      }
+
+      // Make the request
+      const requestParams = [
+        new URLParameter('artist', artistName),
+      ];
+      const requestURL = this.api.getAPIRequestURL('tag', requestParams);
+      const data = await Request(requestURL, {
+        json: true,
+      });
+
+      if (!data.error) {
+        const allTags = this.api.parseResponseJSON(data);
+        const topTags = getTopTags(allTags);
+
+        artistTags.setTags(topTags);
+
+        if (useLocalStorage) {
+          artistTags.cache();
+        }
+      }
+
+      // https://esdiscuss.org/topic/await-settimeout-in-async-functions
+      await new Promise((r) => setTimeout(r, LAST_FM_API_CADENCE_MS));
+
+      return artistTags;
     }, {
-      concurrency: 1,
-    });
+        concurrency: 1,
+      });
 
     // TODO this is kind of ugly
     const tagMap: { [key: string]: ArtistTags } = {};
@@ -223,8 +223,8 @@ export default class LastFm implements DataSource {
 
       return parsedData;
     }, {
-      concurrency: LAST_FM_API_CONCURRENT_REQUESTS,
-    });
+        concurrency: LAST_FM_API_CONCURRENT_REQUESTS,
+      });
 
     const joinedSegments = joinSegments(segmentData);
     return joinedSegments;
