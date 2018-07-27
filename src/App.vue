@@ -7,9 +7,7 @@
       <div>
         LastWave
         <div class="foot">
-          <router-link to="/beta">
-            v3 beta
-          </router-link>
+          Graph your music listening history!
         </div>
       </div>
     </div>
@@ -46,10 +44,8 @@ body {
   padding-top: 75px;
 }
 
-@media only screen and (max-width: 400px) {
-  #titlebar {
-    padding-top: 20px;
-  }
+#titlebar img {
+  height: 64px;
 }
 
 #titlebar>div {
@@ -57,12 +53,27 @@ body {
   height: 80px;
 }
 
-#titlebar img {
-  height: 64px;
+@media only screen and (max-width: 550px) {
+  #titlebar {
+    padding-top: 20px;
+  }
+}
+
+@media only screen and (max-width: 380px) {
+  /* Prevent the titlebar from going to two lines */
+  #titlebar {
+    font-size: 48px;
+  }
+  #titlebar img {
+    height: 48px;
+  }
+  .big-input {
+    height: 50px !important;
+  }
 }
 
 #titlebar .foot {
-  font-size: 20px;
+  font-size: 16px;
   line-height: 0px; /* Probably shouldn't do this */
   position: relative;
   top: 24px;
@@ -80,6 +91,11 @@ h1, h2 {
 
 #app {
   padding-bottom: 50px;
+}
+
+.beta-message {
+  position: relative;
+  top:20px;
 }
 
 </style>

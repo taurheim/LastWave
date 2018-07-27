@@ -1,9 +1,9 @@
 <template>
-  <input v-model="currentValue" :placeholder="optionData.title">
+  <input class="big-input" v-model="currentValue" :placeholder="optionData.title">
 </template>
 <style scoped>
 /* TODO use SCSS */
-  input {
+  .big-input {
     height: 75px;
     width: 400px;
     max-width: 90%;
@@ -13,7 +13,7 @@
     font-family: "TypoPRO Roboto";
     border: 1px solid rgba(64, 196, 255, .5);
   }
-  input:focus {
+  .big-input:focus {
     border: 1px solid rgba(64, 196, 255, 1);
   }
 </style>

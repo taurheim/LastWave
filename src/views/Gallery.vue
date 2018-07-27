@@ -71,7 +71,7 @@ export default Vue.extend({
       res.resources.forEach((imageResource: any) => {
         const version = imageResource.version;
         const imageName = imageResource.public_id;
-        this.allImages.push(`https://res.cloudinary.com/lastwave/image/upload/${imageName}.svg`);
+        this.allImages.push(`https://res.cloudinary.com/lastwave/image/upload/${imageName}.png`);
       });
     });
   },

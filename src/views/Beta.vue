@@ -33,7 +33,7 @@
       After (cloudinary full svg)
     </div>
     <h2>3. Graphical tweak: remove border</h2>
-    A small extra checkbox can be found that will allow you to remove borders.
+    An extra checkbox can be found that will allow you to remove borders.
     <br>
     <div>
       <img src="@/assets/with-border.png">

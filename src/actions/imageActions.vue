@@ -33,6 +33,7 @@
 import Vue from 'vue';
 import jQuery from 'jquery';
 import CloudinaryAPI from '@/actions/CloudinaryAPI';
+import store from '@/store';
 
 /*
   These image actions are grouped because they both require a base64
@@ -64,12 +65,11 @@ export default Vue.extend({
     };
   },
   computed: {
-    cloudinaryDialogHtml: function() {
+    cloudinaryDialogHtml(): string {
       const selectAllOnClick = 'this.setSelectionRange(0, this.value.length)';
       const inputHtml = `<input type="text" value="${this.$data.sharingLink}" onClick="${selectAllOnClick}" />`;
       return `Share this wave: <br><br>${inputHtml}`;
     },
-    
   },
   methods:  {
     cloudinaryUpload() {
@@ -84,21 +84,12 @@ export default Vue.extend({
           this.showDialog = true;
           this.uploadInProgress = false;
         }).then(() => {
-          /*
-          jQuery.ajax({
-            type: 'POST',
-            url: 'https://savas.ca/lastwave/add_img.php',
-            dataType: 'json',
-            data: {
-              user: 
-            },
-          });
-          */
+          // TODO telemetry?
         });
       } else {
         this.showDialog = true;
       }
-    }
+    },
   },
-})
+});
 </script>

@@ -328,7 +328,7 @@ export default class WaveGraph implements Renderer {
     pxFromLeft: number,
     graphHeight: number,
   ) {
-    const MONTH_FONT_FAMILY = 'TypoPRO Roboto';
+    const MONTH_FONT_FAMILY = 'TypoPRO Roboto, Roboto';
     const MONTH_FONT_SIZE = 30;
     const STROKE_WIDTH = 5;
     const STROKE_OPACITY = 0.2;
@@ -356,7 +356,7 @@ export default class WaveGraph implements Renderer {
   private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
-    const WATERMARK_FONT = 'TypoPRO Roboto';
+    const WATERMARK_FONT = 'TypoPRO Roboto, Roboto';
     const WATERMARK_FONT_WEIGHT = '100';
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;

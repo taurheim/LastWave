@@ -1,6 +1,6 @@
 <template>
 <div>
-  <select v-model="currentValue" v-on:change="choseEasyDate($event.target.value)">
+  <select class="big-select" v-model="currentValue" v-on:change="choseEasyDate($event.target.value)">
     <option v-for="(dates, name) in easyDates" :key="name" :value="name">
       {{ name }}
     </option>
@@ -8,22 +8,23 @@
   </div>
 </template>
 <style>
-select {
+.big-select {
   border: 0px;
   height: 64px;
   font-size: 24px;
   width: 250px;
   text-align: center;
+  text-align-last: center;
   margin: 10px 0;
 }
-select:focus {
+.big-select:focus {
   outline: thin;
 }
-option, select {
+.big-select option, .big-select {
   font-weight: 300;
   font-family: "TypoPRO Roboto";
 }
-option {
+.big select option {
   font-size: 20px;
 }
 </style>

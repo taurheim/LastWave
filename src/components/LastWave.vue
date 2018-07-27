@@ -79,6 +79,9 @@
     max-width: 400px;
     margin: 0 auto;
   }
+  #svg-wrapper {
+    overflow-x: auto;
+  }
   #svg-wrapper svg {
     height: 100%;
   }

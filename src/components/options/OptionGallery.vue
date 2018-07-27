@@ -1,5 +1,6 @@
 <template>
 <div>
+  Choose a {{ optionData.title }}:
   <VueSelectImage :dataImages="dataImages" :selectedImages="selectedImages" @onselectimage="onSelectImage" :useLabel="true">
   </VueSelectImage>
 </div>
@@ -7,6 +8,8 @@
 <style>
   li.vue-select-image__item {
     margin: 0 5px 0 5px;
+    width: 30%;
+    max-width: 240px;
   }
   .vue-select-image {
     margin-left: auto;

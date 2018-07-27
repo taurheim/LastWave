@@ -1,6 +1,10 @@
 <template>
   <div class="about">
-    <h1>Contributors</h1>
+    <h1>What is LastWave?</h1>
+    LastWave is a web-app that takes data from your last.fm profile and creates a beautiful
+    wave graph that represents your music listening trends by artist, album, or tag. The
+    artists that you listen to more at a given time has a larger area on the graph.
+    <h1>Who built LastWave?</h1>
     LastWave is written and maintained by <a href="https://savas.ca/">Niko Savas</a>. Swing by my 
     <a href="http://last.fm/user/taurheim">last.fm</a> profile and say hi!
     <h1>Donate to support LastWave</h1>
@@ -24,10 +28,12 @@
   font-size: 16px;
   max-width: 800px;
   margin: 0 auto;
+  padding: 0 10px;
 }
 
 .about h1 {
   margin-top: 40px;
+  line-height: 30px;
 }
 </style>
 <script lang="ts">

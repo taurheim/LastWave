@@ -22,7 +22,7 @@ import LastWave from '@/components/LastWave.vue'; // @ is an alias to /src
   },
   data() {
     let shouldShowSnackbar = true;
-    if (sessionStorage.getItem('hideSnackBar')) {
+    if (localStorage.getItem('hideSnackBar')) {
       shouldShowSnackbar = false;
     }
     return {
@@ -31,7 +31,7 @@ import LastWave from '@/components/LastWave.vue'; // @ is an alias to /src
   },
   methods: {
     hideSnackbar() {
-      sessionStorage.setItem('hideSnackBar', 'true');
+      localStorage.setItem('hideSnackBar', 'true');
     },
   },
 })

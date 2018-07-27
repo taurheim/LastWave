@@ -52,7 +52,7 @@ const COLOR_SCHEMES = [
 
 export default [
   new ImageChoiceOption(
-    'Color Scheme',
+    'theme',
     'color_scheme',
     true,
     'lastwave',
