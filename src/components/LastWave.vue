@@ -88,7 +88,12 @@
 
   /* https://github.com/vuematerial/vue-material/issues/1794 */
   .md-datepicker-dialog.md-theme-default {
-    height: 240px !important;
+    height: 300px !important;
+  }
+
+  #advanced-options {
+    max-width: 95%;
+    margin: 0 auto;
   }
 </style>
 <script lang="ts">

@@ -78,4 +78,8 @@ h1, h2 {
   font-weight: 300;
 }
 
+#app {
+  padding-bottom: 50px;
+}
+
 </style>
