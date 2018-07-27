@@ -17,7 +17,7 @@
   }
   .vue-select-image__thumbnail--selected {
     /* TODO SASS */
-    background-color: rgba(64, 196, 255, 0.3);
+    background-color: rgba(64, 196, 255, 0.8);
   }
   .vue-select-image__thumbnail {
     border-radius: 0px;

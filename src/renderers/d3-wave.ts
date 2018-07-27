@@ -113,7 +113,7 @@ export default class WaveGraph implements Renderer {
       this.addMonthNames(svgDiv, dateStart, dateEnd);
     }
 
-    this.drawWatermark(svgDiv);
+    this.drawWatermark(svgDiv, scheme.backgroundColor);
   }
 
   /*
@@ -353,7 +353,7 @@ export default class WaveGraph implements Renderer {
       .attr('font-size', MONTH_FONT_SIZE);
   }
 
-  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>) {
+  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>, backgroundColor: string) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
     const WATERMARK_FONT = 'TypoPRO Roboto, Roboto';
@@ -361,6 +361,7 @@ export default class WaveGraph implements Renderer {
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;
     const WATERMARK_OPACITY = 0.4;
+    const WATERMARK_FONT_COLOR = (backgroundColor === '#FFFFFF' ? '#000000' : '#FFFFFF');
     const WATERMARK_LOGO = WatermarkLogoPath;
     const WATERMARK_LOGO_HEIGHT = 30;
     const WATERMARK_LOGO_WIDTH = 50;
@@ -376,6 +377,7 @@ export default class WaveGraph implements Renderer {
       .attr('font-size', WATERMARK_FONT_SIZE)
       .attr('font-family', WATERMARK_FONT)
       .attr('font-weight', WATERMARK_FONT_WEIGHT)
+      .attr('fill', WATERMARK_FONT_COLOR)
       .style('opacity', WATERMARK_OPACITY);
 
     /*

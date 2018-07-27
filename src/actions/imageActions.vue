@@ -7,8 +7,8 @@
     <a
       href-lang="image/svg+xml"
       :href="svgFile"
-      title="LastWave.svg"
-      download="LastWave.svg"
+      :title="fileName + '.svg'"
+      :download="fileName + '.svg'"
     >
       <md-button class="md-primary md-raised">
         Download SVG
@@ -70,6 +70,15 @@ export default Vue.extend({
       const inputHtml = `<input type="text" value="${this.$data.sharingLink}" onClick="${selectAllOnClick}" />`;
       return `Share this wave: <br><br>${inputHtml}`;
     },
+    fileName(): string {
+      const username: string = store.state.dataSourceOptions.username;
+      const start: Date = store.state.dataSourceOptions.time_start;
+      const end: Date = store.state.dataSourceOptions.time_end;
+      const startString = start.toLocaleDateString('en-US').replace(/\//g, '-');
+      const endString = end.toLocaleDateString('en-US').replace(/\//g, '-');
+
+      return `LastWave_${username}_${startString}_${endString}`;
+    },
   },
   methods:  {
     cloudinaryUpload() {
@@ -79,7 +88,12 @@ export default Vue.extend({
 
         // TODO handle errors
         // TODO use async/await
-        api.uploadBase64Svg(this.svgFile).then((url: string) => {
+        api.uploadBase64Svg(
+          this.svgFile,
+          this.fileName,
+          store.state.rendererOptions.color_scheme,
+          store.state.dataSourceOptions.username,
+        ).then((url: string) => {
           this.sharingLink = url.replace('.svg', '.png');
           this.showDialog = true;
           this.uploadInProgress = false;
