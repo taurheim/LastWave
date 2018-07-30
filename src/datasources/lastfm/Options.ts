@@ -40,6 +40,7 @@ export default [
     [
       'week',
       'month',
+      'day',
     ],
   ),
   // TODO make an IntegerOption

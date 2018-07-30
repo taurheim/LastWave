@@ -31,6 +31,7 @@
 <script lang="ts">
 // All of these easy dates are offset from today, in ms
 // Each is an array of [FROM_OFFSET, TO_OFFSET]
+// TODO Rename this, it's not really just for dates now since there are also other options
 import EasyDates from '@/config/easyDates.json';
 import Vue from 'vue';
 import OptionBase from './OptionBase.vue';
@@ -61,7 +62,8 @@ export default Vue.extend({
         throw new Error('Not enough connected options');
       }
 
-      const offsets = this.easyDates[chosen];
+      const easyDate = this.easyDates[chosen];
+      const offsets = easyDate.offsets;
       const startDateMs = ((new Date()).valueOf() - offsets[0]);
       const endDateMs = ((new Date()).valueOf() - offsets[1]);
       const startDateString = new Date(startDateMs);
@@ -70,13 +72,20 @@ export default Vue.extend({
       const startDateAlias = optionData.linkedDateOptions[0].alias;
       const endDateAlias = optionData.linkedDateOptions[1].alias;
 
+      let storeState: object;
       if (optionData.module === MODULE.DATA_SOURCE) {
-        Vue.set(this.$store.state.dataSourceOptions, startDateAlias, startDateString);
-        Vue.set(this.$store.state.dataSourceOptions, endDateAlias, endDateString);
+        storeState = this.$store.state.dataSourceOptions;
       } else {
-        Vue.set(this.$store.state.rendererOptions, startDateAlias, startDateString);
-        Vue.set(this.$store.state.rendererOptions, endDateAlias, endDateString);
+        storeState = this.$store.state.rendererOptions;
       }
+
+      Vue.set(storeState, startDateAlias, startDateString);
+      Vue.set(storeState, endDateAlias, endDateString);
+
+      // Set all the other options as well
+      Object.keys(easyDate.otherOptions as {[key: string]: string}).forEach((alias) => {
+        Vue.set(storeState, alias, easyDate.otherOptions[alias]);
+      });
     },
   },
 });

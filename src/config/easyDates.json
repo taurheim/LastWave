@@ -1,4 +1,23 @@
 {
-  "Last 3 months": [7776000000, 0],
-  "Last year": [31536000000, 0]
+  "Last 2 weeks": {
+    "offsets": [1209600000, 0],
+    "otherOptions": {
+      "min_plays": "1",
+      "group_by": "day"
+    }
+  },
+  "Last 3 months": {
+    "offsets": [7776000000, 0],
+    "otherOptions": {
+      "min_plays": "10",
+      "group_by": "week"
+    }
+  },
+  "Last year": {
+    "offsets": [31536000000, 0],
+    "otherOptions": {
+      "min_plays": "10",
+      "group_by": "week"
+    }
+  }
 }
