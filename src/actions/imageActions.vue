@@ -48,7 +48,7 @@ import FileSaver from 'file-saver';
   on screen. The best solution would be to have some way of actually checking, but
   for now we will just timeout
 */
-const SVG_RENDER_WAIT_MS = 50;
+const SVG_RENDER_WAIT_MS = 100;
 
 /*
   These image actions are grouped because they both require a base64
