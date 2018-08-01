@@ -15,6 +15,11 @@
         Download SVG
       </md-button>
     </a>
+    <a @click="downloadPNG" href="#">
+      <md-button class="md-primary md-raised">
+        Download PNG
+      </md-button>
+    </a>
     <a @click="cloudinaryUpload" href="#">
       <md-button class="md-primary md-raised">
         <md-progress-spinner class="md-accent" v-if="uploadInProgress" :md-diameter="20" :md-stroke="3" md-mode="indeterminate"></md-progress-spinner>
@@ -36,6 +41,14 @@ import jQuery from 'jquery';
 import CloudinaryAPI from '@/actions/CloudinaryAPI';
 import store from '@/store';
 import mobile from 'is-mobile';
+import canvg from 'canvg';
+import FileSaver from 'file-saver';
+/*
+  Some of the actions we need to perform actually require the svg to be rendered
+  on screen. The best solution would be to have some way of actually checking, but
+  for now we will just timeout
+*/
+const SVG_RENDER_WAIT_MS = 50;
 
 /*
   These image actions are grouped because they both require a base64
@@ -46,21 +59,12 @@ import mobile from 'is-mobile';
 
 export default Vue.extend({
   mounted() {
-    // Determine the Base64 representation
-    const svgWrapperElement = document.getElementById('visualization');
-    if (!svgWrapperElement) {
-      return;
-    }
-
-    const svgElement = svgWrapperElement.getElementsByTagName('svg')[0];
-    const svgData = (new XMLSerializer()).serializeToString(svgElement);
-    const svgBase64 = Buffer.from(svgData).toString('base64');
-    const file = 'data:image/svg+xml;base64,' + svgBase64;
-    this.svgFile = file;
+    setTimeout(this.onSvgRender, SVG_RENDER_WAIT_MS);
   },
   data() {
     return {
       svgFile: '',
+      pngBlob: new Blob(),
       sharingLink: '',
       showDialog: false,
       uploadInProgress: false,
@@ -87,6 +91,48 @@ export default Vue.extend({
     },
   },
   methods:  {
+    onSvgRender() {
+      const svgWrapperElement = document.getElementById('svg-wrapper');
+      if (!svgWrapperElement) {
+        return;
+      }
+
+      // Determine the Base64 representation
+      const svgElement = svgWrapperElement.getElementsByTagName('svg')[0];
+      const svgData = (new XMLSerializer()).serializeToString(svgElement);
+      const svgBase64 = Buffer.from(svgData).toString('base64');
+      const file = 'data:image/svg+xml;base64,' + svgBase64;
+      this.svgFile = file;
+
+      // Turn the png into a canvas
+      const pngCanvas = document.createElement('canvas');
+      const svgHeight = svgElement.getAttribute('height');
+      const svgWidth = svgElement.getAttribute('width');
+      if (!(svgWidth && svgHeight && svgElement.parentNode)) {
+        return;
+      }
+      pngCanvas.height = parseInt(svgHeight, 10);
+      pngCanvas.width = parseInt(svgWidth, 10);
+      canvg(pngCanvas, (svgElement.parentNode as Element).innerHTML.trim(), {});
+      const dataURL = pngCanvas.toDataURL('image/png');
+      const data = atob(dataURL.substring('data:image/png;base64,'.length));
+      const asArray = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) {
+        asArray[i] = data.charCodeAt(i);
+      }
+
+      this.pngBlob = new Blob([asArray.buffer], {
+        type: 'image/png',
+      });
+
+      // Remove the old svg, add canvas to page
+      pngCanvas.removeAttribute('style');
+      svgWrapperElement.appendChild(pngCanvas);
+      svgElement.remove();
+    },
+    downloadPNG() {
+      FileSaver.saveAs(this.pngBlob, `${this.fileName}.png`);
+    },
     cloudinaryUpload() {
       if (this.sharingLink === '') {
         this.uploadInProgress = true;
@@ -94,8 +140,8 @@ export default Vue.extend({
 
         // TODO handle errors
         // TODO use async/await
-        api.uploadBase64Svg(
-          this.svgFile,
+        api.uploadBase64Image(
+          this.pngBlob,
           this.fileName,
           store.state.rendererOptions.color_scheme,
           store.state.dataSourceOptions.username,

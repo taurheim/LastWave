@@ -85,7 +85,12 @@
   #svg-wrapper svg {
     height: 100%;
   }
-  .scaled svg {
+
+  #svg-wrapper svg, #svg-wrapper canvas {
+    max-width: none;
+  }
+
+  .scaled svg, .scaled canvas {
     width: 100%;
   }
 

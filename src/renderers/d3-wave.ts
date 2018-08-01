@@ -278,7 +278,7 @@ export default class WaveGraph implements Renderer {
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
         .attr('font-size', label.fontSize)
-        .attr('font-family', label.font)
+        .attr('font', label.font)
         .append('svg:tspan')
         .attr('x', label.xPosition)
         .attr('dy', '-' + this.MULTILINE_LINE_HEIGHT)
@@ -294,7 +294,7 @@ export default class WaveGraph implements Renderer {
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
         .attr('font-size', label.fontSize)
-        .attr('font-family', label.font)
+        .attr('font', label.font)
         .attr('fill', font.color);
     }
   }
@@ -328,7 +328,7 @@ export default class WaveGraph implements Renderer {
     pxFromLeft: number,
     graphHeight: number,
   ) {
-    const MONTH_FONT_FAMILY = 'TypoPRO Roboto, Roboto';
+    const MONTH_FONT_FAMILY = 'TypoPRO Roboto';
     const MONTH_FONT_SIZE = 30;
     const STROKE_WIDTH = 5;
     const STROKE_OPACITY = 0.2;
@@ -349,14 +349,14 @@ export default class WaveGraph implements Renderer {
       .attr('x', pxFromLeft - textDimensions.width / 2)
       .attr('y', graphHeight - TEXT_BOTTOM_PADDING - MONTH_FONT_SIZE)
       .attr('fill', COLOR)
-      .attr('font-family', MONTH_FONT_FAMILY)
+      .attr('font', MONTH_FONT_FAMILY)
       .attr('font-size', MONTH_FONT_SIZE);
   }
 
   private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>, backgroundColor: string) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
-    const WATERMARK_FONT = 'TypoPRO Roboto, Roboto';
+    const WATERMARK_FONT = 'TypoPRO Roboto';
     const WATERMARK_FONT_WEIGHT = '100';
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;
@@ -375,10 +375,11 @@ export default class WaveGraph implements Renderer {
       .attr('x', graphWidth - watermarkDimensions.width)
       .attr('y', graphHeight - WATERMARK_BOTTOM_PADDING)
       .attr('font-size', WATERMARK_FONT_SIZE)
-      .attr('font-family', WATERMARK_FONT)
+      .attr('font', WATERMARK_FONT)
       .attr('font-weight', WATERMARK_FONT_WEIGHT)
       .attr('fill', WATERMARK_FONT_COLOR)
-      .style('opacity', WATERMARK_OPACITY);
+      .style('opacity', WATERMARK_OPACITY)
+      .style('font-family', WATERMARK_FONT);
 
     /*
     TODO logo gives a broken link when we upload to cloudinary

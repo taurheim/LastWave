@@ -87,7 +87,7 @@ export default [
     'Font',
     'font',
     false,
-    'TypoPRO Roboto, Roboto',
+    'TypoPRO Roboto',
   ),
   new BooleanOption(
     'Ripple border',

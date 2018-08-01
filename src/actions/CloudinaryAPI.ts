@@ -3,8 +3,8 @@ export default class CloudinaryAPI {
   private UPLOAD_PRESET = 'lastwave_unsigned_upload';
   private API_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${this.ACCOUNT_NAME}/upload`;
 
-  public uploadBase64Svg(
-    b64Svg: string,
+  public uploadBase64Image(
+    b64Image: string | Blob,
     fileName: string,
     schemeName: string,
     username: string,
@@ -31,7 +31,7 @@ export default class CloudinaryAPI {
 
       formData.append('upload_preset', this.UPLOAD_PRESET);
       formData.append('tags', UPLOAD_TAGS.join(','));
-      formData.append('file', b64Svg);
+      formData.append('file', b64Image);
 
       // Unsigned uploads will only keep the first version, so we're not actually using the fileName
       // formData.append('public_id', fileName);
