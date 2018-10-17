@@ -11,3 +11,9 @@ The majority of the creation of the wave graph is done by libraries, but the tex
 
 ## How to contribute
 LastWave is always looking for people to help with the code! This is a great beginner-intermediate project as there are lots of little things that need doing. Check out the "issues" section to see what needs to be done! I've tried to make it pretty clear how difficult each one is, but if you have any questions, just contact me at niko@savas.ca!
+
+To build & run:
+- Clone the repo `git clone https://github.com/taurheim/LastWave.git`
+- Install modules: `yarn install`
+- Run: `yarn serve`
+- Navigate to: `http://localhost:8080/lastwave`
