@@ -13,6 +13,13 @@
       "group_by": "week"
     }
   },
+  "Last 6 months": {
+    "offsets": [15552000000, 0],
+    "otherOptions": {
+      "min_plays": "10",
+      "group_by": "week"
+    }
+  },
   "Last year": {
     "offsets": [31536000000, 0],
     "otherOptions": {
