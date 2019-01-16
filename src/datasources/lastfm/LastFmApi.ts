@@ -36,28 +36,30 @@ export default class LastFmApi {
     const responseData = responseJSON[rootKey][secondKey];
     const counts: SegmentData[] = [];
 
-    responseData.forEach((segmentData: any) => {
-      let name = segmentData.name;
+    if (responseData && typeof responseData == 'object') {
+      responseData.forEach((segmentData: any) => {
+        let name = segmentData.name;
 
-      // If we're getting albums, get both the artist and album name
-      if (secondKey === 'album') {
-        const albumArtist = segmentData.artist['#text'];
-        const albumName = name;
-        name = this.ALBUM_NAME_FORMAT;
-        name = name.replace('{album}', albumName);
-        name = name.replace('{artist}', albumArtist);
-      }
+        // If we're getting albums, get both the artist and album name
+        if (secondKey === 'album') {
+          const albumArtist = segmentData.artist['#text'];
+          const albumName = name;
+          name = this.ALBUM_NAME_FORMAT;
+          name = name.replace('{album}', albumName);
+          name = name.replace('{artist}', albumArtist);
+        }
 
-      let count;
-      if (secondKey === 'tag') {
-        count = segmentData.count;
-      } else {
-        count = segmentData.playcount;
-      }
+        let count;
+        if (secondKey === 'tag') {
+          count = segmentData.count;
+        } else {
+          count = segmentData.playcount;
+        }
 
-      counts.push(new SegmentData(name, parseInt(count, 10)));
+        counts.push(new SegmentData(name, parseInt(count, 10)));
 
-    });
+      });
+    }
 
     return counts;
   }
