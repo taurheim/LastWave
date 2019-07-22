@@ -1,32 +1,33 @@
+/* tslint:disable:max-classes-per-file */
 declare module 'rickshaw' {
   export class RickshawPoint {
-    x: number
-    y: number
+    public x: number;
+    public y: number;
   }
 
   export class RickshawStackPoint {
-    x: number
-    y: number
-    y0: number
+    public x: number;
+    public y: number;
+    public y0: number;
   }
 
   export class RickshawStackData {
-    color: string
-    name: string
-    data: RickshawPoint[]
-    stack: RickshawStackPoint[]
+    public color: string;
+    public name: string;
+    public data: RickshawPoint[];
+    public stack: RickshawStackPoint[];
   }
 
   export class Graph {
+    public series: RickshawStackData[];
+    public element: HTMLElement;
     constructor(obj: any)
-    render(): void
-    series: RickshawStackData[]
-    element: HTMLElement
+    public render(): void;
   }
 
   export class RickshawRippleData {
-    name: string;
-    data: RickshawPoint[];
-    color: string;
+    public name: string;
+    public data: RickshawPoint[];
+    public color: string;
   }
 }

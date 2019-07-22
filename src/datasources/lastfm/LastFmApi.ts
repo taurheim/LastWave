@@ -36,7 +36,7 @@ export default class LastFmApi {
     const responseData = responseJSON[rootKey][secondKey];
     const counts: SegmentData[] = [];
 
-    if (responseData && typeof responseData == 'object') {
+    if (responseData && typeof responseData === 'object') {
       responseData.forEach((segmentData: any) => {
         let name = segmentData.name;
 
