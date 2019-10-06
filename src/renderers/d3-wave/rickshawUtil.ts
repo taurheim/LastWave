@@ -2,7 +2,7 @@ import SeriesData from '@/models/SeriesData';
 import { RickshawRippleData } from 'rickshaw';
 import Rickshaw from 'rickshaw';
 import jQuery from 'jquery';
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 export function convertSeriesToRickshawFormat(seriesData: SeriesData[], schemeColors: string[]) {
   // Parse ripple data into rickshaw format
@@ -51,6 +51,7 @@ export function drawRickshawGraph(
   offset: string,
   stroke: string,
   backgroundColor: string,
+  svgId: string,
 ): Rickshaw.Graph {
   // Clear the space
   jQuery(element).empty();
@@ -68,8 +69,13 @@ export function drawRickshawGraph(
   });
   graph.render();
 
+  const svgElement = d3.select(graph.element).select('svg');
+
+  // Add an id so we can access it later
+  svgElement.attr('id', svgId);
+
   // Add the background rect
-  const backgroundDiv = d3.select(graph.element).select('svg').insert('g', ':first-child');
+  const backgroundDiv = svgElement.insert('g', ':first-child');
   backgroundDiv.append('rect')
     .attr('width', '100%')
     .attr('height', '100%')

@@ -5,7 +5,7 @@ import Option from '@/models/Option';
 import D3Options from './d3-wave/Options';
 import SeriesData from '@/models/SeriesData';
 import { DebugWave } from '@/renderers/d3-wave/debugTools';
-import d3 from 'd3';
+import * as d3 from 'd3';
 import Peak from '@/renderers/d3-wave/models/Peak';
 import { findLabelIndices, getTextDimensions } from './d3-wave/util';
 import Label from './d3-wave/models/Label';
@@ -19,14 +19,17 @@ import store from '@/store';
 import { convertSeriesToRickshawFormat, drawRickshawGraph } from '@/renderers/d3-wave/rickshawUtil';
 import Bluebird from 'bluebird';
 import FontData from '@/renderers/d3-wave/models/FontData';
+import robotoFontBase64 from './d3-wave/font';
 const WatermarkLogoPath = require('@/assets/logo.svg'); // tslint:disable-line
 
 export default class WaveGraph implements Renderer {
   public title: string = 'Wave Graph';
   private MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
+  private DEFAULT_TEXT_FONT_NAME = 'LastWaveFont';
   private DEFAULT_WIDTH_PER_PEAK = 150;
   private RICKSHAW_RENDERER = 'area';
   private DIV_ID = 'svg-wrapper';
+  private SVG_ID = 'd3-wave-svg';
   private MULTILINE_LINE_HEIGHT = '1em';
   private MINIMUM_FONT_SIZE_PIXELS = 8;
   private STAGE_NAMES = {
@@ -66,7 +69,7 @@ export default class WaveGraph implements Renderer {
 
     // Grab the correct color scheme
     const scheme = colorSchemes[options.color_scheme];
-    const font = new FontData(options.font, scheme.fontColor);
+    const font = new FontData(this.DEFAULT_TEXT_FONT_NAME, scheme.fontColor);
     const graphHeight = options.height;
     // Calculate the width if it hasn't been set
     let graphWidth = options.width;
@@ -84,6 +87,7 @@ export default class WaveGraph implements Renderer {
       options.offset,
       options.stroke,
       scheme.backgroundColor,
+      this.SVG_ID,
     );
 
     store.commit('progressCurrentStage');
@@ -92,6 +96,16 @@ export default class WaveGraph implements Renderer {
     const svgDiv = d3.select(`#${this.DIV_ID}`).select('svg');
     svgDiv.attr('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
     svgDiv.attr('preserveAspectRatio', 'none');
+
+    const svg = document.getElementById(this.SVG_ID);
+    const embeddedFont = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    embeddedFont.setAttribute('type', 'text/css');
+    const style = document.createTextNode(`@font-face { font-family: ${this.DEFAULT_TEXT_FONT_NAME}; src: url(\'${robotoFontBase64}\') format(\'woff\'); }`);
+    embeddedFont.appendChild(style);
+    embeddedFont.setAttribute('id', 'test');
+    if (svg) {
+      svg.appendChild(embeddedFont);
+    }
 
     if (DebugWave.isEnabled || DebugWave.debugRippleName) {
       DebugWave.setSvgDiv(svgDiv);
@@ -147,7 +161,7 @@ export default class WaveGraph implements Renderer {
     Add month names and lines to the graph
   */
   private addMonthNames(
-    svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
+    svgDiv: d3.Selection<d3.BaseType, unknown, HTMLElement, any>,
     dateStart: Date,
     dateEnd: Date,
   ) {
@@ -217,7 +231,6 @@ export default class WaveGraph implements Renderer {
     Figure out how big the text should be and where it should go
   */
   private drawTextOnPeak(text: string, peak: Peak, font: FontData) {
-
     if (DebugWave.isEnabled) {
       store.commit('log', `Drawing ${text}`);
       store.commit('log', JSON.stringify(peak));
@@ -278,7 +291,7 @@ export default class WaveGraph implements Renderer {
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
         .attr('font-size', label.fontSize)
-        .attr('font', label.font)
+        .attr('font-family', label.font)
         .append('svg:tspan')
         .attr('x', label.xPosition)
         .attr('dy', '-' + this.MULTILINE_LINE_HEIGHT)
@@ -294,7 +307,7 @@ export default class WaveGraph implements Renderer {
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
         .attr('font-size', label.fontSize)
-        .attr('font', label.font)
+        .attr('font-family', label.font)
         .attr('fill', font.color);
     }
   }
@@ -323,12 +336,12 @@ export default class WaveGraph implements Renderer {
   }
 
   private drawMonthLine(
-    monthDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
+    monthDiv: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     monthName: string,
     pxFromLeft: number,
     graphHeight: number,
   ) {
-    const MONTH_FONT_FAMILY = 'TypoPRO Roboto';
+    const MONTH_FONT_FAMILY = this.DEFAULT_TEXT_FONT_NAME;
     const MONTH_FONT_SIZE = 30;
     const STROKE_WIDTH = 5;
     const STROKE_OPACITY = 0.2;
@@ -349,14 +362,14 @@ export default class WaveGraph implements Renderer {
       .attr('x', pxFromLeft - textDimensions.width / 2)
       .attr('y', graphHeight - TEXT_BOTTOM_PADDING - MONTH_FONT_SIZE)
       .attr('fill', COLOR)
-      .attr('font', MONTH_FONT_FAMILY)
+      .attr('font-family', MONTH_FONT_FAMILY)
       .attr('font-size', MONTH_FONT_SIZE);
   }
 
-  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>, backgroundColor: string) {
+  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, any, HTMLElement, any>, backgroundColor: string) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
-    const WATERMARK_FONT = 'TypoPRO Roboto';
+    const WATERMARK_FONT = this.DEFAULT_TEXT_FONT_NAME;
     const WATERMARK_FONT_WEIGHT = '100';
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;

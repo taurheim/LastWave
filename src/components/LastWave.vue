@@ -90,8 +90,8 @@
     max-width: none;
   }
 
-  .scaled svg, .scaled canvas {
-    width: 100%;
+  #svg-wrapper.scaled svg, #svg-wrapper.scaled canvas, #svg-wrapper.scaled img{
+    max-width: 100%;
   }
 
   /* https://github.com/vuematerial/vue-material/issues/1794 */
@@ -219,6 +219,7 @@ export default Vue.extend({
           jQuery(ACTIONS_DIV).append(newInstance.$el);
         });
       }).catch((e) => {
+        throw e;
         store.commit('log', e);
         this.$data.showError = true;
         this.$data.error = e;

@@ -2,14 +2,14 @@ import LineBase from '@/renderers/d3-wave/models/LineBase';
 import InfiniteLine from './models/InfiniteLine';
 import LineSegment from './models/LineSegment';
 import Point from './models/Point';
-import d3 from 'd3';
+import * as d3 from 'd3';
 import Peak from '@/renderers/d3-wave/models/Peak';
 
 class WaveDebugger {
   public isEnabled: boolean = false;
   public debugRippleName: string = '';
 
-  private svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any> | undefined;
+  private svgDiv: d3.Selection<d3.BaseType, unknown, HTMLElement, any> | undefined;
   private graphHeight: number = 0;
   private graphWidth: number = 0;
 
@@ -21,7 +21,7 @@ class WaveDebugger {
     this.isEnabled = false;
   }
 
-  public setSvgDiv(d3Handle: d3.Selection<d3.BaseType, {}, HTMLElement, any>): void {
+  public setSvgDiv(d3Handle: d3.Selection<d3.BaseType, unknown, HTMLElement, any>): void {
     this.svgDiv = d3Handle;
     this.graphHeight = parseInt(this.svgDiv.attr('height')!, 10);
     this.graphWidth = parseInt(this.svgDiv.attr('width')!, 10);

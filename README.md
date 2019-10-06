@@ -14,6 +14,6 @@ LastWave is always looking for people to help with the code! This is a great beg
 
 To build & run:
 - Clone the repo `git clone https://github.com/taurheim/LastWave.git`
-- Install modules: `yarn install`
-- Run: `yarn serve`
+- Install modules: `npm install`
+- Run: `npm run dev`
 - Navigate to: `http://localhost:8080/lastwave`
