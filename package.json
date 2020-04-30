@@ -21,7 +21,7 @@
     "d3": "5.12.0",
     "file-saver": "^2.0.2",
     "is-mobile": "^2.1.0",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
     "rickshaw": "^1.6.6",
