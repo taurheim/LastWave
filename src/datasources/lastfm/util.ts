@@ -30,6 +30,7 @@ export function splitTimeSpan(splitBy: string, timeSpan: TimeSpan) {
     week: 604800,
     month: 2628000,
     day: 86400,
+    year: 31536000,
   };
   const segments = [];
   const interval = TIME_IN_SECONDS[splitBy];

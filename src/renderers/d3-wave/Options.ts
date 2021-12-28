@@ -107,4 +107,10 @@ export default [
     false,
     true,
   ),
+  new BooleanOption(
+    'Add year names',
+    'add_years',
+    false,
+    false,
+  ),
 ];
