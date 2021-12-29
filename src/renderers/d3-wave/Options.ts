@@ -83,6 +83,12 @@ export default [
       'zero',
     ],
   ),
+  new StringOption(
+    'Font',
+    'font',
+    false,
+    'TypoPRO Roboto',
+  ),
   new BooleanOption(
     'Ripple border',
     'stroke',

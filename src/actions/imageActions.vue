@@ -41,8 +41,8 @@ import jQuery from 'jquery';
 import CloudinaryAPI from '@/actions/CloudinaryAPI';
 import store from '@/store';
 import mobile from 'is-mobile';
+import canvg from 'canvg';
 import FileSaver from 'file-saver';
-import { svg } from 'd3';
 /*
   Some of the actions we need to perform actually require the svg to be rendered
   on screen. The best solution would be to have some way of actually checking, but
@@ -97,9 +97,8 @@ export default Vue.extend({
         return;
       }
 
-      // Determine the Base64 representation to allow SVG download
+      // Determine the Base64 representation
       const svgElement = svgWrapperElement.getElementsByTagName('svg')[0];
-
       const svgData = (new XMLSerializer()).serializeToString(svgElement);
       const svgBase64 = Buffer.from(svgData).toString('base64');
       const file = 'data:image/svg+xml;base64,' + svgBase64;
@@ -114,43 +113,22 @@ export default Vue.extend({
       }
       pngCanvas.height = parseInt(svgHeight, 10);
       pngCanvas.width = parseInt(svgWidth, 10);
-      this.drawSvgToCanvas(svgElement, pngCanvas);
+      canvg(pngCanvas, (svgElement.parentNode as Element).innerHTML.trim(), {});
+      const dataURL = pngCanvas.toDataURL('image/png');
+      const data = atob(dataURL.substring('data:image/png;base64,'.length));
+      const asArray = new Uint8Array(data.length);
+      for (let i = 0; i < data.length; i++) {
+        asArray[i] = data.charCodeAt(i);
+      }
 
+      this.pngBlob = new Blob([asArray.buffer], {
+        type: 'image/png',
+      });
 
       // Remove the old svg, add canvas to page
       pngCanvas.removeAttribute('style');
       svgWrapperElement.appendChild(pngCanvas);
       svgElement.remove();
-    },
-    drawSvgToCanvas(sourceSVG: SVGSVGElement, targetCanvas: HTMLCanvasElement) {
-      // https://developer.mozilla.org/en/XMLSerializer
-      const svgXml = (new XMLSerializer()).serializeToString(sourceSVG);
-      const ctx = targetCanvas.getContext('2d');
-
-      // this is just a JavaScript (HTML) image
-      const img = new Image();
-      // http://en.wikipedia.org/wiki/SVG#Native_support
-      // https://developer.mozilla.org/en/DOM/window.btoa
-      img.src = 'data:image/svg+xml;base64,' + btoa(svgXml);
-
-      img.onload = () => {
-        // after this, Canvas’ origin-clean is DIRTY
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-        }
-
-        // Also save the png data to this.pngBlob to let the Download button work.
-        const dataURL = targetCanvas.toDataURL('image/png');
-        const data = atob(dataURL.substring('data:image/png;base64,'.length));
-        const asArray = new Uint8Array(data.length);
-        for (let i = 0; i < data.length; i++) {
-          asArray[i] = data.charCodeAt(i);
-        }
-
-        this.pngBlob = new Blob([asArray.buffer], {
-          type: 'image/png',
-        });
-      };
     },
     downloadPNG() {
       FileSaver.saveAs(this.pngBlob, `${this.fileName}.png`);
