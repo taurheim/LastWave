@@ -19,7 +19,6 @@ import store from '@/store';
 import { convertSeriesToRickshawFormat, drawRickshawGraph } from '@/renderers/d3-wave/rickshawUtil';
 import Bluebird from 'bluebird';
 import FontData from '@/renderers/d3-wave/models/FontData';
-const WatermarkLogoPath = require('@/assets/logo.svg'); // tslint:disable-line
 
 export default class WaveGraph implements Renderer {
   public title: string = 'Wave Graph';
@@ -89,7 +88,7 @@ export default class WaveGraph implements Renderer {
     store.commit('progressCurrentStage');
 
     // Autoscale options
-    const svgDiv = d3.select(`#${this.DIV_ID}`).select('svg');
+    const svgDiv = d3.select(`#${this.DIV_ID}`).select('svg') as any;
     svgDiv.attr('viewBox', `0 0 ${graphWidth} ${graphHeight}`);
     svgDiv.attr('preserveAspectRatio', 'none');
 
@@ -103,14 +102,15 @@ export default class WaveGraph implements Renderer {
     }
 
     // Add month names
-    if (options.add_months) {
+    if (options.add_months || options.add_years) {
       // TODO hack
       // The way I have options set up in general is kind of dumb. Maybe options should just be a single object
       // that gets shared between the renderer and data source? Or maybe it's better if there's a way to grab
       // them from the renderer if it exists or something, dunno
       const dateStart = store.state.dataSourceOptions.time_start;
       const dateEnd = store.state.dataSourceOptions.time_end;
-      this.addMonthNames(svgDiv, dateStart, dateEnd);
+      // This whole repo needs a refactor...
+      this.addBottomLabels(options.add_months ? 'month' : 'year', svgDiv, dateStart, dateEnd);
     }
 
     this.drawWatermark(svgDiv, scheme.backgroundColor);
@@ -146,14 +146,15 @@ export default class WaveGraph implements Renderer {
   /*
     Add month names and lines to the graph
   */
-  private addMonthNames(
+  private addBottomLabels(
+    labelType: 'month' | 'year',
     svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
     dateStart: Date,
     dateEnd: Date,
   ) {
     // TODO hack
     // d3 doesn't support prepend so we append a div for the months to the first <g> in the svg
-    const monthsDiv = svgDiv.insert('g', ':nth-child(2)');
+    const monthsDiv = svgDiv.insert('g', ':nth-child(2)') as any;
     monthsDiv.attr('id', 'months');
     const graphWidth = parseInt(svgDiv.attr('width'), 10);
     const graphHeight = parseInt(svgDiv.attr('height'), 10);
@@ -167,14 +168,24 @@ export default class WaveGraph implements Renderer {
     let currentDate = dateStart;
     const endTime = dateEnd.getTime();
     while (currentDate.getTime() < endTime) {
-      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+      let label;
+      switch (labelType) {
+        case 'year':
+          currentDate = new Date(currentDate.getFullYear() + 1, currentDate.getMonth(), 1);
+          label = currentDate.getFullYear().toString();
+          break;
+        case 'month': // Intentional fallthrough
+        default:
+          currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+          label = currentDate.toLocaleString('en-us', { month: 'long' });
+          break;
+      }
 
-      const monthName = currentDate.toLocaleString('en-us', { month: 'long' });
       const msFromStart = currentDate.getTime() - dateStart.getTime();
       const pxFromLeft = Math.floor(msFromStart / MS_TO_PX_RATIO);
 
       // Draw a line
-      this.drawMonthLine(monthsDiv, monthName, pxFromLeft, graphHeight);
+      this.drawMonthLine(monthsDiv, label, pxFromLeft, graphHeight);
     }
 
     // Finished
@@ -362,7 +373,6 @@ export default class WaveGraph implements Renderer {
     const WATERMARK_BOTTOM_PADDING = 10;
     const WATERMARK_OPACITY = 0.4;
     const WATERMARK_FONT_COLOR = (backgroundColor === '#FFFFFF' ? '#000000' : '#FFFFFF');
-    const WATERMARK_LOGO = WatermarkLogoPath;
     const WATERMARK_LOGO_HEIGHT = 30;
     const WATERMARK_LOGO_WIDTH = 50;
     const WATERMARK_LOGO_OPACITY = 0.8;
