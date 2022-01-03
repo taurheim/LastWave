@@ -1,11 +1,12 @@
 import Rickshaw, { RickshawRippleData, RickshawStackData } from 'rickshaw';
 import jQuery from 'jquery';
+import d3 from 'd3';
+import Bluebird from 'bluebird';
 import Renderer from '@/models/Renderer';
 import Option from '@/models/Option';
 import D3Options from './d3-wave/Options';
 import SeriesData from '@/models/SeriesData';
 import { DebugWave } from '@/renderers/d3-wave/debugTools';
-import d3 from 'd3';
 import Peak from '@/renderers/d3-wave/models/Peak';
 import { findLabelIndices, getTextDimensions } from './d3-wave/util';
 import Label from './d3-wave/models/Label';
@@ -17,17 +18,23 @@ import colorSchemes from '@/config/schemes.json';
 import LoadingStage from '@/models/LoadingStage';
 import store from '@/store';
 import { convertSeriesToRickshawFormat, drawRickshawGraph } from '@/renderers/d3-wave/rickshawUtil';
-import Bluebird from 'bluebird';
 import FontData from '@/renderers/d3-wave/models/FontData';
 
 export default class WaveGraph implements Renderer {
-  public title: string = 'Wave Graph';
+  public title = 'Wave Graph';
+
   private MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
+
   private DEFAULT_WIDTH_PER_PEAK = 150;
+
   private RICKSHAW_RENDERER = 'area';
+
   private DIV_ID = 'svg-wrapper';
+
   private MULTILINE_LINE_HEIGHT = '1em';
+
   private MINIMUM_FONT_SIZE_PIXELS = 8;
+
   private STAGE_NAMES = {
     DRAWING: 'Drawing Wave...',
     LABELS: 'Adding labels...',
@@ -40,18 +47,9 @@ export default class WaveGraph implements Renderer {
 
   public getLoadingStages(options: any): LoadingStage[] {
     return [
-      new LoadingStage(
-        this.STAGE_NAMES.DRAWING,
-        15,
-      ),
-      new LoadingStage(
-        this.STAGE_NAMES.LABELS,
-        80,
-      ),
-      new LoadingStage(
-        this.STAGE_NAMES.MONTHS,
-        5,
-      ),
+      new LoadingStage(this.STAGE_NAMES.DRAWING, 15),
+      new LoadingStage(this.STAGE_NAMES.LABELS, 80),
+      new LoadingStage(this.STAGE_NAMES.MONTHS, 5),
     ];
   }
 
@@ -76,13 +74,13 @@ export default class WaveGraph implements Renderer {
     const rickshawData = convertSeriesToRickshawFormat(data, scheme.schemeColors);
     const graph = drawRickshawGraph(
       rickshawData,
-      jQuery('#' + this.DIV_ID)[0],
+      jQuery(`#${this.DIV_ID}`)[0],
       graphWidth,
       graphHeight,
       this.RICKSHAW_RENDERER,
       options.offset,
       options.stroke,
-      scheme.backgroundColor,
+      scheme.backgroundColor
     );
 
     store.commit('progressCurrentStage');
@@ -123,7 +121,7 @@ export default class WaveGraph implements Renderer {
     graph: Rickshaw.Graph,
     graphWidth: number,
     graphHeight: number,
-    font: FontData,
+    font: FontData
   ) {
     store.commit('startNextStage', graph.series.length);
     const scalingValues = this.getScalingValues(graph.series, graphWidth, graphHeight);
@@ -150,7 +148,7 @@ export default class WaveGraph implements Renderer {
     labelType: 'month' | 'year',
     svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
     dateStart: Date,
-    dateEnd: Date,
+    dateEnd: Date
   ) {
     // TODO hack
     // d3 doesn't support prepend so we append a div for the months to the first <g> in the svg
@@ -197,8 +195,8 @@ export default class WaveGraph implements Renderer {
   */
   private addRippleLabel(
     rippleData: RickshawStackData,
-    scalingValues: { x: number, y: number },
-    font: FontData,
+    scalingValues: { x: number; y: number },
+    font: FontData
   ) {
     // First find where we should add points
     // Convert our data into a single array
@@ -228,14 +226,13 @@ export default class WaveGraph implements Renderer {
     Figure out how big the text should be and where it should go
   */
   private drawTextOnPeak(text: string, peak: Peak, font: FontData) {
-
     if (DebugWave.isEnabled) {
       store.commit('log', `Drawing ${text}`);
       store.commit('log', JSON.stringify(peak));
     }
 
     // TODO magic numbers/strings
-    const svgDiv = d3.select('#' + this.DIV_ID).select('svg');
+    const svgDiv = d3.select(`#${this.DIV_ID}`).select('svg');
     const graphHeight: number = parseInt(svgDiv.attr('height'), 10);
 
     let label: Label | null;
@@ -250,8 +247,8 @@ export default class WaveGraph implements Renderer {
     } else {
       const graphWidth = parseInt(svgDiv.attr('width'), 10);
       if (
-        (peak.top.y - peak.bottom.y) < (peak.topLeft.y - peak.bottomLeft.y) ||
-        (peak.top.y - peak.bottom.y) < (peak.topRight.y - peak.bottomRight.y)
+        peak.top.y - peak.bottom.y < peak.topLeft.y - peak.bottomLeft.y ||
+        peak.top.y - peak.bottom.y < peak.topRight.y - peak.bottomRight.y
       ) {
         // TODO we can end up here if the height of our peak is less than
         // either of the neighboring peaks. This happens sometimes
@@ -260,9 +257,8 @@ export default class WaveGraph implements Renderer {
         // 2. Move the peak to the left or right by one
         // To test, imagine a continually increasing or decreasing ripple
         return;
-      } else {
-        throw new Error('Couldn\'t classify peak. Something went wrong!');
       }
+      throw new Error("Couldn't classify peak. Something went wrong!");
     }
 
     if (!label) {
@@ -276,7 +272,10 @@ export default class WaveGraph implements Renderer {
 
     // Sanity check: We shouldn't ever hit this
     // TODO telemetry on this guy
-    if (getTextDimensions(label.text, label.font, label.fontSize).height > (peak.top.y - peak.bottom.y)) {
+    if (
+      getTextDimensions(label.text, label.font, label.fontSize).height >
+      peak.top.y - peak.bottom.y
+    ) {
       store.commit('log', 'One of our algorithms got a font size too big for the space!');
       return;
     }
@@ -285,14 +284,15 @@ export default class WaveGraph implements Renderer {
       // Assume max one <br>
       const firstLine = label.text.split('<br>')[0];
       const secondLine = label.text.split('<br>')[1];
-      svgDiv.append('text')
+      svgDiv
+        .append('text')
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
         .attr('font-size', label.fontSize)
         .attr('font', label.font)
         .append('svg:tspan')
         .attr('x', label.xPosition)
-        .attr('dy', '-' + this.MULTILINE_LINE_HEIGHT)
+        .attr('dy', `-${this.MULTILINE_LINE_HEIGHT}`)
         .text(firstLine)
         .append('svg:tspan')
         .attr('x', label.xPosition)
@@ -300,7 +300,8 @@ export default class WaveGraph implements Renderer {
         .attr('fill', font.color)
         .text(secondLine);
     } else {
-      svgDiv.append('text')
+      svgDiv
+        .append('text')
         .text(label.text)
         .attr('x', label.xPosition)
         .attr('y', graphHeight - label.yPosition)
@@ -315,7 +316,11 @@ export default class WaveGraph implements Renderer {
     pixels on the svg. Scaling values are what we need to multiply the
     graph data values by to get real pixel coordinates in the svg
   */
-  private getScalingValues(rickshawData: RickshawStackData[], graphWidth: number, graphHeight: number) {
+  private getScalingValues(
+    rickshawData: RickshawStackData[],
+    graphWidth: number,
+    graphHeight: number
+  ) {
     // The maximum y0 value corresponds with the height of the graph
     let maxy0 = 0;
     // The last ripple is on top
@@ -337,7 +342,7 @@ export default class WaveGraph implements Renderer {
     monthDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
     monthName: string,
     pxFromLeft: number,
-    graphHeight: number,
+    graphHeight: number
   ) {
     const MONTH_FONT_FAMILY = 'TypoPRO Roboto';
     const MONTH_FONT_SIZE = 30;
@@ -348,14 +353,19 @@ export default class WaveGraph implements Renderer {
     const TEXT_BOTTOM_PADDING = 10;
     const textDimensions = getTextDimensions(monthName, MONTH_FONT_FAMILY, MONTH_FONT_SIZE);
 
-    monthDiv.append('line')
+    monthDiv
+      .append('line')
       .attr('x1', pxFromLeft)
       .attr('y1', 0)
       .attr('x2', pxFromLeft)
       .attr('y2', graphHeight - LINE_BOTTOM_PADDING)
-      .attr('style', `stroke:${COLOR};stroke-width:${STROKE_WIDTH};stroke-opacity:${STROKE_OPACITY};`);
+      .attr(
+        'style',
+        `stroke:${COLOR};stroke-width:${STROKE_WIDTH};stroke-opacity:${STROKE_OPACITY};`
+      );
 
-    monthDiv.append('text')
+    monthDiv
+      .append('text')
       .text(monthName)
       .attr('x', pxFromLeft - textDimensions.width / 2)
       .attr('y', graphHeight - TEXT_BOTTOM_PADDING - MONTH_FONT_SIZE)
@@ -364,7 +374,10 @@ export default class WaveGraph implements Renderer {
       .attr('font-size', MONTH_FONT_SIZE);
   }
 
-  private drawWatermark(svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>, backgroundColor: string) {
+  private drawWatermark(
+    svgDiv: d3.Selection<d3.BaseType, {}, HTMLElement, any>,
+    backgroundColor: string
+  ) {
     // TODO scale watermark based on svg size
     const WATERMARK_TEXT = 'savas.ca/lastwave';
     const WATERMARK_FONT = 'TypoPRO Roboto';
@@ -372,15 +385,20 @@ export default class WaveGraph implements Renderer {
     const WATERMARK_FONT_SIZE = 40;
     const WATERMARK_BOTTOM_PADDING = 10;
     const WATERMARK_OPACITY = 0.4;
-    const WATERMARK_FONT_COLOR = (backgroundColor === '#FFFFFF' ? '#000000' : '#FFFFFF');
+    const WATERMARK_FONT_COLOR = backgroundColor === '#FFFFFF' ? '#000000' : '#FFFFFF';
     const WATERMARK_LOGO_HEIGHT = 30;
     const WATERMARK_LOGO_WIDTH = 50;
     const WATERMARK_LOGO_OPACITY = 0.8;
-    const watermarkDimensions = getTextDimensions(WATERMARK_TEXT, WATERMARK_FONT, WATERMARK_FONT_SIZE);
+    const watermarkDimensions = getTextDimensions(
+      WATERMARK_TEXT,
+      WATERMARK_FONT,
+      WATERMARK_FONT_SIZE
+    );
     const graphWidth = parseInt(svgDiv.attr('width'), 10);
     const graphHeight = parseInt(svgDiv.attr('height'), 10);
 
-    svgDiv.append('text')
+    svgDiv
+      .append('text')
       .text(WATERMARK_TEXT)
       .attr('x', graphWidth - watermarkDimensions.width)
       .attr('y', graphHeight - WATERMARK_BOTTOM_PADDING)

@@ -1,10 +1,12 @@
-import Option from 'src/models/Option';
-import LoadingStage from '@/models/LoadingStage';
-import SeriesData from '@/models/SeriesData';
+import AggregatedSnapshot from './AggregatedSnapshot';
+import AggregationWindow from './AggregationWindow';
+import TimeSpan from './TimeSpan';
 
-export default interface DataSource {
-    title: string;
-    getOptions(): Option[];
-    getLoadingStages(options: any): LoadingStage[];
-    loadData(options: any): Promise<SeriesData[]>;
+interface DataSource {
+  getDataForTimePeriod(
+    span: TimeSpan,
+    aggregationWindow: AggregationWindow
+  ): Promise<AggregatedSnapshot[]>;
 }
+
+export default DataSource;

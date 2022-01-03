@@ -6,12 +6,15 @@
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/user-event": "^13.5.0",
+    "@toplast/lastfm": "^0.1.5",
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.17",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
+    "bluebird": "^3.7.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-router-dom": "^6.2.1",
     "react-scripts": "5.0.0",
     "typescript": "^4.5.4",
     "web-vitals": "^2.1.2"
@@ -36,9 +39,11 @@
     ]
   },
   "devDependencies": {
-    "eslint-config-airbnb-typescript-prettier": "^5.0.0"
+    "@types/bluebird": "^3.5.36",
+    "eslint-config-airbnb-typescript-prettier": "^5.0.0",
+    "eslint-import-resolver-typescript": "^2.5.0"
   },
   "eslintConfig": {
-      "extends": "/.eslintrc.js"
+    "extends": "/.eslintrc.js"
   }
 }

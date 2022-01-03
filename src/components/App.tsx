@@ -1,24 +1,34 @@
 import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import LastFmDataSource from 'services/LastFmDataSource';
 import './App.css';
+import Header from './Header';
 
-function App() {
+export default function App() {
+  const start = new Date();
+  start.setMonth(start.getMonth() - 1);
+  const end = new Date();
+  const data = new LastFmDataSource('Taurheim');
+
+  const run = async () => {
+    const snapshots = await data.getDataForTimePeriod({ start, end }, 'week');
+    console.log(snapshots);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/" element={<Header title="A" subtitle="B" />}>
+        <Route
+          index
+          element={
+            <div>
+              <button type="button" onClick={run}>
+                Click me
+              </button>
+            </div>
+          }
+        />
+      </Route>
+    </Routes>
   );
 }
-
-export default App;
