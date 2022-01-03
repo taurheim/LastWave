@@ -14,7 +14,7 @@ import Header from './Header';
 
 export default function App() {
   const start = new Date();
-  start.setMonth(start.getMonth() - 2);
+  start.setMonth(start.getMonth() - 3);
   const end = new Date();
   const lastwaveData = new LastFmDataSource('Taurheim');
 
@@ -24,7 +24,7 @@ export default function App() {
     // Remove artists with < 20 plays
     snapshots.forEach((s) => {
       Object.keys(s).forEach((a) => {
-        if (s[a] < 15) {
+        if (s[a] < 10) {
           // eslint-disable-next-line no-param-reassign
           delete s[a];
         }
@@ -69,7 +69,7 @@ export default function App() {
     const height = +svg.attr('height');
 
     // d3.stackOffsetSilhouette or wiggle
-    const stack = d3.stack().offset(d3.stackOffsetWiggle);
+    const stack = d3.stack().offset(d3.stackOffsetSilhouette);
     const xValue = (d: { time: number }) => d.time;
     const xScale = d3.scaleLinear();
     const yScale = d3.scaleLinear();
