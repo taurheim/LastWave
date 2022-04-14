@@ -15,7 +15,7 @@
     "@types/jquery": "^3.3.4",
     "@types/request-promise": "^4.1.42",
     "@typopro/web-roboto": "^3.7.5",
-    "async": "^2.6.1",
+    "async": "^3.2.2",
     "bluebird": "^3.5.1",
     "bootstrap-vue": "^2.0.0-rc.11",
     "canvg": "^1.0.0",
