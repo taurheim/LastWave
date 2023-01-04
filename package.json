@@ -36,9 +36,9 @@
     "vuex": "^3.0.1"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.0.0-beta.15",
+    "@vue/cli-plugin-babel": "^3.9.2",
     "@vue/cli-plugin-typescript": "^3.0.0-beta.15",
-    "@vue/cli-service": "^3.0.0-beta.15",
+    "@vue/cli-service": "^5.0.8",
     "node-sass": "^4.9.2",
     "sass-loader": "^7.0.3",
     "tslint": "^5.18.0",
