@@ -200,6 +200,9 @@ export default function LastWaveApp() {
       {/* Actions */}
       {showActions && <OptionActions />}
 
+      {/* Image Actions */}
+      {showActions && <ImageActions />}
+
       {/* Visualization */}
       {showVisualization && (
         <div className="group relative mx-auto" style={{ maxWidth: '100%' }}>
@@ -228,9 +231,6 @@ export default function LastWaveApp() {
           )}
         </div>
       )}
-
-      {/* Image Actions */}
-      {showActions && <ImageActions />}
     </div>
   );
 }
