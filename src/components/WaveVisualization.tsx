@@ -45,7 +45,7 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
     const colors = scheme.schemeColors;
     const bgColor = scheme.backgroundColor;
     const fontColor = scheme.fontColor;
-    const fontFamily = rendererOptions.font ?? 'TypoPRO Roboto';
+    const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const showStroke = rendererOptions.stroke ?? true;
@@ -107,6 +107,12 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
       .attr('width', width)
       .attr('height', height)
       .attr('fill', bgColor);
+
+    // Embed font in SVG so text renders when downloaded/viewed standalone
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
+    const defs = svg.append('defs');
+    defs.append('style')
+      .text(`@import url('${fontUrl}');`);
 
     // Draw paths
     svg.selectAll('path.wave')

@@ -43,7 +43,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const width = rendererOptions.width ?? '';
   const height = rendererOptions.height ?? '600';
   const offset = rendererOptions.offset ?? 'silhouette';
-  const font = rendererOptions.font ?? 'TypoPRO Roboto';
+  const font = rendererOptions.font ?? 'DM Sans';
   const stroke = rendererOptions.stroke ?? true;
   const addLabels = rendererOptions.add_labels ?? true;
   const addMonths = rendererOptions.add_months ?? true;
