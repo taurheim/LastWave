@@ -10,18 +10,24 @@ describe('ImageActions', () => {
     });
   });
 
-  it('renders Download SVG button', () => {
-    render(<ImageActions />);
-    expect(screen.getByRole('button', { name: 'Download SVG' })).toBeInTheDocument();
-  });
-
-  it('renders Download PNG button', () => {
+  it('renders desktop Download PNG button', () => {
     render(<ImageActions />);
     expect(screen.getByRole('button', { name: 'Download PNG' })).toBeInTheDocument();
   });
 
-  it('renders Get image link button', () => {
+  it('renders desktop Download SVG button', () => {
     render(<ImageActions />);
-    expect(screen.getByRole('button', { name: /share link/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Download SVG/i })).toBeInTheDocument();
+  });
+
+  it('renders Get share link buttons', () => {
+    render(<ImageActions />);
+    const buttons = screen.getAllByRole('button', { name: /share link/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders mobile Download button', () => {
+    render(<ImageActions />);
+    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument();
   });
 });

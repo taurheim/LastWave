@@ -154,32 +154,84 @@ export default function ImageActions() {
     }
   }
 
+  async function nativeShare() {
+    const svgEl = getSvgElement();
+    if (!svgEl) return;
+    const fontFamily = rendererOptions.font ?? 'DM Sans';
+
+    try {
+      const blob = await svgToPngBlob(svgEl, fontFamily);
+      const file = new File([blob], `${getFileName()}.png`, { type: 'image/png' });
+      await navigator.share({ files: [file], title: 'LastWave' });
+    } catch (err) {
+      // User cancelled or share failed — fall back to download
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed', err);
+      }
+    }
+  }
+
+  const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+
   return (
-    <div className="flex flex-wrap justify-center gap-3 py-4">
-      <button
-        onClick={downloadSvg}
-        className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all"
-      >
-        Download SVG
-      </button>
-
-      <button
-        onClick={downloadPng}
-        className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all"
-      >
-        Download PNG
-      </button>
-
-      <button
-        onClick={cloudinaryUpload}
-        className="bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase font-semibold min-w-[140px] transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]"
-      >
-        {uploadInProgress ? (
-          <span className="inline-block w-4 h-4 border-2 border-lw-bg border-t-transparent rounded-full animate-spin" />
-        ) : (
-          'Get share link'
+    <div className="py-4 px-4">
+      {/* Mobile layout */}
+      <div className="flex flex-col items-center gap-3 md:hidden">
+        {canNativeShare && (
+          <button
+            onClick={nativeShare}
+            className="w-full max-w-xs bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-3 text-sm tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]"
+          >
+            Share
+          </button>
         )}
-      </button>
+        <button
+          onClick={downloadPng}
+          className={`w-full max-w-xs rounded-lg px-6 py-3 text-sm tracking-wider uppercase font-semibold transition-all ${
+            canNativeShare
+              ? 'border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+              : 'bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]'
+          }`}
+        >
+          Download
+        </button>
+        <button
+          onClick={cloudinaryUpload}
+          className="text-lw-muted hover:text-lw-accent text-xs tracking-wider uppercase transition-colors py-1"
+        >
+          {uploadInProgress ? (
+            <span className="inline-block w-4 h-4 border-2 border-lw-muted border-t-transparent rounded-full animate-spin" />
+          ) : (
+            'Get share link'
+          )}
+        </button>
+      </div>
+
+      {/* Desktop layout */}
+      <div className="hidden md:flex justify-center items-center gap-3">
+        <button
+          onClick={downloadPng}
+          className="bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-2.5 text-xs tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Download PNG
+        </button>
+        <button
+          onClick={downloadSvg}
+          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all"
+        >
+          Download SVG (Vectorized)
+        </button>
+        <button
+          onClick={cloudinaryUpload}
+          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all min-w-[140px]"
+        >
+          {uploadInProgress ? (
+            <span className="inline-block w-4 h-4 border-2 border-lw-muted border-t-transparent rounded-full animate-spin" />
+          ) : (
+            'Get share link'
+          )}
+        </button>
+      </div>
 
       {/* Sharing Dialog */}
       {showDialog && (

@@ -202,17 +202,31 @@ export default function LastWaveApp() {
 
       {/* Visualization */}
       {showVisualization && (
-        <>
-          <div className={`rounded-xl overflow-hidden mx-4 ${showFullSvg ? '' : 'max-w-full overflow-x-auto [&_svg]:w-full'}`}>
+        <div className="group relative mx-auto" style={{ maxWidth: '100%' }}>
+          <div className={`mx-4 ${showFullSvg ? 'overflow-x-auto' : 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto'}`}>
             <WaveVisualization seriesData={seriesData} />
           </div>
-          <button
-            onClick={() => setShowFullSvg(!showFullSvg)}
-            className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase mt-3 mb-2 transition-colors"
-          >
-            {showFullSvg ? 'Fit to screen' : 'Full size'}
-          </button>
-        </>
+          {!showFullSvg && (
+            <button
+              onClick={() => setShowFullSvg(true)}
+              className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 cursor-pointer"
+            >
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
+                ⤢ Full size
+              </span>
+            </button>
+          )}
+          {showFullSvg && (
+            <div className="text-center mt-2">
+              <button
+                onClick={() => setShowFullSvg(false)}
+                className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase transition-colors"
+              >
+                ⤡ Fit to screen
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Image Actions */}
