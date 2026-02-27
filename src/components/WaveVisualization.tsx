@@ -94,7 +94,7 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
       .x((_, i) => xScale(i))
       .y0((d) => yScale(d[0]))
       .y1((d) => yScale(d[1]))
-      .curve(d3.curveCardinal);
+      .curve(d3.curveMonotoneX);
 
     // Set SVG attributes
     svg

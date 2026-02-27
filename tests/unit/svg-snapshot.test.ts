@@ -96,7 +96,7 @@ function renderWaveSvg(
     .x((_, i) => xScale(i))
     .y0((d) => yScale(d[0]))
     .y1((d) => yScale(d[1]))
-    .curve(d3.curveCardinal);
+    .curve(d3.curveMonotoneX);
 
   // SVG attributes
   svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);

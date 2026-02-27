@@ -58,7 +58,7 @@ describe('Pixel-Proxy Structural Regression', () => {
         .x((_, i) => xScale(i))
         .y0((d) => yScale(d[0]))
         .y1((d) => yScale(d[1]))
-        .curve(d3.curveCardinal);
+        .curve(d3.curveMonotoneX);
 
       const pathStrings = stackedData.map(layer => area(layer as any));
 
@@ -77,7 +77,7 @@ describe('Pixel-Proxy Structural Regression', () => {
         .x((_, i) => xScale(i))
         .y0((d) => yScale(d[0]))
         .y1((d) => yScale(d[1]))
-        .curve(d3.curveCardinal);
+        .curve(d3.curveMonotoneX);
 
       const pathStrings = stackedData.map(layer => area(layer as any));
       expect(pathStrings).toMatchSnapshot('large-dataset-paths');
