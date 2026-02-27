@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import WaveOptions from '@/components/WaveOptions';
 import StageLoadingBar from '@/components/StageLoadingBar';
@@ -24,6 +24,63 @@ const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 
 function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
+  showFullSvg: boolean;
+  setShowFullSvg: (v: boolean) => void;
+  children: ReactNode;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  const checkOverflow = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const svg = el.querySelector('svg');
+    if (!svg) return;
+    const svgWidth = svg.getAttribute('width');
+    setIsOverflowing(svgWidth ? parseFloat(svgWidth) > el.clientWidth : false);
+  }, []);
+
+  useEffect(() => {
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [checkOverflow]);
+
+  // If image fits or is expanded, no special UI needed
+  if (!isOverflowing && !showFullSvg) {
+    return <div ref={containerRef} className="mx-4">{children}</div>;
+  }
+
+  return (
+    <div ref={containerRef} className="group relative mx-auto" style={{ maxWidth: '100%' }}>
+      <div className={`mx-4 ${showFullSvg ? 'overflow-x-auto' : 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto'}`}>
+        {children}
+      </div>
+      {!showFullSvg && (
+        <button
+          onClick={() => setShowFullSvg(true)}
+          className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-all duration-200 cursor-pointer"
+        >
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
+            ⤢ Full size
+          </span>
+        </button>
+      )}
+      {showFullSvg && (
+        <div className="text-center mt-2">
+          <button
+            onClick={() => setShowFullSvg(false)}
+            className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase transition-colors"
+          >
+            ⤡ Fit to screen
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function LastWaveApp() {
@@ -205,31 +262,9 @@ export default function LastWaveApp() {
 
       {/* Visualization */}
       {showVisualization && (
-        <div className="group relative mx-auto" style={{ maxWidth: '100%' }}>
-          <div className={`mx-4 ${showFullSvg ? 'overflow-x-auto' : 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto'}`}>
-            <WaveVisualization seriesData={seriesData} />
-          </div>
-          {!showFullSvg && (
-            <button
-              onClick={() => setShowFullSvg(true)}
-              className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 cursor-pointer"
-            >
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
-                ⤢ Full size
-              </span>
-            </button>
-          )}
-          {showFullSvg && (
-            <div className="text-center mt-2">
-              <button
-                onClick={() => setShowFullSvg(false)}
-                className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase transition-colors"
-              >
-                ⤡ Fit to screen
-              </button>
-            </div>
-          )}
-        </div>
+        <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
+          <WaveVisualization seriesData={seriesData} />
+        </ImageScaler>
       )}
     </div>
   );
