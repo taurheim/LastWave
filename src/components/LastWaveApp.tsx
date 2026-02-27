@@ -35,13 +35,15 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
   const [isOverflowing, setIsOverflowing] = useState(false);
 
   const checkOverflow = useCallback(() => {
+    if (showFullSvg) return;
     const el = containerRef.current;
     if (!el) return;
     const svg = el.querySelector('svg');
     if (!svg) return;
-    const svgWidth = svg.getAttribute('width');
-    setIsOverflowing(svgWidth ? parseFloat(svgWidth) > el.clientWidth : false);
-  }, []);
+    const svgWidth = parseFloat(svg.getAttribute('width') ?? '0');
+    // Compare against viewport width (stable reference, not container)
+    setIsOverflowing(svgWidth > window.innerWidth);
+  }, [showFullSvg]);
 
   useEffect(() => {
     checkOverflow();
@@ -49,7 +51,7 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     return () => window.removeEventListener('resize', checkOverflow);
   }, [checkOverflow]);
 
-  // If image fits or is expanded, no special UI needed
+  // Image fits the screen — render as-is
   if (!isOverflowing && !showFullSvg) {
     return <div ref={containerRef} className="mx-4">{children}</div>;
   }
