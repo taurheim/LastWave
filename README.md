@@ -1,19 +1,77 @@
 # LastWave
+
 Graph your music listening history!
+
 ![An Example Graph](http://i.imgur.com/jMQoqg6.png)
 
 ## What does it do?
-LastWave is a web-app that takes data from your last.fm profile and creates a beautiful wave graph that represents your music listening trends by artist. The artists that you listen to more at a given time has a larger area on the graph.
+
+LastWave is a web app that takes data from your [last.fm](https://last.fm) profile and creates a beautiful wave graph (streamgraph) that represents your music listening trends by artist, album, or tag. The artists you listen to more at a given time have a larger area on the graph.
+
+## Tech Stack
+
+- **[Astro](https://astro.build/)** — Static site generation with islands architecture
+- **[React](https://react.dev/)** — Interactive UI components
+- **[D3.js v7](https://d3js.org/)** — Streamgraph visualization
+- **[Tailwind CSS](https://tailwindcss.com/)** — Utility-first styling
+- **[Zustand](https://zustand.docs.pmnd.rs/)** — Lightweight state management
+- **[TypeScript](https://www.typescriptlang.org/)** — Type safety throughout
+- **[Vitest](https://vitest.dev/)** + **[React Testing Library](https://testing-library.com/react)** — Unit & component tests
+- **[Playwright](https://playwright.dev/)** — End-to-end tests
 
 ## How does it work?
-LastWave is built almost entirely in JavaScript, although some of the exporting process is handled with PHP. The wave created by LastWave is rendered entirely in the browser in svg format, and LastWave allows you to export this wave to multiple sources, including saving it as an image to the web.
-The majority of the creation of the wave graph is done by libraries, but the text placement is done manually by LastWave. This is accomplished with a series of algorithms that are detailed in my blog post <http://savas.ca/blog/lastwave-1-text-placement/>
 
-## How to contribute
-LastWave is always looking for people to help with the code! This is a great beginner-intermediate project as there are lots of little things that need doing. Check out the "issues" section to see what needs to be done! I've tried to make it pretty clear how difficult each one is, but if you have any questions, just contact me at niko@savas.ca!
+The wave graph is rendered entirely in the browser as SVG using D3.js. Text placement on the wave peaks uses custom algorithms (W/X/Y/Z wave types) detailed in [this blog post](http://savas.ca/blog/lastwave-1-text-placement/). LastWave supports exporting as SVG, PNG, or sharing via Cloudinary.
 
-To build & run:
-- Clone the repo `git clone https://github.com/taurheim/LastWave.git`
-- Install modules: `yarn install`
-- Run: `yarn serve`
-- Navigate to: `http://localhost:8080/lastwave`
+## Getting Started
+
+```bash
+# Clone the repo
+git clone https://github.com/taurheim/LastWave.git
+cd LastWave
+
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Open in browser
+open http://localhost:4321
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm test` | Run unit & component tests |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:e2e` | Run Playwright E2E tests |
+
+## Project Structure
+
+```
+src/
+├── core/           # Framework-agnostic business logic
+│   ├── models/     # Data models (Point, Peak, Label, SeriesData, etc.)
+│   ├── lastfm/     # Last.fm API client & data processing
+│   ├── wave/       # Text placement algorithms (W/X/Y/Z types)
+│   ├── config/     # Color schemes, date presets
+│   └── cloudinary/ # Image upload API
+├── components/     # React components
+├── layouts/        # Astro layouts
+├── pages/          # Astro pages (/, /about, /gallery)
+└── store/          # Zustand state management
+tests/
+├── unit/           # Unit tests for core logic
+├── component/      # React component tests
+├── e2e/            # Playwright E2E tests
+└── fixtures/       # Test data fixtures
+```
+
+## How to Contribute
+
+LastWave is always looking for contributors! Check out the [issues](https://github.com/taurheim/LastWave/issues) section to see what needs doing. Questions? Contact niko@savas.ca.

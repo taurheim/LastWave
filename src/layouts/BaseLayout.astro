@@ -1,0 +1,83 @@
+---
+interface Props {
+  title?: string;
+}
+
+const { title = 'LastWave' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Graph your music listening history with LastWave" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <title>{title}</title>
+    <style>
+      body {
+        background: #0c1117;
+        background-image:
+          radial-gradient(ellipse 80% 60% at 50% 0%, rgba(39,170,225,0.06) 0%, transparent 70%),
+          radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,206,209,0.04) 0%, transparent 60%);
+      }
+      @keyframes drift {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+      }
+      .logo-drift { animation: drift 4s ease-in-out infinite; }
+      .nav-link {
+        position: relative;
+        transition: color 0.3s;
+      }
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: linear-gradient(90deg, #27AAE1, #00CED1);
+        transition: width 0.3s ease;
+      }
+      .nav-link:hover::after { width: 100%; }
+    </style>
+  </head>
+  <body class="font-body text-lw-text min-h-screen pb-16">
+    <header class="pt-12 md:pt-16 pb-6 text-center">
+      <div class="inline-flex items-center gap-4">
+        <img src="/logo.svg" alt="LastWave" class="h-12 logo-drift opacity-80" />
+        <div>
+          <h1 class="font-display text-5xl md:text-6xl font-medium tracking-tight text-white">
+            Last<span class="text-lw-accent">Wave</span>
+          </h1>
+          <p class="text-lw-muted text-sm tracking-[0.25em] uppercase mt-1 font-light">
+            Your music · visualized
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="text-center mb-10">
+      <div class="inline-flex items-center gap-8 text-sm tracking-widest uppercase text-lw-muted">
+        <a href="/" class="nav-link hover:text-lw-accent">Home</a>
+        <span class="w-px h-3 bg-lw-border inline-block"></span>
+        <a href="/gallery" class="nav-link hover:text-lw-accent">Gallery</a>
+        <span class="w-px h-3 bg-lw-border inline-block"></span>
+        <a href="/about" class="nav-link hover:text-lw-accent">About</a>
+      </div>
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="text-center mt-20 pb-8 text-lw-muted/40 text-xs tracking-wider">
+      <div class="w-12 h-px bg-gradient-to-r from-transparent via-lw-border to-transparent mx-auto mb-4"></div>
+      LastWave &middot; built by <a href="https://savas.ca" class="hover:text-lw-accent transition-colors">Niko Savas</a>
+    </footer>
+  </body>
+</html>

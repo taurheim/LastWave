@@ -1,0 +1,243 @@
+import { useRef, useEffect } from 'react';
+import * as d3 from 'd3';
+import type SeriesData from '@/core/models/SeriesData';
+import { useLastWaveStore } from '@/store/index';
+import schemes from '@/core/config/schemes.json';
+import { findLabelIndices, createCanvasMeasurer } from '@/core/wave/util';
+import { isWType, getWLabel } from '@/core/wave/waveW';
+import { isXType, getXLabel } from '@/core/wave/waveX';
+import { isYType, getYLabel } from '@/core/wave/waveY';
+import { isZType, getZLabel } from '@/core/wave/waveZ';
+import Peak from '@/core/models/Peak';
+import type { StackPoint } from '@/core/models/Peak';
+import FontData from '@/core/models/FontData';
+import type Label from '@/core/models/Label';
+
+const DEFAULT_WIDTH_PER_PEAK = 150;
+const DEFAULT_HEIGHT = 600;
+const MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
+const MINIMUM_FONT_SIZE_PIXELS = 8;
+
+const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
+  silhouette: d3.stackOffsetSilhouette,
+  wiggle: d3.stackOffsetWiggle,
+  expand: d3.stackOffsetExpand,
+  zero: d3.stackOffsetNone,
+};
+
+interface WaveVisualizationProps {
+  seriesData: SeriesData[];
+}
+
+export default function WaveVisualization({ seriesData }: WaveVisualizationProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
+  const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
+
+  useEffect(() => {
+    if (!svgRef.current || seriesData.length === 0) return;
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+
+    const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+    const scheme = schemes[schemeName] ?? schemes.lastwave;
+    const colors = scheme.schemeColors;
+    const bgColor = scheme.backgroundColor;
+    const fontColor = scheme.fontColor;
+    const fontFamily = rendererOptions.font ?? 'TypoPRO Roboto';
+    const offsetName = rendererOptions.offset ?? 'silhouette';
+    const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
+    const showStroke = rendererOptions.stroke ?? true;
+    const addLabels = rendererOptions.add_labels ?? true;
+    const addMonths = rendererOptions.add_months ?? true;
+    const addYears = rendererOptions.add_years ?? false;
+
+    // Determine dimensions
+    const numSegments = seriesData[0]?.counts.length ?? 0;
+    const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
+    const width = userWidth > 0 ? userWidth : numSegments * DEFAULT_WIDTH_PER_PEAK;
+    const height = rendererOptions.height ? parseInt(rendererOptions.height, 10) : DEFAULT_HEIGHT;
+
+    // Pivot data: from SeriesData[] to tabular format for d3.stack
+    const keys = seriesData.map((s) => s.title);
+    const tableData: Record<string, number>[] = [];
+    for (let i = 0; i < numSegments; i++) {
+      const row: Record<string, number> = { index: i };
+      seriesData.forEach((s) => {
+        row[s.title] = s.counts[i] ?? 0;
+      });
+      tableData.push(row);
+    }
+
+    // D3 stack
+    const stack = d3.stack<Record<string, number>>()
+      .keys(keys)
+      .offset(offsetFn)
+      .order(d3.stackOrderNone);
+
+    const stackedData = stack(tableData);
+
+    // Scales
+    const xScale = d3.scaleLinear()
+      .domain([0, numSegments - 1])
+      .range([0, width]);
+
+    const yMin = d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
+    const yMax = d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
+    const yScale = d3.scaleLinear()
+      .domain([yMin, yMax])
+      .range([height, 0]);
+
+    // Area generator
+    const area = d3.area<[number, number]>()
+      .x((_, i) => xScale(i))
+      .y0((d) => yScale(d[0]))
+      .y1((d) => yScale(d[1]))
+      .curve(d3.curveCardinal);
+
+    // Set SVG attributes
+    svg
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`);
+
+    // Background
+    svg.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', bgColor);
+
+    // Draw paths
+    svg.selectAll('path.wave')
+      .data(stackedData)
+      .join('path')
+      .attr('class', 'wave')
+      .attr('d', (d) => area(d as any))
+      .attr('fill', (_, i) => colors[i % colors.length])
+      .attr('stroke', showStroke ? bgColor : 'none')
+      .attr('stroke-width', showStroke ? 0.5 : 0);
+
+    // Add text labels using wave algorithms
+    if (addLabels) {
+      const measureText = createCanvasMeasurer();
+      const fontData = new FontData(fontFamily, fontColor);
+
+      stackedData.forEach((layer, layerIndex) => {
+        const seriesTitle = keys[layerIndex];
+        const counts = seriesData[layerIndex].counts;
+
+        // Build StackPoint array in inverted coordinate space (y=0 at bottom)
+        // to match the coordinate system the wave algorithms expect
+        const stackPoints: StackPoint[] = layer.map((d, i) => ({
+          x: xScale(i),
+          y: (height - yScale(d[1])) - (height - yScale(d[0])),
+          y0: height - yScale(d[0]),
+        }));
+
+        // Determine label indices
+        const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
+
+        labelIndices.forEach((idx) => {
+          if (idx <= 0 || idx >= stackPoints.length - 1) return;
+
+          const peak = new Peak(idx, stackPoints);
+          let label: Label | null = null;
+
+          if (isWType(peak)) {
+            label = getWLabel(peak, seriesTitle, fontData.family, measureText);
+          } else if (isZType(peak)) {
+            label = getZLabel(peak, seriesTitle, fontData.family, measureText);
+          } else if (isYType(peak)) {
+            label = getYLabel(peak, seriesTitle, fontData.family, measureText);
+          } else if (isXType(peak)) {
+            label = getXLabel(peak, seriesTitle, fontData.family, measureText);
+          }
+
+          if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
+            svg.append('text')
+              .attr('x', label.xPosition)
+              .attr('y', height - label.yPosition)
+              .attr('font-size', `${label.fontSize}px`)
+              .attr('font-family', fontData.family)
+              .attr('fill', fontData.color)
+              .text(label.text);
+          }
+        });
+      });
+    }
+
+    // Month labels along the bottom
+    if (addMonths && dataSourceOptions.time_start && dataSourceOptions.time_end) {
+      const startTime = dataSourceOptions.time_start instanceof Date
+        ? dataSourceOptions.time_start.getTime()
+        : new Date(dataSourceOptions.time_start).getTime();
+      const endTime = dataSourceOptions.time_end instanceof Date
+        ? dataSourceOptions.time_end.getTime()
+        : new Date(dataSourceOptions.time_end).getTime();
+      const timePerSegment = (endTime - startTime) / numSegments;
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      let lastMonth = -1;
+
+      for (let i = 0; i < numSegments; i++) {
+        const segDate = new Date(startTime + i * timePerSegment);
+        const month = segDate.getMonth();
+        if (month !== lastMonth) {
+          lastMonth = month;
+          svg.append('text')
+            .attr('x', xScale(i))
+            .attr('y', height - 5)
+            .attr('font-size', '10px')
+            .attr('font-family', fontFamily)
+            .attr('fill', fontColor)
+            .text(monthNames[month]);
+        }
+      }
+    }
+
+    // Year labels
+    if (addYears && dataSourceOptions.time_start && dataSourceOptions.time_end) {
+      const startTime = dataSourceOptions.time_start instanceof Date
+        ? dataSourceOptions.time_start.getTime()
+        : new Date(dataSourceOptions.time_start).getTime();
+      const endTime = dataSourceOptions.time_end instanceof Date
+        ? dataSourceOptions.time_end.getTime()
+        : new Date(dataSourceOptions.time_end).getTime();
+      const timePerSegment = (endTime - startTime) / numSegments;
+      let lastYear = -1;
+
+      for (let i = 0; i < numSegments; i++) {
+        const segDate = new Date(startTime + i * timePerSegment);
+        const year = segDate.getFullYear();
+        if (year !== lastYear) {
+          lastYear = year;
+          svg.append('text')
+            .attr('x', xScale(i))
+            .attr('y', 15)
+            .attr('font-size', '12px')
+            .attr('font-family', fontFamily)
+            .attr('fill', fontColor)
+            .attr('font-weight', 'bold')
+            .text(String(year));
+        }
+      }
+    }
+
+    // Watermark
+    svg.append('text')
+      .attr('x', width - 5)
+      .attr('y', height - 5)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '9px')
+      .attr('font-family', fontFamily)
+      .attr('fill', fontColor)
+      .attr('opacity', 0.5)
+      .text('lastwave');
+  }, [seriesData, rendererOptions, dataSourceOptions]);
+
+  return (
+    <div id="svg-wrapper" className="overflow-x-auto">
+      <svg ref={svgRef} className="w-full max-w-none" />
+    </div>
+  );
+}

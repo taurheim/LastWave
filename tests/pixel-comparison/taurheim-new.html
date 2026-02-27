@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LastWave - Taurheim Comparison (New D3 v7)</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <style>
+    body { margin: 0; padding: 20px; background: #f0f0f0; font-family: sans-serif; }
+    h2 { margin: 10px 0 5px; }
+    .render-container { margin-bottom: 30px; background: white; display: inline-block; overflow: auto; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Taurheim — New Rendering (D3 v7)</h1>
+  <h2>Last 3 months, default settings (silhouette, stroke on, labels on)</h2>
+  <div id="taurheim-new" class="render-container"></div>
+
+  <script src="wave-algorithms.js"></script>
+  <script>
+    var SCHEME = {
+      backgroundColor: "#ffffff",
+      fontColor: "#000000",
+      schemeColors: [
+        "#838B8B","#7A8B8B","#C1CDCD","#668B8B","#B4CDCD","#2F4F4F","#2F4F4F","#5F9F9F",
+        "#C0D9D9","#528B8B","#E0EEEE","#96CDCD","#388E8E","#79CDCD","#D1EEEE","#8FD8D8",
+        "#66CCCC","#ADEAEA","#70DBDB","#AEEEEE","#AFEEEE","#8DEEEE","#37FDFC","#008080",
+        "#008B8B","#00CDCD","#00EEEE","#00FFFF","#00FFFF","#97FFFF","#BBFFFF","#E0FFFF",
+        "#F0FFFF","#00CED1","#5F9EA0","#00868B","#00C5CD","#00E5EE","#00F5FF","#67E6EC",
+        "#4A777A","#05EDFF","#53868B","#73B1B7","#05E9FF","#7AC5CD","#8EE5EE","#05B8CC",
+        "#98F5FF","#B0E0E6","#C1F0F6","#39B7CD","#65909A","#0EBFE9","#C3E4ED","#68838B",
+        "#63D1F4","#9AC0CD","#50A6C2","#ADD8E6","#B2DFEE","#00688B","#0099CC","#009ACD",
+        "#00B2EE"
+      ]
+    };
+
+    var DEFAULT_WIDTH_PER_PEAK = 150;
+    var DEFAULT_HEIGHT = 600;
+
+    fetch("taurheim-series-data.json").then(function(r) { return r.json(); }).then(function(seriesData) {
+      var el = document.getElementById("taurheim-new");
+      var numSegments = seriesData[0].counts.length;
+      var width = numSegments * DEFAULT_WIDTH_PER_PEAK;
+      var height = DEFAULT_HEIGHT;
+
+      // Pivot to tabular
+      var keys = seriesData.map(function(s) { return s.title; });
+      var tableData = [];
+      for (var i = 0; i < numSegments; i++) {
+        var row = { index: i };
+        seriesData.forEach(function(s) { row[s.title] = s.counts[i] || 0; });
+        tableData.push(row);
+      }
+
+      var stack = d3.stack()
+        .keys(keys)
+        .offset(d3.stackOffsetSilhouette)
+        .order(d3.stackOrderNone);
+
+      var stackedData = stack(tableData);
+
+      var xScale = d3.scaleLinear().domain([0, numSegments - 1]).range([0, width]);
+      var yMin = d3.min(stackedData, function(l) { return d3.min(l, function(d) { return d[0]; }); });
+      var yMax = d3.max(stackedData, function(l) { return d3.max(l, function(d) { return d[1]; }); });
+      var yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
+
+      var area = d3.area()
+        .x(function(d, i) { return xScale(i); })
+        .y0(function(d) { return yScale(d[0]); })
+        .y1(function(d) { return yScale(d[1]); })
+        .curve(d3.curveCardinal);
+
+      var svg = d3.select(el).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", "0 0 " + width + " " + height);
+
+      svg.append("rect")
+        .attr("width", width).attr("height", height)
+        .attr("fill", SCHEME.backgroundColor);
+
+      svg.selectAll("path.wave")
+        .data(stackedData)
+        .join("path")
+        .attr("class", "wave")
+        .attr("d", function(d) { return area(d); })
+        .attr("fill", function(d, i) { return SCHEME.schemeColors[i % SCHEME.schemeColors.length]; })
+        .attr("stroke", SCHEME.backgroundColor)
+        .attr("stroke-width", 0.5);
+
+      // Labels
+      addLabelsNew(svg, stackedData, seriesData, xScale, yScale, width, height, "sans-serif", SCHEME.fontColor, 8);
+    });
+  </script>
+</body>
+</html>

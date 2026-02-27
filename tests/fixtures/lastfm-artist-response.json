@@ -1,0 +1,14 @@
+{
+  "weeklyartistchart": {
+    "artist": [
+      { "name": "Radiohead", "playcount": "45" },
+      { "name": "Pink Floyd", "playcount": "32" },
+      { "name": "Tame Impala", "playcount": "28" },
+      { "name": "Boards of Canada", "playcount": "15" },
+      { "name": "Aphex Twin", "playcount": "12" },
+      { "name": "Sigur Ros", "playcount": "8" },
+      { "name": "Burial", "playcount": "5" },
+      { "name": "Four Tet", "playcount": "3" }
+    ]
+  }
+}

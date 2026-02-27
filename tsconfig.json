@@ -1,38 +1,14 @@
 {
+  "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "baseUrl": ".",
-    "types": [
-      "node"    ],
     "paths": {
-      "@/*": [
-        "src/*"
-      ],
+      "@/*": ["src/*"]
     },
-    "lib": [
-      "es2015",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
+    "types": ["vitest/globals"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/core/**/*", "src/layouts/**/*", "src/pages/**/*", "src/components/**/*.tsx", "src/components/**/*.ts", "src/store/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "src/main.ts", "src/App.vue", "src/store.ts", "src/router.ts", "src/lastwave.ts", "src/models/**/*", "src/views/**/*", "src/datasources/**/*", "src/renderers/**/*", "src/actions/**/*", "src/types/**/*", "src/components/**/*.vue"]
 }
