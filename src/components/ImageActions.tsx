@@ -2,6 +2,67 @@ import { useState } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
 
+// Fetch Google Fonts CSS, download all referenced font files, and return
+// a self-contained <style> block with base64-inlined @font-face rules.
+// This is needed because <img>-based SVG rendering blocks external loads.
+async function inlineFontCss(fontFamily: string): Promise<string> {
+  const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
+  // Request woff2 by sending a modern User-Agent
+  const cssRes = await fetch(cssUrl, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+  });
+  let css = await cssRes.text();
+
+  // Find all url(...) references and replace with data URIs
+  const urlPattern = /url\((https:\/\/[^)]+)\)/g;
+  const urls = [...css.matchAll(urlPattern)].map((m) => m[1]);
+  for (const fontUrl of urls) {
+    try {
+      const res = await fetch(fontUrl);
+      const buf = await res.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      const mime = fontUrl.includes('.woff2') ? 'font/woff2' : 'font/woff';
+      css = css.replace(fontUrl, `data:${mime};base64,${b64}`);
+    } catch {
+      // If a single font file fails, skip it — text will fall back
+    }
+  }
+  return css;
+}
+
+// Render an SVG element to a PNG blob with fonts inlined
+async function svgToPngBlob(svgEl: SVGSVGElement, fontFamily: string): Promise<Blob> {
+  const clone = svgEl.cloneNode(true) as SVGSVGElement;
+
+  // Replace the @import style with fully inlined font CSS
+  const styleEl = clone.querySelector('defs style');
+  if (styleEl) {
+    styleEl.textContent = await inlineFontCss(fontFamily);
+  }
+
+  const svgData = new XMLSerializer().serializeToString(clone);
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  return new Promise<Blob>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = svgEl.width.baseVal.value || 800;
+      canvas.height = svgEl.height.baseVal.value || 600;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('No canvas context')); return; }
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        blob ? resolve(blob) : reject(new Error('Failed to create PNG blob'));
+      }, 'image/png');
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 export default function ImageActions() {
   const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -26,15 +87,10 @@ export default function ImageActions() {
     return wrapper?.querySelector('svg') ?? null;
   }
 
-  function serializeSvg(): string | null {
-    const svgEl = getSvgElement();
-    if (!svgEl) return null;
-    return new XMLSerializer().serializeToString(svgEl);
-  }
-
   function downloadSvg() {
-    const svgData = serializeSvg();
-    if (!svgData) return;
+    const svgEl = getSvgElement();
+    if (!svgEl) return;
+    const svgData = new XMLSerializer().serializeToString(svgEl);
     const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -46,36 +102,24 @@ export default function ImageActions() {
     URL.revokeObjectURL(url);
   }
 
-  function downloadPng() {
+  async function downloadPng() {
     const svgEl = getSvgElement();
     if (!svgEl) return;
-    const svgData = new XMLSerializer().serializeToString(svgEl);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
+    const fontFamily = rendererOptions.font ?? 'DM Sans';
 
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = svgEl.width.baseVal.value || 800;
-      canvas.height = svgEl.height.baseVal.value || 600;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const pngUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = pngUrl;
-        a.download = `${getFileName()}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(pngUrl);
-      }, 'image/png');
-    };
-    img.src = url;
+    try {
+      const blob = await svgToPngBlob(svgEl, fontFamily);
+      const pngUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = `${getFileName()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(pngUrl);
+    } catch (err) {
+      console.error('PNG download failed', err);
+    }
   }
 
   async function cloudinaryUpload() {
@@ -86,32 +130,12 @@ export default function ImageActions() {
 
     const svgEl = getSvgElement();
     if (!svgEl) return;
+    const fontFamily = rendererOptions.font ?? 'DM Sans';
 
     setUploadInProgress(true);
 
     try {
-      // Render SVG to PNG blob
-      const svgData = new XMLSerializer().serializeToString(svgEl);
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-
-      const pngBlob = await new Promise<Blob>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = svgEl.width.baseVal.value || 800;
-          canvas.height = svgEl.height.baseVal.value || 600;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) { reject(new Error('No canvas context')); return; }
-          ctx.drawImage(img, 0, 0);
-          URL.revokeObjectURL(url);
-          canvas.toBlob((blob) => {
-            blob ? resolve(blob) : reject(new Error('Failed to create PNG blob'));
-          }, 'image/png');
-        };
-        img.onerror = reject;
-        img.src = url;
-      });
+      const pngBlob = await svgToPngBlob(svgEl, fontFamily);
 
       const api = new CloudinaryAPI();
       const imageUrl = await api.uploadImage(
