@@ -41,7 +41,6 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     const svg = el.querySelector('svg');
     if (!svg) return;
     const svgWidth = parseFloat(svg.getAttribute('width') ?? '0');
-    // Compare against viewport width (stable reference, not container)
     setIsOverflowing(svgWidth > window.innerWidth);
   }, [showFullSvg]);
 
@@ -51,36 +50,31 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     return () => window.removeEventListener('resize', checkOverflow);
   }, [checkOverflow]);
 
-  // Image fits the screen — render as-is
-  if (!isOverflowing && !showFullSvg) {
+  // Full size: native dimensions, page scrolls horizontally
+  if (showFullSvg) {
+    return (
+      <div ref={containerRef} className="mx-4 overflow-x-auto cursor-pointer" onClick={() => setShowFullSvg(false)}>
+        {children}
+      </div>
+    );
+  }
+
+  // Image fits the screen — render as-is, no controls needed
+  if (!isOverflowing) {
     return <div ref={containerRef} className="mx-4">{children}</div>;
   }
 
+  // Image overflows — shrink to fit, click to expand
   return (
-    <div ref={containerRef} className="group relative mx-auto" style={{ maxWidth: '100%' }}>
-      <div className={`mx-4 ${showFullSvg ? 'overflow-x-auto' : 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto'}`}>
+    <div ref={containerRef} className="group relative mx-4 cursor-pointer" onClick={() => setShowFullSvg(true)}>
+      <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto">
         {children}
       </div>
-      {!showFullSvg && (
-        <button
-          onClick={() => setShowFullSvg(true)}
-          className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 transition-all duration-200 cursor-pointer"
-        >
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
-            ⤢ Full size
-          </span>
-        </button>
-      )}
-      {showFullSvg && (
-        <div className="text-center mt-2">
-          <button
-            onClick={() => setShowFullSvg(false)}
-            className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase transition-colors"
-          >
-            ⤡ Fit to screen
-          </button>
-        </div>
-      )}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200">
+        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
+          ⤢ Full size
+        </span>
+      </div>
     </div>
   );
 }
