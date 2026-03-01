@@ -50,11 +50,13 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     return () => window.removeEventListener('resize', checkOverflow);
   }, [checkOverflow]);
 
-  // Full size: native dimensions, page scrolls horizontally
+  // Full size: native dimensions, container scrolls horizontally
   if (showFullSvg) {
     return (
       <div ref={containerRef} className="mx-4 overflow-x-auto cursor-pointer" onClick={() => setShowFullSvg(false)}>
-        {children}
+        <div className="[&_svg]:block" style={{ minWidth: 'max-content' }}>
+          {children}
+        </div>
       </div>
     );
   }
