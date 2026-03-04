@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
+import SchemePreview from './SchemePreview';
 
 interface WaveOptionsProps {
   onSubmit: (opts: { dataSourceOptions: Record<string, any>; rendererOptions: Record<string, any> }) => void;
@@ -130,10 +131,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                       : 'border-lw-border hover:border-lw-muted/50 bg-lw-surface'
                   }`}
                 >
-                  <div className="flex h-5 w-20 rounded overflow-hidden mb-1.5">
-                    {scheme.schemeColors.slice(0, 10).map((color: string, i: number) => (
-                      <div key={i} className="flex-1" style={{ backgroundColor: color }} />
-                    ))}
+                  <div className="rounded overflow-hidden mb-1.5">
+                    <SchemePreview
+                      colors={scheme.schemeColors}
+                      bgColor={scheme.backgroundColor}
+                      width={100}
+                      height={40}
+                    />
                   </div>
                   <span className={`text-xs capitalize ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}>{name}</span>
                 </button>
