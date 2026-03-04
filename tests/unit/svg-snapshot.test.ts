@@ -188,8 +188,8 @@ describe('SVG Snapshot Regression', () => {
     expect(svg).toMatchSnapshot();
   });
 
-  it('matches snapshot with carpet color scheme', () => {
-    const svg = renderWaveSvg(simpleSeriesData, { schemeName: 'carpet' });
+  it('matches snapshot with ocean color scheme', () => {
+    const svg = renderWaveSvg(simpleSeriesData, { schemeName: 'ocean' });
     expect(svg).toMatchSnapshot();
   });
 
@@ -223,8 +223,8 @@ describe('SVG Snapshot Regression', () => {
   });
 
   it('applies correct background color from scheme', () => {
-    const svg = renderWaveSvg(simpleSeriesData, { schemeName: 'gorgeous' });
-    expect(svg).toContain((schemes as any).gorgeous.backgroundColor);
+    const svg = renderWaveSvg(simpleSeriesData, { schemeName: 'mosaic' });
+    expect(svg).toContain((schemes as any).mosaic.backgroundColor);
   });
 
   it('has correct number of wave paths', () => {
