@@ -242,7 +242,7 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
   }, [seriesData, rendererOptions, dataSourceOptions]);
 
   return (
-    <div id="svg-wrapper" className="overflow-x-auto">
+    <div id="svg-wrapper" className="overflow-x-auto flex justify-center">
       <svg ref={svgRef} style={{ display: 'block' }} />
     </div>
   );
