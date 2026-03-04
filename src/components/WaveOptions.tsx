@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
-import SchemePreview from './SchemePreview';
 
 interface WaveOptionsProps {
   onSubmit: (opts: { dataSourceOptions: Record<string, any>; rendererOptions: Record<string, any> }) => void;
@@ -132,11 +131,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   }`}
                 >
                   <div className="rounded overflow-hidden mb-1.5">
-                    <SchemePreview
-                      colors={scheme.schemeColors}
-                      bgColor={scheme.backgroundColor}
-                      width={100}
-                      height={40}
+                    <img
+                      src={`/scheme-previews/${name}.png`}
+                      alt={`${name} theme preview`}
+                      width={140}
+                      height={60}
+                      className="block"
                     />
                   </div>
                   <span className={`text-xs capitalize ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}>{name}</span>
