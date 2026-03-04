@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const schemes = JSON.parse(fs.readFileSync('src/core/config/schemes.json', 'utf8'));
-const seriesData = JSON.parse(fs.readFileSync('tests/pixel-comparison/taurheim-series-data.json', 'utf8'));
+const seriesData = JSON.parse(fs.readFileSync('scripts/morganpog-data.json', 'utf8'));
 
 (async () => {
   const browser = await chromium.launch();
@@ -26,7 +26,7 @@ const seriesData = JSON.parse(fs.readFileSync('tests/pixel-comparison/taurheim-s
           const sorted = seriesData.map(s => ({
             ...s,
             total: s.counts.reduce((a, b) => a + b, 0)
-          })).sort((a, b) => b.total - a.total).slice(0, 12);
+          })).sort((a, b) => b.total - a.total).slice(0, 15);
           const numSegments = sorted[0].counts.length;
           const width = 280;
           const height = 120;
