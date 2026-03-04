@@ -42,7 +42,8 @@ const seriesData = JSON.parse(fs.readFileSync('scripts/morganpog-data.json', 'ut
           const xScale = d3.scaleLinear().domain([0, numSegments - 1]).range([0, width]);
           const yMin = d3.min(stackedData, l => d3.min(l, d => d[0]));
           const yMax = d3.max(stackedData, l => d3.max(l, d => d[1]));
-          const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
+          const yPad = (yMax - yMin) * 0.08;
+          const yScale = d3.scaleLinear().domain([yMin - yPad, yMax + yPad]).range([height, 0]);
           const area = d3.area()
             .x((d, i) => xScale(i))
             .y0(d => yScale(d[0]))
