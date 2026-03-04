@@ -22,14 +22,19 @@ const seriesData = JSON.parse(fs.readFileSync('tests/pixel-comparison/taurheim-s
         <script>
           const seriesData = ${JSON.stringify(seriesData)};
           const scheme = ${JSON.stringify(scheme)};
-          const numSegments = seriesData[0].counts.length;
+          // Use only top 12 artists by total plays for a cleaner preview
+          const sorted = seriesData.map(s => ({
+            ...s,
+            total: s.counts.reduce((a, b) => a + b, 0)
+          })).sort((a, b) => b.total - a.total).slice(0, 12);
+          const numSegments = sorted[0].counts.length;
           const width = 280;
           const height = 120;
-          const keys = seriesData.map(s => s.title);
+          const keys = sorted.map(s => s.title);
           const tableData = [];
           for (let i = 0; i < numSegments; i++) {
             const row = { index: i };
-            seriesData.forEach(s => { row[s.title] = s.counts[i] || 0; });
+            sorted.forEach(s => { row[s.title] = s.counts[i] || 0; });
             tableData.push(row);
           }
           const stack = d3.stack().keys(keys).offset(d3.stackOffsetSilhouette).order(d3.stackOrderNone);
