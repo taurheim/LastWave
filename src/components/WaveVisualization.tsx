@@ -192,7 +192,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
               const bandLUT = buildBandLUT(pathD, width);
               if (bandLUT) {
                 const overflow = checkLabelOverflow(label, fontData.family, height, bandLUT);
-                if (overflow && overflow.overflowPct > 10) {
+                if (overflow && overflow.overflowPct > 3) {
                   detectedOverflows.push(overflow);
                   textEl.attr('data-overflow', 'true');
                 }
