@@ -1,4 +1,6 @@
 ---
+import ErrorToast from '@/components/ErrorToast';
+
 interface Props {
   title?: string;
 }
@@ -76,6 +78,8 @@ const { title = 'LastWave' } = Astro.props;
     <main>
       <slot />
     </main>
+
+    <ErrorToast client:load />
 
     <footer class="text-center mt-20 pb-8 text-lw-muted/40 text-xs tracking-wider">
       <div class="w-12 h-px bg-gradient-to-r from-transparent via-lw-border to-transparent mx-auto mb-4"></div>

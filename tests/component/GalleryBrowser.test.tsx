@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import GalleryBrowser from '@/components/GalleryBrowser';
 
 describe('GalleryBrowser', () => {
@@ -8,6 +8,7 @@ describe('GalleryBrowser', () => {
 
   it('renders pagination buttons', () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ resources: [] }),
     } as Response);
 
@@ -18,6 +19,7 @@ describe('GalleryBrowser', () => {
 
   it('shows page info text', () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ resources: [] }),
     } as Response);
 
@@ -27,6 +29,7 @@ describe('GalleryBrowser', () => {
 
   it('disables Previous Page on first page', () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ resources: [] }),
     } as Response);
 
@@ -41,6 +44,7 @@ describe('GalleryBrowser', () => {
     ];
 
     vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ resources: mockResources }),
     } as Response);
 
@@ -50,5 +54,22 @@ describe('GalleryBrowser', () => {
       const images = container.querySelectorAll('[style*="background-image"]');
       expect(images.length).toBe(2);
     });
+  });
+
+  it('shows error state when fetch fails', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
+
+    render(<GalleryBrowser />);
+
+    // Advance past retry delays (1s + 2s exponential backoff)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10000);
+    });
+
+    expect(screen.getByText(/Could not load gallery images/)).toBeInTheDocument();
+    expect(screen.getByText(/niko@savas.ca/)).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });

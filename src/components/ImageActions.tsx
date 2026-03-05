@@ -1,33 +1,39 @@
 import { useState } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
+import { fetchWithRetry } from '@/core/fetchWithRetry';
 
 // Fetch Google Fonts CSS, download all referenced font files, and return
 // a self-contained <style> block with base64-inlined @font-face rules.
 // This is needed because <img>-based SVG rendering blocks external loads.
 async function inlineFontCss(fontFamily: string): Promise<string> {
   const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
-  // Request woff2 by sending a modern User-Agent
-  const cssRes = await fetch(cssUrl, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-  });
-  let css = await cssRes.text();
+  try {
+    // Request woff2 by sending a modern User-Agent
+    const cssRes = await fetchWithRetry(cssUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+    });
+    let css = await cssRes.text();
 
-  // Find all url(...) references and replace with data URIs
-  const urlPattern = /url\((https:\/\/[^)]+)\)/g;
-  const urls = [...css.matchAll(urlPattern)].map((m) => m[1]);
-  for (const fontUrl of urls) {
-    try {
-      const res = await fetch(fontUrl);
-      const buf = await res.arrayBuffer();
-      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-      const mime = fontUrl.includes('.woff2') ? 'font/woff2' : 'font/woff';
-      css = css.replace(fontUrl, `data:${mime};base64,${b64}`);
-    } catch {
-      // If a single font file fails, skip it — text will fall back
+    // Find all url(...) references and replace with data URIs
+    const urlPattern = /url\((https:\/\/[^)]+)\)/g;
+    const urls = [...css.matchAll(urlPattern)].map((m) => m[1]);
+    for (const fontUrl of urls) {
+      try {
+        const res = await fetch(fontUrl);
+        const buf = await res.arrayBuffer();
+        const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const mime = fontUrl.includes('.woff2') ? 'font/woff2' : 'font/woff';
+        css = css.replace(fontUrl, `data:${mime};base64,${b64}`);
+      } catch {
+        // If a single font file fails, skip it — text will fall back
+      }
     }
+    return css;
+  } catch {
+    // If font CSS fetch fails entirely, return empty — SVG will use web font fallback
+    return '';
   }
-  return css;
 }
 
 // Render an SVG element to a PNG blob with fonts inlined
@@ -66,6 +72,7 @@ async function svgToPngBlob(svgEl: SVGSVGElement, fontFamily: string): Promise<B
 export default function ImageActions() {
   const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
+  const addToast = useLastWaveStore((s) => s.addToast);
 
   const [sharingLink, setSharingLink] = useState('');
   const [showDialog, setShowDialog] = useState(false);
@@ -118,7 +125,7 @@ export default function ImageActions() {
       document.body.removeChild(a);
       URL.revokeObjectURL(pngUrl);
     } catch (err) {
-      console.error('PNG download failed', err);
+      addToast('PNG download failed. Please try again or use "Download SVG" instead.');
     }
   }
 
@@ -148,7 +155,7 @@ export default function ImageActions() {
       setSharingLink(imageUrl.replace('.svg', '.png'));
       setShowDialog(true);
     } catch (err) {
-      console.error('Cloudinary upload failed', err);
+      addToast('Could not generate share link. Please try again.');
     } finally {
       setUploadInProgress(false);
     }
@@ -164,9 +171,8 @@ export default function ImageActions() {
       const file = new File([blob], `${getFileName()}.png`, { type: 'image/png' });
       await navigator.share({ files: [file], title: 'LastWave' });
     } catch (err) {
-      // User cancelled or share failed — fall back to download
       if ((err as Error).name !== 'AbortError') {
-        console.error('Share failed', err);
+        addToast('Share failed. Try downloading the image and sharing it manually.');
       }
     }
   }
@@ -237,7 +243,7 @@ export default function ImageActions() {
       {showDialog && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowDialog(false)}>
           <div className="bg-lw-surface border border-lw-border rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-display text-xl text-white mb-4">Share this wave</h3>
+            <h3 className="font-display text-xl text-lw-heading mb-4">Share this wave</h3>
             <input
               type="text"
               readOnly

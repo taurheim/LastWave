@@ -1,10 +1,22 @@
 import { create } from 'zustand';
 import type LoadingStage from '../core/models/LoadingStage';
 
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'error' | 'warning' | 'info';
+  createdAt: number;
+}
+
 interface LastWaveState {
   // Logging
   logs: string[];
   log: (message: string) => void;
+
+  // Toasts
+  toasts: Toast[];
+  addToast: (message: string, type?: Toast['type']) => void;
+  removeToast: (id: string) => void;
 
   // Options
   rendererOptions: Record<string, any>;
@@ -39,6 +51,18 @@ export const useLastWaveStore = create<LastWaveState>((set, get) => ({
   // Logging
   logs: [],
   log: (message: string) => set((state) => ({ logs: [...state.logs, message] })),
+
+  // Toasts
+  toasts: [],
+  addToast: (message, type = 'error') =>
+    set((state) => ({
+      toasts: [
+        ...state.toasts,
+        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, message, type, createdAt: Date.now() },
+      ],
+    })),
+  removeToast: (id) =>
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   // Options
   rendererOptions: {},

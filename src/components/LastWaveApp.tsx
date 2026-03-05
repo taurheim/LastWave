@@ -5,6 +5,7 @@ import StageLoadingBar from '@/components/StageLoadingBar';
 import WaveVisualization from '@/components/WaveVisualization';
 import ImageActions from '@/components/ImageActions';
 import CustomizePanel from '@/components/CustomizePanel';
+import { fetchWithRetry } from '@/core/fetchWithRetry';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
@@ -90,11 +91,26 @@ export default function LastWaveApp() {
   const resetToOptions = useLastWaveStore((s) => s.resetToOptions);
 
   const [seriesData, setSeriesData] = useState<SeriesData[]>([]);
+  const rawSeriesDataRef = useRef<SeriesData[]>([]);
+  const [maxPlaysInDataset, setMaxPlaysInDataset] = useState(100);
   const [error, setError] = useState<string | null>(null);
   const [showFullSvg, setShowFullSvg] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [overflows, setOverflows] = useState<OverflowInfo[]>([]);
   const [highlightOverflows, setHighlightOverflows] = useState(false);
+
+  const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
+
+  // Re-filter data when minPlays changes (debounced)
+  useEffect(() => {
+    if (rawSeriesDataRef.current.length === 0) return;
+    const timer = setTimeout(() => {
+      const mp = parseInt(minPlays, 10);
+      if (isNaN(mp)) return;
+      setSeriesData(cleanByMinPlays(rawSeriesDataRef.current, mp));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [minPlays]);
 
   // Swap nav "Home" link to "← New graph" when graph is visible
   useEffect(() => {
@@ -171,7 +187,7 @@ export default function LastWaveApp() {
         ];
         const url = api.getAPIRequestURL(fetchMethod, params);
 
-        const response = await fetch(url);
+        const response = await fetchWithRetry(url);
         const json = await response.json();
         const parsed = api.parseResponseJSON(json);
         segmentData.push(parsed);
@@ -183,6 +199,7 @@ export default function LastWaveApp() {
 
       // Join and clean data
       let data = joinSegments(segmentData, store.log);
+      let rawData = data;
       data = cleanByMinPlays(data, minPlays, store.log);
 
       // If tag mode, fetch tags for each artist
@@ -202,7 +219,7 @@ export default function LastWaveApp() {
             const tagUrl = api.getAPIRequestURL('tag', tagParams);
 
             try {
-              const tagResponse = await fetch(tagUrl);
+              const tagResponse = await fetchWithRetry(tagUrl);
               const tagJson = await tagResponse.json();
               const tagParsed = api.parseResponseJSON(tagJson);
               const topTags = getTopTags(tagParsed);
@@ -211,7 +228,7 @@ export default function LastWaveApp() {
                 artistTags.cache(cache as any);
               }
             } catch {
-              // Skip this artist's tags on error
+              store.addToast(`Could not load tags for "${series.title}" — skipping`, 'warning');
             }
           }
 
@@ -221,12 +238,22 @@ export default function LastWaveApp() {
         }
 
         data = combineArtistTags(data, tagData);
+        rawData = data;
         data = cleanByMinPlays(data, minPlays, store.log);
       }
 
       // Rendering stage
       store.startNextStage(1);
 
+      rawSeriesDataRef.current = rawData;
+      // Compute the highest peak play count across all series for the slider max
+      let datasetMax = 1;
+      for (const series of rawData) {
+        for (const c of series.counts) {
+          if (c > datasetMax) datasetMax = c;
+        }
+      }
+      setMaxPlaysInDataset(datasetMax);
       setSeriesData(data);
 
       store.progressCurrentStage();
@@ -255,7 +282,10 @@ export default function LastWaveApp() {
             <h3 className="font-display text-xl text-red-400 mb-3">Something went wrong</h3>
             <p className="text-sm text-lw-muted font-mono mb-4 break-words">{error}</p>
             <p className="text-xs text-lw-muted/60 mb-6">
-              If this is unexpected, please let me know at niko@savas.ca
+              If this is unexpected, please{' '}
+              <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">email niko@savas.ca</a>
+              {' '}or{' '}
+              <a href="https://github.com/nikosavas/LastWave/issues/new" target="_blank" rel="noopener noreferrer" className="text-lw-accent hover:underline">open a GitHub issue</a>.
             </p>
             <button
               onClick={handleErrorDismiss}
@@ -278,19 +308,19 @@ export default function LastWaveApp() {
         <div className="flex justify-center px-4 py-3">
           <button
             onClick={() => setShowCustomize(!showCustomize)}
-            className={`border rounded-lg px-5 py-2 text-xs tracking-wider uppercase transition-all ${
+            className={`rounded-lg px-6 py-2.5 text-xs tracking-wider uppercase font-medium transition-all ${
               showCustomize
-                ? 'border-lw-accent text-lw-accent'
-                : 'border-lw-border hover:border-lw-muted text-lw-muted hover:text-lw-text'
+                ? 'bg-lw-accent text-lw-bg'
+                : 'bg-lw-surface border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
             }`}
           >
-            {showCustomize ? 'Hide customize' : 'Customize'}
+            {showCustomize ? 'Hide customize' : '⚙ Customize'}
           </button>
         </div>
       )}
 
       {/* Customize Panel */}
-      {showActions && showCustomize && <CustomizePanel />}
+      {showActions && showCustomize && <CustomizePanel maxPlays={maxPlaysInDataset} />}
 
       {/* Visualization */}
       {showVisualization && (
@@ -299,34 +329,35 @@ export default function LastWaveApp() {
         </ImageScaler>
       )}
 
+      {/* Misaligned labels warning — always below the image */}
+      {showActions && overflows.length > 0 && (
+        <div className="flex justify-center py-2">
+          <button
+            onClick={() => {}}
+            onMouseEnter={() => setHighlightOverflows(true)}
+            onMouseLeave={() => setHighlightOverflows(false)}
+            className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/50 hover:border-orange-400 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg px-4 py-2 transition-all"
+          >
+            <span>⚠</span>
+            <span>
+              {overflows.length === 1
+                ? '1 label may be misaligned'
+                : `${overflows.length} labels may be misaligned`}
+              {' — '}Report issue
+            </span>
+          </button>
+        </div>
+      )}
+
       {/* Image Actions (download/share) — sticky on mobile */}
       {showActions && (
         <div className="md:relative fixed bottom-0 left-0 right-0 z-40 md:z-auto bg-lw-bg/90 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none border-t border-lw-border md:border-t-0">
           <ImageActions />
-          {/* Bug report button for text overflow */}
-          {overflows.length > 0 && (
-            <div className="flex justify-center pb-3 md:pb-4">
-              <button
-                onClick={() => {}}
-                onMouseEnter={() => setHighlightOverflows(true)}
-                onMouseLeave={() => setHighlightOverflows(false)}
-                className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/50 hover:border-orange-400 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg px-4 py-2 transition-all"
-              >
-                <span>⚠</span>
-                <span>
-                  {overflows.length === 1
-                    ? '1 label may be misaligned'
-                    : `${overflows.length} labels may be misaligned`}
-                  {' — '}Report issue
-                </span>
-              </button>
-            </div>
-          )}
         </div>
       )}
 
       {/* Spacer so fixed mobile bar doesn't cover content */}
-      {showActions && <div className="h-28 md:hidden" />}
+      {showActions && <div className="h-20 md:hidden" />}
 
       {/* Highlight overflowing labels when hovering the bug report button */}
       {highlightOverflows && (

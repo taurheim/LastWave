@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useLastWaveStore } from '@/store/index';
+import { fetchWithRetry } from '@/core/fetchWithRetry';
 
 const IMAGES_PER_PAGE = 9;
 const GALLERY_API_URL = 'https://res.cloudinary.com/lastwave/image/list/browser_upload.json';
@@ -7,9 +9,11 @@ export default function GalleryBrowser() {
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const addToast = useLastWaveStore((s) => s.addToast);
 
   useEffect(() => {
-    fetch(GALLERY_API_URL)
+    fetchWithRetry(GALLERY_API_URL)
       .then((res) => res.json())
       .then((data) => {
         const images = (data.resources ?? []).map(
@@ -18,7 +22,10 @@ export default function GalleryBrowser() {
         );
         setAllImages(images);
       })
-      .catch((err) => console.error('Failed to load gallery', err));
+      .catch(() => {
+        setLoadError(true);
+        addToast('Could not load the gallery. Please try refreshing the page.');
+      });
   }, []);
 
   const pageCount = Math.max(1, Math.ceil(allImages.length / IMAGES_PER_PAGE));
@@ -27,8 +34,21 @@ export default function GalleryBrowser() {
 
   return (
     <div className="text-center py-6 px-4">
+      {/* Error state */}
+      {loadError && (
+        <div className="py-12">
+          <p className="text-lw-muted text-sm mb-2">Could not load gallery images.</p>
+          <p className="text-lw-muted/60 text-xs">
+            Please try refreshing, or report this at{' '}
+            <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">niko@savas.ca</a>
+            {' / '}
+            <a href="https://github.com/nikosavas/LastWave/issues/new" target="_blank" rel="noopener noreferrer" className="text-lw-accent hover:underline">GitHub Issues</a>.
+          </p>
+        </div>
+      )}
+
       {/* Navigation */}
-      <div className="flex justify-center gap-3 mb-6">
+      {!loadError && <div className="flex justify-center gap-3 mb-6">
         <button
           disabled={currentPage === 0}
           onClick={() => setCurrentPage((p) => p - 1)}
@@ -43,10 +63,10 @@ export default function GalleryBrowser() {
         >
           Next →
         </button>
-      </div>
+      </div>}
 
       {/* Image Grid */}
-      <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
+      {!loadError && <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
         {thisPageImages.map((url, i) => (
           <div
             key={`${currentPage}-${i}`}
@@ -55,12 +75,12 @@ export default function GalleryBrowser() {
             style={{ backgroundImage: `url(${url})` }}
           />
         ))}
-      </div>
+      </div>}
 
       {/* Footer */}
-      <p className="mt-6 text-xs tracking-widest uppercase text-lw-muted">
+      {!loadError && <p className="mt-6 text-xs tracking-widest uppercase text-lw-muted">
         Page {currentPage + 1} / {pageCount}
-      </p>
+      </p>}
 
       {/* Lightbox */}
       {lightboxUrl && (

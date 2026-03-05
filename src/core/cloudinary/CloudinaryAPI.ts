@@ -1,3 +1,5 @@
+import { fetchWithRetry } from '@/core/fetchWithRetry';
+
 export default class CloudinaryAPI {
   private ACCOUNT_NAME = 'lastwave';
   private UPLOAD_PRESET = 'lastwave_unsigned_upload';
@@ -21,14 +23,10 @@ export default class CloudinaryAPI {
     formData.append('tags', UPLOAD_TAGS.join(','));
     formData.append('file', imageBlob);
 
-    const response = await fetch(this.API_UPLOAD_URL, {
+    const response = await fetchWithRetry(this.API_UPLOAD_URL, {
       method: 'POST',
       body: formData,
     });
-
-    if (!response.ok) {
-      throw new Error(`Cloudinary upload failed: ${response.statusText}`);
-    }
 
     const data = await response.json();
     return data.secure_url;
