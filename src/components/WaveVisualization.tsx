@@ -52,9 +52,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const bgColor = schemeName === 'lastwave'
       ? (isDark ? '#0c1117' : '#f0f2f5')
       : scheme.backgroundColor;
-    const fontColor = schemeName === 'lastwave'
-      ? (isDark ? '#000000' : '#ffffff')
-      : scheme.fontColor;
+    const fontColor = scheme.fontColor;
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
@@ -287,12 +285,16 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
       }
       fontSize = Math.max(10, fontSize);
 
+      const usernameColor = schemeName === 'lastwave'
+        ? (isDark ? '#ffffff' : '#000000')
+        : fontColor;
+
       svg.append('text')
         .attr('x', 5)
         .attr('y', fontSize + 2)
         .attr('font-size', `${fontSize}px`)
         .attr('font-family', fontFamily)
-        .attr('fill', fontColor)
+        .attr('fill', usernameColor)
         .attr('opacity', 0.2)
         .text(username);
     }
