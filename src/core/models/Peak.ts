@@ -22,9 +22,15 @@ export default class Peak {
   public B: LineSegment;
   public C: LineSegment;
   public D: LineSegment;
+  // Store stack data for accurate Bezier curve computation
+  public stackData: StackPoint[];
+  public stackIndex: number;
 
   constructor(index: number, stack: StackPoint[]) {
     const LEFT_RIGHT_SPREADING_FACTOR = 0.1;
+
+    this.stackData = stack;
+    this.stackIndex = index;
 
     // 1. Grab all the surrounding points
     // y: The amount of vertical space that the ripple takes up

@@ -3,6 +3,7 @@ import Peak from '../models/Peak';
 import Point from '../models/Point';
 import InfiniteLine from '../models/InfiniteLine';
 import Label from '../models/Label';
+import { constrainLabel } from './textFitting';
 
 /*
   Returns true if the Z algorithm should be used:
@@ -71,9 +72,13 @@ export function getZLabel(peak: Peak, text: string, font: string, measureText: M
   const heightToFontSizeRatio = textDimensions.height / TEST_FONT_SIZE;
   const fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
 
-  // Position the text on the bottom left corner
-  const textPositionX = centerPoint.x - minVerticalDistance / textDimensions.slope;
-  const textPositionY = centerPoint.y - boxHeight / 2;
+  if (fontSize < 5) return null;
 
-  return new Label(text, textPositionX, textPositionY, font, fontSize);
+  // Recompute position with final font size for better centering
+  const finalDims = measureText(text, font, fontSize);
+  const textPositionX = centerPoint.x - finalDims.width / 2;
+  const textPositionY = centerPoint.y - finalDims.height / 2;
+
+  const label = new Label(text, textPositionX, textPositionY, font, fontSize);
+  return constrainLabel(label, peak, text, font, measureText);
 }

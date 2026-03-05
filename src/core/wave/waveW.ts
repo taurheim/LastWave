@@ -3,6 +3,7 @@ import Peak from '../models/Peak';
 import Point from '../models/Point';
 import InfiniteLine from '../models/InfiniteLine';
 import Label from '../models/Label';
+import { constrainLabel } from './textFitting';
 
 /*
   Returns true if the W algorithm should be used:
@@ -37,7 +38,7 @@ export function getWLabel(peak: Peak, text: string, font: string, measureText: M
   // Config
   const STARTING_FONT_SIZE = 5;
   const FONT_SIZE_INTERVAL = 2;
-  const FONT_SIZE_SAFETY_SCALE = 0.9;
+  const FONT_SIZE_SAFETY_SCALE = 0.90;
 
   let fontSize: number = STARTING_FONT_SIZE;
   let leftCollision;
@@ -126,5 +127,6 @@ export function getWLabel(peak: Peak, text: string, font: string, measureText: M
 
   const labelX = leftCollision.x;
 
-  return new Label(text, labelX, labelY, font, fontSize);
+  const label = new Label(text, labelX, labelY, font, fontSize);
+  return constrainLabel(label, peak, text, font, measureText);
 }
