@@ -56,32 +56,32 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
           <div>
             <div className="flex items-baseline justify-between mb-2">
               <label className="text-sm text-lw-text font-medium">Minimum plays</label>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setDataSourceOption('min_plays', String(Math.max(1, minPlays - 1)))}
-                  disabled={minPlays <= 1}
-                  className="w-6 h-6 flex items-center justify-center rounded bg-lw-bg border border-lw-border text-lw-muted hover:text-lw-text hover:border-lw-accent disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm"
-                >
-                  −
-                </button>
-                <span className="text-lg font-semibold text-lw-accent tabular-nums">{minPlays}</span>
-                <button
-                  onClick={() => setDataSourceOption('min_plays', String(Math.min(maxPlays, minPlays + 1)))}
-                  disabled={minPlays >= maxPlays}
-                  className="w-6 h-6 flex items-center justify-center rounded bg-lw-bg border border-lw-border text-lw-muted hover:text-lw-text hover:border-lw-accent disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm"
-                >
-                  +
-                </button>
-              </div>
+              <span className="text-lg font-semibold text-lw-accent tabular-nums">{minPlays}</span>
             </div>
-            <input
-              type="range"
-              min={1}
-              max={maxPlays}
-              value={minPlays}
-              onChange={(e) => setDataSourceOption('min_plays', e.target.value)}
-              className="w-full h-2 accent-lw-accent cursor-pointer"
-            />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setDataSourceOption('min_plays', String(Math.max(1, minPlays - 1)))}
+                disabled={minPlays <= 1}
+                className="w-6 h-6 flex items-center justify-center rounded bg-lw-bg border border-lw-border text-lw-muted hover:text-lw-text hover:border-lw-accent disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm shrink-0"
+              >
+                −
+              </button>
+              <input
+                type="range"
+                min={1}
+                max={maxPlays}
+                value={minPlays}
+                onChange={(e) => setDataSourceOption('min_plays', e.target.value)}
+                className="w-full h-2 accent-lw-accent cursor-pointer"
+              />
+              <button
+                onClick={() => setDataSourceOption('min_plays', String(Math.min(maxPlays, minPlays + 1)))}
+                disabled={minPlays >= maxPlays}
+                className="w-6 h-6 flex items-center justify-center rounded bg-lw-bg border border-lw-border text-lw-muted hover:text-lw-text hover:border-lw-accent disabled:opacity-30 disabled:cursor-not-allowed transition-all text-sm shrink-0"
+              >
+                +
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm text-lw-text font-medium mb-2">Graph type</label>
