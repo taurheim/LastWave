@@ -1,24 +1,26 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        display: ['Roboto', 'system-ui', 'sans-serif'],
         body: ['"DM Sans"', 'system-ui', 'sans-serif'],
         sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
       },
       colors: {
         lw: {
-          bg: '#0c1117',
-          surface: '#141b24',
-          border: '#1e2a36',
-          accent: '#27AAE1',
-          'accent-dim': '#1a7faa',
-          teal: '#2F4F4F',
-          cyan: '#00CED1',
-          muted: '#7a8fa0',
-          text: '#e2e8f0',
+          bg: 'rgb(var(--lw-bg) / <alpha-value>)',
+          surface: 'rgb(var(--lw-surface) / <alpha-value>)',
+          border: 'rgb(var(--lw-border) / <alpha-value>)',
+          accent: 'rgb(var(--lw-accent) / <alpha-value>)',
+          'accent-dim': 'rgb(var(--lw-accent-dim) / <alpha-value>)',
+          teal: 'rgb(var(--lw-teal) / <alpha-value>)',
+          cyan: 'rgb(var(--lw-cyan) / <alpha-value>)',
+          muted: 'rgb(var(--lw-muted) / <alpha-value>)',
+          text: 'rgb(var(--lw-text) / <alpha-value>)',
+          heading: 'rgb(var(--lw-heading) / <alpha-value>)',
         },
       },
     },
