@@ -46,8 +46,15 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
     const scheme = schemes[schemeName] ?? schemes.lastwave;
     const colors = scheme.schemeColors;
-    const bgColor = scheme.backgroundColor;
-    const fontColor = scheme.fontColor;
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // LastWave theme adapts to system dark/light mode
+    const bgColor = schemeName === 'lastwave'
+      ? (isDark ? '#0c1117' : '#f0f2f5')
+      : scheme.backgroundColor;
+    const fontColor = schemeName === 'lastwave'
+      ? (isDark ? '#000000' : '#ffffff')
+      : scheme.fontColor;
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
