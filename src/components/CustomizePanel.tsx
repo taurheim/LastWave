@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useLastWaveStore } from '@/store/index';
 
 const FALLBACK_FONTS = [
@@ -7,10 +7,13 @@ const FALLBACK_FONTS = [
   'Comic Sans MS', 'Impact', 'Futura', 'Gill Sans',
 ];
 
-function useFontList() {
+function useLazyFontList() {
   const [fonts, setFonts] = useState<string[]>(FALLBACK_FONTS);
+  const [fetched, setFetched] = useState(false);
 
-  useEffect(() => {
+  const fetchFonts = useCallback(() => {
+    if (fetched) return;
+    setFetched(true);
     if ('queryLocalFonts' in window) {
       (window as any).queryLocalFonts().then((localFonts: any[]) => {
         const families = [...new Set(localFonts.map((f: any) => f.family))].sort(
@@ -19,9 +22,9 @@ function useFontList() {
         if (families.length > 0) setFonts(families);
       }).catch(() => {});
     }
-  }, []);
+  }, [fetched]);
 
-  return fonts;
+  return { fonts, fetchFonts };
 }
 
 export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
@@ -42,8 +45,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const addYears = rendererOptions.add_years ?? false;
   const showUsername = rendererOptions.show_username ?? true;
 
-  const fontList = useFontList();
-  const [customFont, setCustomFont] = useState(!fontList.includes(font));
+  const { fonts: fontList, fetchFonts } = useLazyFontList();
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-4">
@@ -130,43 +132,16 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
               </div>
               <div>
                 <label className="block text-xs text-lw-muted mb-1">Font</label>
-                {customFont ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={font}
-                      onChange={(e) => setRendererOption('font', e.target.value)}
-                      placeholder="Font family name"
-                      className="flex-1 bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text placeholder-lw-muted/40 focus:outline-none focus:border-lw-accent transition-all"
-                    />
-                    <button
-                      onClick={() => { setCustomFont(false); setRendererOption('font', fontList[0]); }}
-                      className="text-xs text-lw-muted hover:text-lw-accent transition-colors px-2"
-                      title="Switch to font picker"
-                    >
-                      ← List
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <select
-                      value={fontList.includes(font) ? font : ''}
-                      onChange={(e) => setRendererOption('font', e.target.value)}
-                      className="flex-1 bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
-                    >
-                      {fontList.map((f) => (
-                        <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => setCustomFont(true)}
-                      className="text-xs text-lw-muted hover:text-lw-accent transition-colors px-2"
-                      title="Type a custom font name"
-                    >
-                      Custom
-                    </button>
-                  </div>
-                )}
+                <select
+                  value={fontList.includes(font) ? font : ''}
+                  onFocus={fetchFonts}
+                  onChange={(e) => setRendererOption('font', e.target.value)}
+                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+                >
+                  {fontList.map((f) => (
+                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
