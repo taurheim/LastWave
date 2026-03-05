@@ -294,6 +294,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
         .attr('y', fontSize + 2)
         .attr('font-size', `${fontSize}px`)
         .attr('font-family', fontFamily)
+        .attr('font-weight', 'bold')
         .attr('fill', usernameColor)
         .attr('opacity', 0.2)
         .text(username);
