@@ -20,12 +20,30 @@ import {
   getTopTags,
 } from '@/core/lastfm';
 import type ArtistTags from '@/core/lastfm/models/ArtistTags';
-import lastfmConfig from '@/core/lastfm/config.json';
 
 const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
+const MAX_CONCURRENT = 10;
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+/** Run async tasks with a concurrency cap, calling onProgress after each completes. */
+async function pooled<T>(
+  tasks: (() => Promise<T>)[],
+  concurrency: number,
+  onProgress?: () => void,
+): Promise<T[]> {
+  const results: T[] = new Array(tasks.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < tasks.length) {
+      const idx = next++;
+      results[idx] = await tasks[idx]();
+      onProgress?.();
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
 }
 
 function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
@@ -177,25 +195,20 @@ export default function LastWaveApp() {
       store.startNextStage(segments.length);
 
       const fetchMethod = isTagMode ? 'artist' : method;
-      const segmentData = [];
 
-      for (const seg of segments) {
+      const segmentTasks = segments.map((seg) => async () => {
         const params = [
           new URLParameter('user', username),
           new URLParameter('from', String(seg.start)),
           new URLParameter('to', String(seg.end)),
         ];
         const url = api.getAPIRequestURL(fetchMethod, params);
-
         const response = await fetchWithRetry(url);
         const json = await response.json();
-        const parsed = api.parseResponseJSON(json);
-        segmentData.push(parsed);
+        return api.parseResponseJSON(json);
+      });
 
-        store.progressCurrentStage();
-
-        await delay(lastfmConfig.LAST_FM_API_CADENCE_MS);
-      }
+      const segmentData = await pooled(segmentTasks, MAX_CONCURRENT, () => store.progressCurrentStage());
 
       // Join and clean data
       let data = joinSegments(segmentData, store.log);
@@ -205,12 +218,12 @@ export default function LastWaveApp() {
       // If tag mode, fetch tags for each artist
       if (isTagMode) {
         store.startNextStage(data.length);
-        const tagData: Record<string, ArtistTags> = {};
         const useLocalStorage = dsOpts.use_localstorage ?? true;
         const cache = useLocalStorage ? localStorage : undefined;
+        const ArtistTagsClass = (await import('@/core/lastfm/models/ArtistTags')).default;
 
-        for (const series of data) {
-          const artistTags = new (await import('@/core/lastfm/models/ArtistTags')).default(series.title);
+        const tagTasks = data.map((series) => async () => {
+          const artistTags = new ArtistTagsClass(series.title);
 
           if (cache && artistTags.isInCache(cache as any)) {
             artistTags.loadFromCache(cache as any);
@@ -232,9 +245,13 @@ export default function LastWaveApp() {
             }
           }
 
-          tagData[series.title] = artistTags;
-          store.progressCurrentStage();
-          await delay(lastfmConfig.LAST_FM_API_CADENCE_MS);
+          return { title: series.title, tags: artistTags };
+        });
+
+        const tagResults = await pooled(tagTasks, MAX_CONCURRENT, () => store.progressCurrentStage());
+        const tagData: Record<string, ArtistTags> = {};
+        for (const { title, tags } of tagResults) {
+          tagData[title] = tags;
         }
 
         data = combineArtistTags(data, tagData);
