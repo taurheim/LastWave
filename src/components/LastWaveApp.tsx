@@ -218,8 +218,7 @@ export default function LastWaveApp() {
       // If tag mode, fetch tags for each artist
       if (isTagMode) {
         store.startNextStage(data.length);
-        const useLocalStorage = dsOpts.use_localstorage ?? true;
-        const cache = useLocalStorage ? localStorage : undefined;
+        const cache = localStorage;
         const ArtistTagsClass = (await import('@/core/lastfm/models/ArtistTags')).default;
 
         const tagTasks = data.map((series) => async () => {

@@ -31,7 +31,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const minPlays = parseInt(dataSourceOptions.min_plays ?? '10', 10) || 1;
-  const useLocalStorage = dataSourceOptions.use_localstorage ?? true;
 
   const width = rendererOptions.width ?? '';
   const height = rendererOptions.height ?? '600';
@@ -103,15 +102,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">{opt.label}</span>
                 </label>
               ))}
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={useLocalStorage}
-                  onChange={(e) => setDataSourceOption('use_localstorage', e.target.checked)}
-                  className="rounded border-lw-border bg-lw-bg accent-lw-accent"
-                />
-                <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">Cache last.fm tag responses</span>
-              </label>
             </div>
           </div>
 
