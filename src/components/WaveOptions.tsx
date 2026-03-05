@@ -27,6 +27,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains('dark'));
+    check();
     const observer = new MutationObserver(check);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
