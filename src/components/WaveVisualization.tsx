@@ -55,6 +55,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const addLabels = rendererOptions.add_labels ?? true;
     const addMonths = rendererOptions.add_months ?? true;
     const addYears = rendererOptions.add_years ?? false;
+    const showUsername = rendererOptions.show_username ?? true;
 
     // Determine dimensions
     const numSegments = seriesData[0]?.counts.length ?? 0;
@@ -263,6 +264,31 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
       .attr('fill', fontColor)
       .attr('opacity', 0.5)
       .text('lastwave');
+
+    // Username
+    const username = dataSourceOptions.username;
+    if (username && showUsername) {
+      // Scale font size so the username fits within 1/3 of the graph width
+      const maxWidth = width / 3;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      let fontSize = Math.round(height / 12);
+      ctx.font = `${fontSize}px ${fontFamily}`;
+      const measured = ctx.measureText(username).width;
+      if (measured > maxWidth) {
+        fontSize = Math.floor(fontSize * (maxWidth / measured));
+      }
+      fontSize = Math.max(10, fontSize);
+
+      svg.append('text')
+        .attr('x', 5)
+        .attr('y', fontSize + 2)
+        .attr('font-size', `${fontSize}px`)
+        .attr('font-family', fontFamily)
+        .attr('fill', fontColor)
+        .attr('opacity', 0.2)
+        .text(username);
+    }
   }, [seriesData, rendererOptions, dataSourceOptions]);
 
   return (
