@@ -39,7 +39,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const height = rendererOptions.height ?? '600';
   const offset = rendererOptions.offset ?? 'silhouette';
   const font = rendererOptions.font ?? 'DM Sans';
-  const stroke = rendererOptions.stroke ?? true;
   const addLabels = rendererOptions.add_labels ?? true;
   const addMonths = rendererOptions.add_months ?? true;
   const addYears = rendererOptions.add_years ?? false;
@@ -109,7 +108,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             <div className="space-y-3">
               {[
                 { label: 'Username', checked: showUsername, key: 'show_username' },
-                { label: 'Ripple border', checked: stroke, key: 'stroke' },
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
                 { label: 'Year names', checked: addYears, key: 'add_years' },
                 { label: 'Watermark', checked: showWatermark, key: 'show_watermark' },

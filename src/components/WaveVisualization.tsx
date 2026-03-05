@@ -58,7 +58,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
-    const showStroke = rendererOptions.stroke ?? true;
     const addLabels = rendererOptions.add_labels ?? true;
     const addMonths = rendererOptions.add_months ?? true;
     const addYears = rendererOptions.add_years ?? false;
@@ -138,8 +137,8 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
         return pathD;
       })
       .attr('fill', (_, i) => colors[i % colors.length])
-      .attr('stroke', showStroke ? bgColor : 'none')
-      .attr('stroke-width', showStroke ? 0.5 : 0);
+      .attr('stroke', 'none')
+      .attr('stroke-width', 0);
 
     // Add text labels using wave algorithms
     const detectedOverflows: OverflowInfo[] = [];
