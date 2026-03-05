@@ -4,7 +4,6 @@ import Label from '../models/Label';
 import Point from '../models/Point';
 import LineSegment from '../models/LineSegment';
 import InfiniteLine from '../models/InfiniteLine';
-import { constrainLabel } from './textFitting';
 
 /*
   Returns true if the Y algorithm should be used:
@@ -309,10 +308,6 @@ export function getYLabel(peak: Peak, text: string, font: string, measureText: M
     startPoint = newStartPoint;
   }
 
-  // Apply safety scale to account for Bezier deviation and font metric mismatch
-  fontSize = Math.floor(fontSize * 0.90);
-  if (fontSize < 5) return null;
-
   const textPosition = startPoint;
 
   // The text is anchored to the bottom left, but textPosition likely isn't
@@ -329,6 +324,5 @@ export function getYLabel(peak: Peak, text: string, font: string, measureText: M
     textPosition.y -= textHeight;
   }
 
-  const label = new Label(text, textPosition.x, textPosition.y, font, fontSize);
-  return constrainLabel(label, peak, text, font, measureText);
+  return new Label(text, textPosition.x, textPosition.y, font, fontSize);
 }

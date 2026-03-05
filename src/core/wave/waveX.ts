@@ -3,7 +3,6 @@ import Peak from '../models/Peak';
 import Point from '../models/Point';
 import InfiniteLine from '../models/InfiniteLine';
 import Label from '../models/Label';
-import { constrainLabel } from './textFitting';
 
 /*
   Returns true if the X algorithm should be used:
@@ -149,11 +148,8 @@ export function getXLabel(peak: Peak, text: string, font: string, measureText: M
   const boxHeight = Math.abs(leftTextCollision.y - rightTextCollision.y);
   const fontSize = Math.floor(boxHeight / heightToFontSizeRatio);
 
-  if (fontSize < 5) return null;
-
   const textX = leftTextCollision.x;
   const textY = Math.min(leftTextCollision.y, rightTextCollision.y);
 
-  const label = new Label(text, textX, textY, font, fontSize);
-  return constrainLabel(label, peak, text, font, measureText);
+  return new Label(text, textX, textY, font, fontSize);
 }
