@@ -9,6 +9,8 @@
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:accuracy": "vitest run tests/unit/wave-accuracy.test.ts --reporter=verbose",
+    "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
     "test:e2e": "playwright test",
     "lint": "eslint src/"
   },
@@ -22,6 +24,8 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
+    "@napi-rs/canvas": "^0.1.95",
     "@playwright/test": "^1.50.0",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.2.0",
@@ -29,12 +33,12 @@
     "@types/d3": "^7.4.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
     "jsdom": "^25.0.0",
     "pixelmatch": "^6.0.0",
     "pngjs": "^7.0.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
-    "@vitejs/plugin-react": "^4.3.0"
+    "vitest": "^3.0.0"
   }
 }

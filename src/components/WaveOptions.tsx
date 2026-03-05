@@ -35,21 +35,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
     ? dataSourceOptions.time_end.toISOString().slice(0, 10)
     : '';
   const groupBy = dataSourceOptions.group_by ?? 'week';
-  const minPlays = dataSourceOptions.min_plays ?? '10';
   const method = dataSourceOptions.method ?? 'artist';
-  const useLocalStorage = dataSourceOptions.use_localstorage ?? true;
+  const isCustomDate = datePreset === 'Custom';
 
-  // Renderer advanced defaults
-  const width = rendererOptions.width ?? '';
-  const height = rendererOptions.height ?? '600';
-  const offset = rendererOptions.offset ?? 'silhouette';
-  const font = rendererOptions.font ?? 'DM Sans';
-  const stroke = rendererOptions.stroke ?? true;
-  const addLabels = rendererOptions.add_labels ?? true;
-  const addMonths = rendererOptions.add_months ?? true;
-  const addYears = rendererOptions.add_years ?? false;
+  function handleDatePresetChange(presetName: string) {
+    setDataSourceOption('_datePreset', presetName);
+    if (presetName === 'Custom') return;
 
-  function applyDatePreset(presetName: string) {
     const entry = easyDateEntries.find(([name]) => name === presetName);
     if (!entry) return;
     const [, preset] = entry;
@@ -57,7 +49,6 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
     const startDate = new Date(now - preset.offsets[0]);
     const endDate = new Date(now - preset.offsets[1]);
 
-    setDataSourceOption('_datePreset', presetName);
     setDataSourceOption('time_start', startDate);
     setDataSourceOption('time_end', endDate);
 
@@ -71,7 +62,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
     // If dates haven't been set yet, apply the default preset
     if (!dataSourceOptions.time_start) {
-      applyDatePreset(datePreset);
+      handleDatePresetChange(datePreset);
     }
 
     // Let the parent read options from the store
@@ -103,13 +94,36 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           <label className="block text-xs tracking-widest uppercase text-lw-muted mb-2">Date range</label>
           <select
             value={datePreset}
-            onChange={(e) => applyDatePreset(e.target.value)}
+            onChange={(e) => handleDatePresetChange(e.target.value)}
             className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all appearance-none cursor-pointer"
           >
             {easyDateEntries.map(([name]) => (
               <option key={name} value={name}>{name}</option>
             ))}
+            <option value="Custom">Custom</option>
           </select>
+          {isCustomDate && (
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className="block text-xs text-lw-muted mb-1">Start</label>
+                <input
+                  type="date"
+                  value={timeStart}
+                  onChange={(e) => setDataSourceOption('time_start', new Date(e.target.value))}
+                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-lw-muted mb-1">End</label>
+                <input
+                  type="date"
+                  value={timeEnd}
+                  onChange={(e) => setDataSourceOption('time_end', new Date(e.target.value))}
+                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Color Scheme */}
@@ -160,134 +174,31 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
       {/* Advanced Options */}
       {showAdvanced && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 bg-lw-surface/50 border border-lw-border rounded-xl p-6">
-          {/* Data Source Options */}
-          <div>
-            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4">Data Source</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Timespan start</label>
-                <input
-                  type="date"
-                  value={timeStart}
-                  onChange={(e) => setDataSourceOption('time_start', new Date(e.target.value))}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Timespan end</label>
-                <input
-                  type="date"
-                  value={timeEnd}
-                  onChange={(e) => setDataSourceOption('time_end', new Date(e.target.value))}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Group by</label>
-                <select
-                  value={groupBy}
-                  onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                >
-                  {['week', 'month', 'day', 'year'].map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Minimum Plays</label>
-                <input
-                  type="text"
-                  value={minPlays}
-                  onChange={(e) => setDataSourceOption('min_plays', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Data set</label>
-                <select
-                  value={method}
-                  onChange={(e) => setDataSourceOption('method', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                >
-                  {['artist', 'album', 'tag'].map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              <label className="flex items-center gap-2.5 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={useLocalStorage}
-                  onChange={(e) => setDataSourceOption('use_localstorage', e.target.checked)}
-                  className="rounded border-lw-border bg-lw-bg accent-lw-accent"
-                />
-                <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">Cache last.fm tag responses</span>
-              </label>
+        <div className="mb-8 bg-lw-surface/50 border border-lw-border rounded-xl p-6 max-w-sm mx-auto">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs text-lw-muted mb-1">Group by</label>
+              <select
+                value={groupBy}
+                onChange={(e) => setDataSourceOption('group_by', e.target.value)}
+                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
+              >
+                {['week', 'month', 'day', 'year'].map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          {/* Renderer Options */}
-          <div>
-            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4">Renderer</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Graph width</label>
-                <input
-                  type="text"
-                  value={width}
-                  onChange={(e) => setRendererOption('width', e.target.value)}
-                  placeholder="auto"
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white placeholder-lw-muted/40 focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Graph height</label>
-                <input
-                  type="text"
-                  value={height}
-                  onChange={(e) => setRendererOption('height', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Graph type</label>
-                <select
-                  value={offset}
-                  onChange={(e) => setRendererOption('offset', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                >
-                  {['silhouette', 'wiggle', 'expand', 'zero'].map((v) => (
-                    <option key={v} value={v}>{v}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs text-lw-muted mb-1">Font</label>
-                <input
-                  type="text"
-                  value={font}
-                  onChange={(e) => setRendererOption('font', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
-                />
-              </div>
-              {[
-                { label: 'Ripple border', checked: stroke, key: 'stroke' },
-                { label: 'Artist / album / tag names', checked: addLabels, key: 'add_labels' },
-                { label: 'Month names', checked: addMonths, key: 'add_months' },
-                { label: 'Year names', checked: addYears, key: 'add_years' },
-              ].map((opt) => (
-                <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={opt.checked}
-                    onChange={(e) => setRendererOption(opt.key, e.target.checked)}
-                    className="rounded border-lw-border bg-lw-bg accent-lw-accent"
-                  />
-                  <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">{opt.label}</span>
-                </label>
-              ))}
+            <div>
+              <label className="block text-xs text-lw-muted mb-1">Data set</label>
+              <select
+                value={method}
+                onChange={(e) => setDataSourceOption('method', e.target.value)}
+                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
+              >
+                {['artist', 'album', 'tag'].map((v) => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

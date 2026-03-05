@@ -4,7 +4,8 @@ import WaveOptions from '@/components/WaveOptions';
 import StageLoadingBar from '@/components/StageLoadingBar';
 import WaveVisualization from '@/components/WaveVisualization';
 import ImageActions from '@/components/ImageActions';
-import OptionActions from '@/components/OptionActions';
+import CustomizePanel from '@/components/CustomizePanel';
+import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
 import {
@@ -91,6 +92,26 @@ export default function LastWaveApp() {
   const [seriesData, setSeriesData] = useState<SeriesData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showFullSvg, setShowFullSvg] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [overflows, setOverflows] = useState<OverflowInfo[]>([]);
+  const [highlightOverflows, setHighlightOverflows] = useState(false);
+
+  // Swap nav "Home" link to "← New graph" when graph is visible
+  useEffect(() => {
+    const link = document.getElementById('nav-home-link') as HTMLAnchorElement | null;
+    if (!link) return;
+    if (showActions) {
+      link.textContent = '← New graph';
+      const handler = (e: Event) => { e.preventDefault(); resetToOptions(); };
+      link.addEventListener('click', handler);
+      return () => {
+        link.textContent = 'Home';
+        link.removeEventListener('click', handler);
+      };
+    } else {
+      link.textContent = 'Home';
+    }
+  }, [showActions, resetToOptions]);
 
   async function handleSubmit() {
     const store = useLastWaveStore.getState();
@@ -252,17 +273,72 @@ export default function LastWaveApp() {
       {/* Loading Bar */}
       {showLoadingBar && <StageLoadingBar />}
 
-      {/* Actions */}
-      {showActions && <OptionActions />}
+      {/* Customize toggle */}
+      {showActions && (
+        <div className="flex justify-center px-4 py-3">
+          <button
+            onClick={() => setShowCustomize(!showCustomize)}
+            className={`border rounded-lg px-5 py-2 text-xs tracking-wider uppercase transition-all ${
+              showCustomize
+                ? 'border-lw-accent text-lw-accent'
+                : 'border-lw-border hover:border-lw-muted text-lw-muted hover:text-lw-text'
+            }`}
+          >
+            {showCustomize ? 'Hide customize' : 'Customize'}
+          </button>
+        </div>
+      )}
 
-      {/* Image Actions */}
-      {showActions && <ImageActions />}
+      {/* Customize Panel */}
+      {showActions && showCustomize && <CustomizePanel />}
 
       {/* Visualization */}
       {showVisualization && (
         <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
-          <WaveVisualization seriesData={seriesData} />
+          <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
         </ImageScaler>
+      )}
+
+      {/* Image Actions (download/share) — sticky on mobile */}
+      {showActions && (
+        <div className="md:relative fixed bottom-0 left-0 right-0 z-40 md:z-auto bg-lw-bg/90 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none border-t border-lw-border md:border-t-0">
+          <ImageActions />
+          {/* Bug report button for text overflow */}
+          {overflows.length > 0 && (
+            <div className="flex justify-center pb-3 md:pb-4">
+              <button
+                onClick={() => {}}
+                onMouseEnter={() => setHighlightOverflows(true)}
+                onMouseLeave={() => setHighlightOverflows(false)}
+                className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/50 hover:border-orange-400 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg px-4 py-2 transition-all"
+              >
+                <span>⚠</span>
+                <span>
+                  {overflows.length === 1
+                    ? '1 label may be misaligned'
+                    : `${overflows.length} labels may be misaligned`}
+                  {' — '}Report issue
+                </span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Spacer so fixed mobile bar doesn't cover content */}
+      {showActions && <div className="h-28 md:hidden" />}
+
+      {/* Highlight overflowing labels when hovering the bug report button */}
+      {highlightOverflows && (
+        <style>{`
+          #svg-wrapper svg text[data-overflow="true"] {
+            fill: #ffffff !important;
+            stroke: #000000;
+            stroke-width: 3px;
+            paint-order: stroke fill;
+            filter: drop-shadow(0 0 8px #f97316) drop-shadow(0 0 16px #f97316);
+          }
+        `}</style>
       )}
     </div>
   );

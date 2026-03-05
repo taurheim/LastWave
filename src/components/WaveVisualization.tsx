@@ -8,6 +8,8 @@ import { isWType, getWLabel } from '@/core/wave/waveW';
 import { isXType, getXLabel } from '@/core/wave/waveX';
 import { isYType, getYLabel } from '@/core/wave/waveY';
 import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { buildBandLUT, checkLabelOverflow } from '@/core/wave/overflowDetection';
+import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import FontData from '@/core/models/FontData';
@@ -27,9 +29,10 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
 
 interface WaveVisualizationProps {
   seriesData: SeriesData[];
+  onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
 }
 
-export default function WaveVisualization({ seriesData }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
   const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
@@ -114,17 +117,23 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
     defs.append('style')
       .text(`@import url('${fontUrl}');`);
 
-    // Draw paths
+    // Draw paths — capture path strings for overflow detection
+    const pathStrings: string[] = [];
     svg.selectAll('path.wave')
       .data(stackedData)
       .join('path')
       .attr('class', 'wave')
-      .attr('d', (d) => area(d as any))
+      .attr('d', (d) => {
+        const pathD = area(d as any) ?? '';
+        pathStrings.push(pathD);
+        return pathD;
+      })
       .attr('fill', (_, i) => colors[i % colors.length])
       .attr('stroke', showStroke ? bgColor : 'none')
       .attr('stroke-width', showStroke ? 0.5 : 0);
 
     // Add text labels using wave algorithms
+    const detectedOverflows: OverflowInfo[] = [];
     if (addLabels) {
       const measureText = createCanvasMeasurer();
       const fontData = new FontData(fontFamily, fontColor);
@@ -161,17 +170,32 @@ export default function WaveVisualization({ seriesData }: WaveVisualizationProps
           }
 
           if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-            svg.append('text')
+            const textEl = svg.append('text')
               .attr('x', label.xPosition)
               .attr('y', height - label.yPosition)
               .attr('font-size', `${label.fontSize}px`)
               .attr('font-family', fontData.family)
               .attr('fill', fontData.color)
               .text(label.text);
+
+            // Check for Bezier overflow
+            const pathD = pathStrings[layerIndex];
+            if (pathD && isFinite(label.xPosition) && isFinite(label.yPosition)) {
+              const bandLUT = buildBandLUT(pathD, width);
+              if (bandLUT) {
+                const overflow = checkLabelOverflow(label, fontData.family, height, bandLUT);
+                if (overflow && overflow.overflowPct > 10) {
+                  detectedOverflows.push(overflow);
+                  textEl.attr('data-overflow', 'true');
+                }
+              }
+            }
           }
         });
       });
     }
+
+    onOverflowsDetected?.(detectedOverflows);
 
     // Month labels along the bottom
     if (addMonths && dataSourceOptions.time_start && dataSourceOptions.time_end) {

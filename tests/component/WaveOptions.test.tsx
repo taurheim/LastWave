@@ -33,12 +33,12 @@ describe('WaveOptions', () => {
     const user = userEvent.setup();
     render(<WaveOptions onSubmit={mockOnSubmit} />);
 
-    expect(screen.queryByText('Data Source')).not.toBeInTheDocument();
+    expect(screen.queryByText('Group by')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Advanced Options/ }));
 
-    expect(screen.getByText('Data Source')).toBeInTheDocument();
-    expect(screen.getByText('Renderer')).toBeInTheDocument();
+    expect(screen.getByText('Group by')).toBeInTheDocument();
+    expect(screen.getByText('Data set')).toBeInTheDocument();
   });
 
   it('calls onSubmit when form is submitted', async () => {
