@@ -21,11 +21,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true
+  );
 
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-    check();
     const observer = new MutationObserver(check);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();
