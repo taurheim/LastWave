@@ -24,7 +24,7 @@ function useLazyFontList() {
     }
   }, [fetched]);
 
-  return { fonts, fetchFonts };
+  return { fonts, fetchFonts, fetched };
 }
 
 export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
@@ -45,13 +45,13 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const addYears = rendererOptions.add_years ?? false;
   const showUsername = rendererOptions.show_username ?? true;
 
-  const { fonts: fontList, fetchFonts } = useLazyFontList();
+  const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-4">
       <div className="bg-lw-surface/50 border border-lw-border rounded-xl p-6 space-y-6">
-        {/* Top controls — full width */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Top controls — full width, stacked */}
+        <div className="space-y-4">
           <div>
             <div className="flex items-baseline justify-between mb-2">
               <label className="text-sm text-lw-text font-medium">Minimum plays</label>
@@ -134,7 +134,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 <label className="block text-xs text-lw-muted mb-1">Font</label>
                 <select
                   value={fontList.includes(font) ? font : ''}
-                  onFocus={fetchFonts}
                   onChange={(e) => setRendererOption('font', e.target.value)}
                   className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
                 >
@@ -142,6 +141,14 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                     <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
                   ))}
                 </select>
+                {!fontsLoaded && (
+                  <button
+                    onClick={fetchFonts}
+                    className="text-xs text-lw-accent hover:text-lw-text transition-colors mt-1.5"
+                  >
+                    Load available fonts
+                  </button>
+                )}
               </div>
             </div>
           </div>
