@@ -60,7 +60,8 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const addLabels = rendererOptions.add_labels ?? true;
     const addMonths = rendererOptions.add_months ?? true;
     const addYears = rendererOptions.add_years ?? false;
-    const showUsername = rendererOptions.show_username ?? true;
+    const showUsername = rendererOptions.show_username ?? false;
+    const showWatermark = rendererOptions.show_watermark ?? true;
 
     // Determine dimensions
     const numSegments = seriesData[0]?.counts.length ?? 0;
@@ -260,15 +261,17 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     }
 
     // Watermark
-    svg.append('text')
-      .attr('x', width - 5)
-      .attr('y', height - 5)
-      .attr('text-anchor', 'end')
-      .attr('font-size', '14px')
-      .attr('font-family', fontFamily)
-      .attr('fill', fontColor)
-      .attr('opacity', 0.5)
-      .text('lastwave');
+    if (showWatermark) {
+      svg.append('text')
+        .attr('x', width - 5)
+        .attr('y', height - 5)
+        .attr('text-anchor', 'end')
+        .attr('font-size', '14px')
+        .attr('font-family', fontFamily)
+        .attr('fill', fontColor)
+        .attr('opacity', 0.5)
+        .text('lastwave');
+    }
 
     // Username
     const username = dataSourceOptions.username;

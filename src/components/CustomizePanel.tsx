@@ -43,7 +43,8 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const addLabels = rendererOptions.add_labels ?? true;
   const addMonths = rendererOptions.add_months ?? true;
   const addYears = rendererOptions.add_years ?? false;
-  const showUsername = rendererOptions.show_username ?? true;
+  const showUsername = rendererOptions.show_username ?? false;
+  const showWatermark = rendererOptions.show_watermark ?? true;
 
   const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
   const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];
@@ -109,6 +110,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
                 { label: 'Year names', checked: addYears, key: 'add_years' },
                 { label: 'Username', checked: showUsername, key: 'show_username' },
+                { label: 'Watermark', checked: showWatermark, key: 'show_watermark' },
                 { label: 'Ripple border', checked: stroke, key: 'stroke' },
               ].map((opt) => (
                 <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer group">
