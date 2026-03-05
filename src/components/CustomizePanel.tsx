@@ -56,7 +56,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
         <div className="space-y-4">
           <div>
             <div className="flex items-baseline justify-between mb-2">
-              <label className="text-sm text-lw-text font-medium">Minimum plays</label>
+              <label htmlFor="min-plays" className="text-sm text-lw-text font-medium">Minimum plays</label>
               <span className="text-lg font-semibold text-lw-accent tabular-nums">{minPlays}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -68,6 +68,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 −
               </button>
               <input
+                id="min-plays"
                 type="range"
                 min={1}
                 max={maxPlays}
@@ -85,8 +86,9 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-lw-text font-medium mb-2">Graph type</label>
+            <label htmlFor="graph-type" className="block text-sm text-lw-text font-medium mb-2">Graph type</label>
             <select
+              id="graph-type"
               value={offset}
               onChange={(e) => setRendererOption('offset', e.target.value)}
               className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
@@ -131,8 +133,9 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4">Image</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-lw-muted mb-1">Width</label>
+                <label htmlFor="img-width" className="block text-xs text-lw-muted mb-1">Width</label>
                 <input
+                  id="img-width"
                   type="text"
                   value={width}
                   onChange={(e) => setRendererOption('width', e.target.value)}
@@ -141,8 +144,9 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 />
               </div>
               <div>
-                <label className="block text-xs text-lw-muted mb-1">Height</label>
+                <label htmlFor="img-height" className="block text-xs text-lw-muted mb-1">Height</label>
                 <input
+                  id="img-height"
                   type="text"
                   value={height}
                   onChange={(e) => setRendererOption('height', e.target.value)}
@@ -150,7 +154,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 />
               </div>
               <div>
-                <label className="block text-xs text-lw-muted mb-1">Font</label>
+                <label htmlFor="font-picker" className="block text-xs text-lw-muted mb-1">Font</label>
                 {fontsLoaded ? (
                   <select
                     value={font}

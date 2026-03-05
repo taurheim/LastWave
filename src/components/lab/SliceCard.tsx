@@ -14,7 +14,7 @@ import type { SliceDefinition } from './sliceData';
 const CARD_W = 400;
 const CARD_H = 220;
 const FONT_FAMILY = 'DM Sans';
-const FONT_COLOR = '#e0e0e0';
+const FONT_COLOR = '#000000';
 const BEZIER_FILL = 'rgba(39, 170, 225, 0.25)';
 const BEZIER_STROKE = 'rgba(39, 170, 225, 0.6)';
 const LINE_COLORS = { A: '#ef4444', B: '#f59e0b', C: '#22c55e', D: '#8b5cf6' };
@@ -110,7 +110,11 @@ export default function SliceCard({ slice, showStraightLines, showBezier, onStat
     svg.append('rect')
       .attr('x', vbX).attr('y', vbY)
       .attr('width', vbW).attr('height', vbH)
-      .attr('fill', '#0c1117');
+      .attr('fill', (() => {
+        const rgb = getComputedStyle(document.documentElement).getPropertyValue('--lw-bg').trim();
+        const parts = rgb.split(' ');
+        return parts.length === 3 ? `rgb(${parts.join(',')})` : '#0c1117';
+      })());
 
     // Adjust stroke widths for zoom level
     const zoomScale = vbW / CARD_W;
@@ -208,20 +212,28 @@ export default function SliceCard({ slice, showStraightLines, showBezier, onStat
         let overflowPx = 0;
         let overflowArea = 0;
         const textHeight = ascent + descent;
-        const totalArea = textWidth * textHeight;
+        const textLeft = Math.floor(label.xPosition);
+        const textRight = Math.ceil(label.xPosition + textWidth);
+        const totalArea = (textRight - textLeft + 1) * textHeight;
         if (areaPathD) {
           const bandLUT = buildBandLUT(areaPathD, points[points.length - 1].x);
           if (bandLUT) {
-            const tL = Math.max(0, Math.floor(label.xPosition));
-            const tR = Math.min(bandLUT.length - 1, Math.ceil(label.xPosition + textWidth));
+            // Pixels outside the band's x range are fully overflowing
+            const clampedL = Math.max(0, textLeft);
+            const clampedR = Math.min(bandLUT.length - 1, textRight);
+            const outsideLeft = Math.max(0, -textLeft);
+            const outsideRight = Math.max(0, textRight - (bandLUT.length - 1));
+            overflowArea += (outsideLeft + outsideRight) * textHeight;
 
-            for (let px = tL; px <= tR; px++) {
+            for (let px = clampedL; px <= clampedR; px++) {
               const b = bandLUT[px];
-              if (!b) continue;
+              if (!b) {
+                overflowArea += textHeight;
+                continue;
+              }
               const overTop = Math.max(0, b.top - textTop);
               const overBot = Math.max(0, textBot - b.bot);
               overflowPx = Math.max(overflowPx, overTop, overBot);
-              // Clamp column overflow to text height (can't overflow more than full column)
               overflowArea += Math.min(overTop + overBot, textHeight);
             }
           }
