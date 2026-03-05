@@ -46,6 +46,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const showUsername = rendererOptions.show_username ?? true;
 
   const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
+  const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-4">
@@ -132,19 +133,20 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
               </div>
               <div>
                 <label className="block text-xs text-lw-muted mb-1">Font</label>
-                <select
-                  value={fontList.includes(font) ? font : ''}
-                  onChange={(e) => setRendererOption('font', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
-                >
-                  {fontList.map((f) => (
-                    <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
-                  ))}
-                </select>
-                {!fontsLoaded && (
+                {fontsLoaded ? (
+                  <select
+                    value={font}
+                    onChange={(e) => setRendererOption('font', e.target.value)}
+                    className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+                  >
+                    {displayFonts.map((f) => (
+                      <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>
+                    ))}
+                  </select>
+                ) : (
                   <button
                     onClick={fetchFonts}
-                    className="text-xs text-lw-accent hover:text-lw-text transition-colors mt-1.5"
+                    className="text-xs text-lw-accent hover:text-lw-text transition-colors"
                   >
                     Load available fonts
                   </button>
