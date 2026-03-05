@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
@@ -21,17 +21,6 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isDark, setIsDark] = useState(() =>
-    typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true
-  );
-
-  useEffect(() => {
-    const check = () => setIsDark(document.documentElement.classList.contains('dark'));
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
 
   // Initialize defaults on first render if empty
   const username = dataSourceOptions.username ?? '';
@@ -157,7 +146,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 >
                   <div className="rounded overflow-hidden mb-1.5">
                     <img
-                      src={`/scheme-previews/${name}${!isDark && scheme.backgroundColorLight ? '-light' : ''}.png`}
+                      src={`/scheme-previews/${name}.png`}
                       alt={`${name} theme preview`}
                       width={140}
                       height={60}
