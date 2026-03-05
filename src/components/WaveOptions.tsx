@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
@@ -21,6 +21,15 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains('dark'));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Initialize defaults on first render if empty
   const username = dataSourceOptions.username ?? '';
@@ -84,7 +93,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
             type="text"
             value={username}
             onChange={(e) => setDataSourceOption('username', e.target.value)}
-            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-white placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-lw-text placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
             placeholder="Enter your username"
           />
         </div>
@@ -95,7 +104,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           <select
             value={datePreset}
             onChange={(e) => handleDatePresetChange(e.target.value)}
-            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all appearance-none cursor-pointer"
+            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all appearance-none cursor-pointer"
           >
             {easyDateEntries.map(([name]) => (
               <option key={name} value={name}>{name}</option>
@@ -110,7 +119,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   type="date"
                   value={timeStart}
                   onChange={(e) => setDataSourceOption('time_start', new Date(e.target.value))}
-                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
                 />
               </div>
               <div>
@@ -119,7 +128,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   type="date"
                   value={timeEnd}
                   onChange={(e) => setDataSourceOption('time_end', new Date(e.target.value))}
-                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
                 />
               </div>
             </div>
@@ -146,7 +155,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 >
                   <div className="rounded overflow-hidden mb-1.5">
                     <img
-                      src={`/scheme-previews/${name}.png`}
+                      src={`/scheme-previews/${name}${!isDark && scheme.backgroundColorLight ? '-light' : ''}.png`}
                       alt={`${name} theme preview`}
                       width={140}
                       height={60}
@@ -181,7 +190,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               <select
                 value={groupBy}
                 onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
+                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
               >
                 {['week', 'month', 'day', 'year'].map((v) => (
                   <option key={v} value={v}>{v}</option>
@@ -193,7 +202,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               <select
                 value={method}
                 onChange={(e) => setDataSourceOption('method', e.target.value)}
-                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-lw-accent transition-all"
+                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
               >
                 {['artist', 'album', 'tag'].map((v) => (
                   <option key={v} value={v}>{v}</option>

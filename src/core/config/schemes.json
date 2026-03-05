@@ -1,6 +1,7 @@
 {
   "lastwave": {
     "backgroundColor": "#0c1117",
+    "backgroundColorLight": "#f0f2f5",
     "fontColor": "#000000",
     "schemeColors": [
       "#838B8B", "#00FFFF", "#F0FFFF", "#0147FA", "#008080",
@@ -13,7 +14,9 @@
   },
   "ember": {
     "backgroundColor": "#1A0A0A",
+    "backgroundColorLight": "#FFF5F5",
     "fontColor": "#FFFFFF",
+    "fontColorLight": "#4A0000",
     "schemeColors": [
       "#8B0000", "#A31515", "#BF2A2A", "#D44040", "#E85555",
       "#F06B3A", "#E87820", "#D98C10", "#CCA020", "#BFB430",
@@ -23,13 +26,13 @@
       "#9E2828", "#C24848", "#E55828", "#D69228", "#A0B840"
     ]
   },
-  "grand_budapest": {
+  "budapest": {
     "backgroundColor": "#FBCFE8",
     "fontColor": "#510056",
     "schemeColors": [
       "#DC2626", "#9333EA", "#67E8F9", "#DDD690", "#FF5252",
       "#784283", "#8BC34A", "#FF9E9D", "#507592", "#BB86FC",
-      "#7C4DFF", "#e5000c", "#a4d8ff", "#dac291", "#510056",
+      "#7C4DFF", "#e5000c", "#a4d8ff", "#dac291", "#2E7D32",
       "#f9d1bc", "#75638b", "#FFEB3B", "#e590a5", "#dd0000",
       "#e8d0d9", "#ffa8cb", "#00897B", "#FF6F00", "#3949AB",
       "#C62828", "#00ACC1", "#7CB342", "#F4511E", "#5C6BC0"
@@ -37,7 +40,9 @@
   },
   "mosaic": {
     "backgroundColor": "#0B1D0B",
+    "backgroundColorLight": "#F2F7F2",
     "fontColor": "#FFFFFF",
+    "fontColorLight": "#1A3A1A",
     "schemeColors": [
       "#E63946", "#457B9D", "#F4A261", "#2A9D8F", "#E9C46A",
       "#264653", "#A8DADC", "#D62828", "#023E8A", "#F77F00",
@@ -49,7 +54,9 @@
   },
   "ocean": {
     "backgroundColor": "#0A0E1A",
+    "backgroundColorLight": "#EFF4F9",
     "fontColor": "#FFFFFF",
+    "fontColorLight": "#1A2A4A",
     "schemeColors": [
       "#334489", "#2E4D85", "#294F7E", "#295A78", "#286472",
       "#286E6B", "#287A63", "#2D8548", "#2D8F3C", "#3A7D5A",
