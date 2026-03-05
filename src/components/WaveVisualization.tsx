@@ -264,7 +264,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
       .attr('x', width - 5)
       .attr('y', height - 5)
       .attr('text-anchor', 'end')
-      .attr('font-size', '9px')
+      .attr('font-size', '14px')
       .attr('font-family', fontFamily)
       .attr('fill', fontColor)
       .attr('opacity', 0.5)
