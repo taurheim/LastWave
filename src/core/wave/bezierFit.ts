@@ -13,6 +13,7 @@
  */
 
 import Peak from '../models/Peak';
+import type { StackPoint } from '../models/Peak';
 import Label from '../models/Label';
 import type { MeasureTextFn } from './util';
 
@@ -61,12 +62,24 @@ interface CurveParams {
 }
 
 /**
- * Compute the d3.curveMonotoneX tangents for 3 points.
+ * Compute the d3.curveMonotoneX tangents for 3 points, using neighbor data
+ * from the full series when available for accurate endpoint tangents.
+ *
+ * Without neighbor data, endpoints use secant slopes (conservative fallback).
+ * With neighbor data, endpoints use the proper d3 formulas:
+ * - Interior points: Steffen method (slopeInterior)
+ * - Series endpoints: slope2 formula with monotonicity clamping
  */
 function computeCurveParams(
   x0: number, y0: number,
   x1: number, y1: number,
   x2: number, y2: number,
+  neighbors?: {
+    xPrev?: number; yPrev?: number;  // point before (x0,y0) in full series
+    xNext?: number; yNext?: number;  // point after (x2,y2) in full series
+    isFirstPoint?: boolean;          // is (x0,y0) the first series point?
+    isLastPoint?: boolean;           // is (x2,y2) the last series point?
+  },
 ): CurveParams {
   const h0 = x1 - x0;
   const h1 = x2 - x1;
@@ -74,12 +87,41 @@ function computeCurveParams(
   const s1 = h1 !== 0 ? (y2 - y1) / h1 : 0;
 
   const m1 = (h0 + h1) !== 0 ? slopeInterior(h0, h1, s0, s1) : 0;
-  // Use secant slopes for endpoint tangents instead of d3's slope2 formula.
-  // Our 3-point window's endpoints are actually interior points of the full
-  // data series, so slope2 (designed for series endpoints) can overshoot.
-  // Using secant slopes is conservative and prevents outward bowing.
-  let m0 = s0;
-  let m2 = s1;
+
+  let m0: number;
+  let m2: number;
+
+  if (!neighbors) {
+    // Fallback: secant slopes (conservative)
+    m0 = s0;
+    m2 = s1;
+  } else {
+    // Left tangent
+    if (neighbors.isFirstPoint) {
+      m0 = slopeEndpoint(s0, m1);
+      if (m0 * s0 < 0) m0 = 0;
+      if (Math.abs(m0) > 3 * Math.abs(s0)) m0 = 3 * s0;
+    } else if (neighbors.xPrev !== undefined && neighbors.yPrev !== undefined) {
+      const hPrev = x0 - neighbors.xPrev;
+      const sPrev = hPrev !== 0 ? (y0 - neighbors.yPrev) / hPrev : 0;
+      m0 = slopeInterior(hPrev, h0, sPrev, s0);
+    } else {
+      m0 = s0;
+    }
+
+    // Right tangent
+    if (neighbors.isLastPoint) {
+      m2 = slopeEndpoint(s1, m1);
+      if (m2 * s1 < 0) m2 = 0;
+      if (Math.abs(m2) > 3 * Math.abs(s1)) m2 = 3 * s1;
+    } else if (neighbors.xNext !== undefined && neighbors.yNext !== undefined) {
+      const hNext = neighbors.xNext - x2;
+      const sNext = hNext !== 0 ? (neighbors.yNext - y2) / hNext : 0;
+      m2 = slopeInterior(h1, hNext, s1, sNext);
+    } else {
+      m2 = s1;
+    }
+  }
 
   return { x0, y0, x1, y1, x2, y2, m0, m1, m2 };
 }
@@ -131,6 +173,8 @@ export function findOptimalLabel(
   text: string,
   font: string,
   measureText: MeasureTextFn,
+  stack?: StackPoint[],
+  peakIndex?: number,
 ): Label | null {
   const MIN_FONT = 2;
   // Safety margin based on center band height, applied uniformly.
@@ -142,16 +186,51 @@ export function findOptimalLabel(
   const DESCENT_FRAC = 0.28;
 
   // Reconstruct Bezier curves for top and bottom boundaries
-  const topCurve = computeCurveParams(
-    peak.topLeft.x, peak.topLeft.y,
-    peak.top.x, peak.top.y,
-    peak.topRight.x, peak.topRight.y,
-  );
-  const botCurve = computeCurveParams(
-    peak.bottomLeft.x, peak.bottomLeft.y,
-    peak.bottom.x, peak.bottom.y,
-    peak.bottomRight.x, peak.bottomRight.y,
-  );
+  // When stack data is available, use accurate d3-matching tangents
+  let topCurve: CurveParams;
+  let botCurve: CurveParams;
+  if (stack && peakIndex !== undefined) {
+    const i = peakIndex;
+    const n = stack.length;
+    const prevTop = i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y + stack[i - 2].y0 } : {};
+    const nextTop = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y + stack[i + 2].y0 } : {};
+    const topNeighbors = {
+      ...prevTop, ...nextTop,
+      isFirstPoint: i - 1 === 0,
+      isLastPoint: i + 1 === n - 1,
+    };
+    const prevBot = i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y0 } : {};
+    const nextBot = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y0 } : {};
+    const botNeighbors = {
+      ...prevBot, ...nextBot,
+      isFirstPoint: i - 1 === 0,
+      isLastPoint: i + 1 === n - 1,
+    };
+
+    topCurve = computeCurveParams(
+      peak.topLeft.x, peak.topLeft.y,
+      peak.top.x, peak.top.y,
+      peak.topRight.x, peak.topRight.y,
+      topNeighbors,
+    );
+    botCurve = computeCurveParams(
+      peak.bottomLeft.x, peak.bottomLeft.y,
+      peak.bottom.x, peak.bottom.y,
+      peak.bottomRight.x, peak.bottomRight.y,
+      botNeighbors,
+    );
+  } else {
+    topCurve = computeCurveParams(
+      peak.topLeft.x, peak.topLeft.y,
+      peak.top.x, peak.top.y,
+      peak.topRight.x, peak.topRight.y,
+    );
+    botCurve = computeCurveParams(
+      peak.bottomLeft.x, peak.bottomLeft.y,
+      peak.bottom.x, peak.bottom.y,
+      peak.bottomRight.x, peak.bottomRight.y,
+    );
+  }
 
   // Valid x range (intersection of top and bottom curve domains)
   const xMin = Math.ceil(Math.max(topCurve.x0, botCurve.x0));

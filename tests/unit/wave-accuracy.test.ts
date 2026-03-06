@@ -63,12 +63,12 @@ function getActualBounds(text: string, fontSize: number) {
 }
 
 // ── Algorithm classification ────────────────────────────────────────
-function getLabel(peak: Peak, text: string): Label | null {
+function getLabel(peak: Peak, text: string, stackPoints?: StackPoint[], peakIndex?: number): Label | null {
   try {
-    if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText);
-    if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText);
-    if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText);
-    if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText);
+    if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
+    if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
+    if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
+    if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
   } catch {
     return null;
   }
@@ -168,7 +168,7 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
 
       const peak = new Peak(idx, stackPoints);
       const t0 = performance.now();
-      const label = getLabel(peak, title);
+      const label = getLabel(peak, title, stackPoints, idx);
       placementTimeMs += performance.now() - t0;
       if (!label || !isFinite(label.fontSize) || label.fontSize < MIN_FONT_SIZE) return;
 

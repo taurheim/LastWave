@@ -27,11 +27,11 @@ function getAlgorithmType(peak: Peak): string {
   return '?';
 }
 
-function getLabel(peak: Peak, text: string, measureText: ReturnType<typeof createCanvasMeasurer>): Label | null {
-  if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText);
-  if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText);
-  if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText);
-  if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText);
+function getLabel(peak: Peak, text: string, measureText: ReturnType<typeof createCanvasMeasurer>, points: StackPoint[], peakIndex: number): Label | null {
+  if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
+  if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
+  if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
+  if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
   return null;
 }
 
@@ -167,7 +167,7 @@ export default function SliceCard({ slice, showStraightLines, showBezier, onStat
     }
 
     // 3. Position and draw text label, detect overflow
-    const label = getLabel(peak, slice.label, measureText);
+    const label = getLabel(peak, slice.label, measureText, points, slice.peakIndex);
     if (label) {
       // Check for Infinity/NaN in label position (hidden/broken label)
       const hasInvalid = !isFinite(label.xPosition) || !isFinite(label.yPosition) || !isFinite(label.fontSize);

@@ -168,13 +168,13 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
           let label: Label | null = null;
 
           if (isWType(peak)) {
-            label = getWLabel(peak, seriesTitle, fontData.family, measureText);
+            label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
           } else if (isZType(peak)) {
-            label = getZLabel(peak, seriesTitle, fontData.family, measureText);
+            label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
           } else if (isYType(peak)) {
-            label = getYLabel(peak, seriesTitle, fontData.family, measureText);
+            label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
           } else if (isXType(peak)) {
-            label = getXLabel(peak, seriesTitle, fontData.family, measureText);
+            label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
           }
 
           if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
