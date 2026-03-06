@@ -38,7 +38,8 @@
  *     backgrounds so the preview blends with whatever the page bg is.
  *   - Schemes without "backgroundColorLight" (e.g. budapest) keep their
  *     opaque background color since it's the same in light and dark mode.
- *   - No stroke between bands — this keeps the preview clean.
+ *   - Each band has a same-color stroke (0.5px) to eliminate anti-aliasing
+ *     seams — no visible borders, but no gaps either.
  *   - Top 15 artists by total plays, rendered as a silhouette streamgraph.
  */
 
