@@ -115,7 +115,9 @@ if (fs.existsSync(morganpogPath)) {
           }
           svg.selectAll("path").data(stackedData).join("path")
             .attr("d", d => area(d))
-            .attr("fill", (d, i) => scheme.schemeColors[i % scheme.schemeColors.length]);
+            .attr("fill", (d, i) => scheme.schemeColors[i % scheme.schemeColors.length])
+            .attr("stroke", (d, i) => scheme.schemeColors[i % scheme.schemeColors.length])
+            .attr("stroke-width", 0.5);
         </script>
       </body></html>
     `);
