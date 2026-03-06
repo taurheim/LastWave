@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const schemes = JSON.parse(fs.readFileSync('src/core/config/schemes.json', 'utf8'));
-const seriesData = JSON.parse(fs.readFileSync('scripts/morganpog-data.json', 'utf8'));
+const fixtureFile = fs.readdirSync('tests/fixtures/wave-accuracy')[0];
+const fixture = JSON.parse(fs.readFileSync(path.join('tests/fixtures/wave-accuracy', fixtureFile), 'utf8'));
+const seriesData = fixture.artists;
 
 (async () => {
   const browser = await chromium.launch();
