@@ -1,10 +1,31 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 width="30.117px" height="19.512px" viewBox="0 0 30.117 19.512" enable-background="new 0 0 30.117 19.512" xml:space="preserve">
-<path opacity="0.6" fill="none" stroke="#27AAE1" stroke-miterlimit="10" d="M0.379,8.681C9.801-2.262,9.604,1.027,11.987,4.6
-	c2.552,3.827,2.952,7.622,7.726-0.92c3.308-5.918,4.025-3.41,7.53,6.143"/>
-<path fill="none" stroke="#000000" stroke-miterlimit="10" d="M0.379,10.963c9.422,10.943,9.226,7.654,11.608,4.082
-	c2.552-3.827,2.952-7.622,7.726,0.92c3.308,5.918,3.933,4.021,9.933-12.854"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="64" height="56" viewBox="0 0 64 56" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- One full wave period at width=160, so translating -80→+80 creates seamless loop -->
+    <path id="w" d="M-160,0 C-130,0 -110,-16 -80,0 C-50,16 -30,0 0,0 C30,0 50,-16 80,0 C110,16 130,0 160,0"/>
+  </defs>
+  <g>
+    <!-- Band 1 (top, faint) -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="6" stroke-opacity="0.15"
+         transform="translate(0,12)" style="animation:waveSlide 3s linear infinite"/>
+    <!-- Band 2 -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="6" stroke-opacity="0.3"
+         transform="translate(0,20)" style="animation:waveSlide 3.5s linear infinite; animation-delay:-1s"/>
+    <!-- Band 3 (center, bold) -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="7" stroke-opacity="0.8"
+         transform="translate(0,28)" style="animation:waveSlide 4s linear infinite; animation-delay:-0.5s"/>
+    <!-- Band 4 -->
+    <use xlink:href="#w" fill="none" stroke="#00CED1" stroke-width="6" stroke-opacity="0.3"
+         transform="translate(0,36)" style="animation:waveSlide 3.5s linear infinite; animation-delay:-2s"/>
+    <!-- Band 5 (bottom, faint) -->
+    <use xlink:href="#w" fill="none" stroke="#00CED1" stroke-width="6" stroke-opacity="0.15"
+         transform="translate(0,44)" style="animation:waveSlide 3s linear infinite; animation-delay:-1.5s"/>
+  </g>
+  <style>
+    @keyframes waveSlide {
+      0%   { transform: translate(-80px, 0); }
+      100% { transform: translate(80px, 0); }
+    }
+    use { transform-box: fill-box; }
+  </style>
 </svg>

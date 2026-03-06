@@ -428,17 +428,21 @@ describe('getZLabel', () => {
     expect(label!.font).toBe('Arial');
   });
 
-  it('returns a Label even for small Z peak (always returns a label)', () => {
+  it('falls back to clamped sizing when intersections escape segment bounds', () => {
+    // Use a realistically-sized peak so the fallback produces a viable label
     const stack = makeStack(
-      [0, 5, 45],
-      [1, 10, 40],
-      [2, 5, 45],
+      [0, 50, 450],
+      [500, 100, 400],
+      [1000, 50, 450],
     );
     const peak = new Peak(1, stack);
     expect(isZType(peak)).toBe(true);
 
-    // getZLabel always computes a label (no early null return for small peaks)
-    const label = getZLabel(peak, 'X', 'Arial', mockMeasureText);
+    // Z now uses the peak's horizontal extent as a fallback instead of returning null
+    const label = getZLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
+    expect(label!.fontSize).toBeGreaterThan(0);
+    expect(isFinite(label!.xPosition)).toBe(true);
+    expect(isFinite(label!.yPosition)).toBe(true);
   });
 });

@@ -1,6 +1,12 @@
 /**
  * Bezier overflow detection utilities.
- * Parses D3 area SVG paths and checks text bounding boxes against actual curves.
+ *
+ * The wave algorithms position text using approximate measurements (fontSize * 1.2
+ * for height) because that's what determines the layout. This module checks those
+ * placements against the ACTUAL Bezier curves using pixel-accurate glyph metrics
+ * (actualBoundingBoxAscent/Descent). The two measurement systems are intentionally
+ * separate — changing the algorithm's measurement would alter every label placement,
+ * while this module only observes and reports problems.
  */
 
 /**
@@ -116,16 +122,24 @@ export function checkLabelOverflow(
   const textTop = baselineSvgY - ascent;
   const textBot = baselineSvgY + descent;
 
-  const tL = Math.max(0, Math.floor(label.xPosition));
-  const tR = Math.min(bandLUT.length - 1, Math.ceil(label.xPosition + textWidth));
-  const totalArea = textWidth * textHeight;
+  const tL = Math.floor(label.xPosition);
+  const tR = Math.ceil(label.xPosition + textWidth);
+  const clampedL = Math.max(0, tL);
+  const clampedR = Math.min(bandLUT.length - 1, tR);
+  const totalArea = (tR - tL + 1) * textHeight;
 
   let worstPx = 0;
   let overflowArea = 0;
 
-  for (let px = tL; px <= tR; px++) {
+  // Pixels outside the band's x range are fully overflowing
+  overflowArea += (Math.max(0, -tL) + Math.max(0, tR - (bandLUT.length - 1))) * textHeight;
+
+  for (let px = clampedL; px <= clampedR; px++) {
     const b = bandLUT[px];
-    if (!b) continue;
+    if (!b) {
+      overflowArea += textHeight;
+      continue;
+    }
     const overTop = Math.max(0, b.top - textTop);
     const overBot = Math.max(0, textBot - b.bot);
     worstPx = Math.max(worstPx, overTop, overBot);

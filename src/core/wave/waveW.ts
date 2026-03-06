@@ -1,8 +1,7 @@
 import type { MeasureTextFn } from './util';
 import Peak from '../models/Peak';
-import Point from '../models/Point';
-import InfiniteLine from '../models/InfiniteLine';
 import Label from '../models/Label';
+import { findOptimalLabel } from './bezierFit';
 
 /*
   Returns true if the W algorithm should be used:
@@ -28,103 +27,10 @@ export function isWType(peak: Peak) {
 }
 
 /*
-  High level explanation:
-  The text box should be either touching the "top" point (w1) or the
-  "bottom" point (w2). With this assumption, we expand the text box as big
-  as it can be.
+  Bezier-aware inscribed rectangle placement.
+  Reconstructs the actual d3.curveMonotoneX curves from the Peak's boundary
+  points and finds the largest text rectangle that fits via bisection search.
 */
 export function getWLabel(peak: Peak, text: string, font: string, measureText: MeasureTextFn): Label | null {
-  // Config
-  const STARTING_FONT_SIZE = 5;
-  const FONT_SIZE_INTERVAL = 2;
-  const FONT_SIZE_SAFETY_SCALE = 0.9;
-
-  let fontSize: number = STARTING_FONT_SIZE;
-  let leftCollision;
-  let rightCollision;
-  let verticalPointyBound;
-  let horizontalLeftBound;
-  let horizontalRightBound;
-  let textDimensions;
-
-  // If we don't have enough space, don't even bother
-  const minimumHeightRequired = measureText(text, font, fontSize).height;
-  if ((peak.top.y - peak.bottom.y) < minimumHeightRequired) {
-    return null;
-  }
-
-  // Slightly different code for "w1" vs "w2"
-  const isW1 = (peak.A.slope <= 0);
-
-  // We never go past the pointy bound. We expand up/down from it.
-  if (isW1) {
-    verticalPointyBound = peak.top.y;
-    horizontalLeftBound = peak.C;
-    horizontalRightBound = peak.D;
-  } else {
-    verticalPointyBound = peak.bottom.y;
-    horizontalLeftBound = peak.A;
-    horizontalRightBound = peak.B;
-  }
-
-
-  // Loop
-  // TODO explain
-  while (true) {
-    let verticalInnerBound;
-    textDimensions = measureText(text, font, fontSize);
-    if (isW1) {
-      verticalInnerBound = verticalPointyBound - textDimensions.height;
-    } else {
-      verticalInnerBound = verticalPointyBound + textDimensions.height;
-    }
-
-    // If we start going outisde our top/bottom, we need to stop
-    if (verticalInnerBound > peak.top.y || verticalInnerBound < peak.bottom.y) {
-      break;
-    }
-
-    // If we draw a line above our text box, how far can it stretch
-    // to the left and right before it hits the sides
-    // of our text box?
-    const topLine = new InfiniteLine(0, new Point(0, verticalInnerBound));
-    leftCollision = topLine.getIntersect(horizontalLeftBound);
-    rightCollision = topLine.getIntersect(horizontalRightBound);
-
-    if (!leftCollision) {
-      leftCollision = new Point(peak.topLeft.x, verticalInnerBound);
-    }
-    if (!rightCollision) {
-      rightCollision = new Point(peak.topRight.x, verticalInnerBound);
-    }
-
-    // This is the available width at this font size
-    const availableWidth = rightCollision.x - leftCollision.x;
-
-    if (textDimensions.width < availableWidth) {
-      fontSize += FONT_SIZE_INTERVAL;
-    } else {
-      break;
-    }
-  }
-
-  fontSize *= FONT_SIZE_SAFETY_SCALE;
-
-  // Center the text vertically
-  textDimensions = measureText(text, font, fontSize);
-  let labelY;
-  if (isW1) {
-    labelY = peak.top.y - textDimensions.height;
-  } else {
-    labelY = peak.bottom.y;
-  }
-
-  // Final sanity check
-  if (!leftCollision) {
-    return null;
-  }
-
-  const labelX = leftCollision.x;
-
-  return new Label(text, labelX, labelY, font, fontSize);
+  return findOptimalLabel(peak, text, font, measureText);
 }

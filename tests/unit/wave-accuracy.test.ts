@@ -64,10 +64,14 @@ function getActualBounds(text: string, fontSize: number) {
 
 // ── Algorithm classification ────────────────────────────────────────
 function getLabel(peak: Peak, text: string): Label | null {
-  if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText);
-  if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText);
-  if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText);
-  if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText);
+  try {
+    if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText);
+    if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText);
+    if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText);
+    if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText);
+  } catch {
+    return null;
+  }
   return null;
 }
 
@@ -85,13 +89,29 @@ function loadCachedUsers(): CachedData[] {
   return files.map(f => JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, f), 'utf8')));
 }
 
+// ── Offset modes (match WaveVisualization.tsx) ──────────────────────
+const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
+  silhouette: d3.stackOffsetSilhouette,
+  wiggle: d3.stackOffsetWiggle,
+  expand: d3.stackOffsetExpand,
+  zero: d3.stackOffsetNone,
+};
+
+type OffsetMode = keyof typeof OFFSET_MAP;
+const ALL_OFFSETS: OffsetMode[] = ['silhouette', 'wiggle', 'expand', 'zero'];
+
 // ── Overflow computation ────────────────────────────────────────────
 interface LabelResult {
   artist: string;
   overflowPct: number;
 }
 
-function runPipeline(data: CachedData): { labels: LabelResult[]; totalLabels: number } {
+interface FontSizeData {
+  fontSize: number;
+  bandHeight: number;
+}
+
+function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): { labels: LabelResult[]; totalLabels: number; fontSizeData: FontSizeData[]; placementTimeMs: number } {
   const numSegs = data.numSegments;
   const width = numSegs * WIDTH_PER_PEAK;
   const keys = data.artists.map(d => d.title);
@@ -105,7 +125,7 @@ function runPipeline(data: CachedData): { labels: LabelResult[]; totalLabels: nu
 
   const stack = d3.stack<Record<string, number>>()
     .keys(keys)
-    .offset(d3.stackOffsetSilhouette)
+    .offset(OFFSET_MAP[offsetMode])
     .order(d3.stackOrderNone);
   const stackedData = stack(tableData);
 
@@ -121,7 +141,9 @@ function runPipeline(data: CachedData): { labels: LabelResult[]; totalLabels: nu
     .curve(d3.curveMonotoneX);
 
   const results: LabelResult[] = [];
+  const fontSizeData: FontSizeData[] = [];
   let totalLabels = 0;
+  let placementTimeMs = 0;
 
   stackedData.forEach((layer, layerIdx) => {
     const title = keys[layerIdx];
@@ -145,8 +167,10 @@ function runPipeline(data: CachedData): { labels: LabelResult[]; totalLabels: nu
       if (idx <= 0 || idx >= stackPoints.length - 1) return;
 
       const peak = new Peak(idx, stackPoints);
+      const t0 = performance.now();
       const label = getLabel(peak, title);
-      if (!label || label.fontSize < MIN_FONT_SIZE) return;
+      placementTimeMs += performance.now() - t0;
+      if (!label || !isFinite(label.fontSize) || label.fontSize < MIN_FONT_SIZE) return;
 
       totalLabels++;
 
@@ -177,11 +201,16 @@ function runPipeline(data: CachedData): { labels: LabelResult[]; totalLabels: nu
 
       if (pct > 0.5) {
         results.push({ artist: title, overflowPct: Math.round(pct * 10) / 10 });
+      } else {
+        const bandHeight = peak.top.y - peak.bottom.y;
+        if (bandHeight > 0) {
+          fontSizeData.push({ fontSize: label.fontSize, bandHeight });
+        }
       }
     });
   });
 
-  return { labels: results, totalLabels };
+  return { labels: results, totalLabels, fontSizeData, placementTimeMs };
 }
 
 // ── Scoring ─────────────────────────────────────────────────────────
@@ -205,85 +234,145 @@ function computeScore(allResults: LabelResult[], totalLabels: number): number {
   return Math.max(0, Math.min(100, Math.round(score * 100) / 100));
 }
 
+function computeFontSizeScore(fontSizeData: FontSizeData[]): number {
+  if (fontSizeData.length === 0) return 0;
+  const totalRatio = fontSizeData.reduce((sum, d) => sum + Math.min(d.fontSize / d.bandHeight, 1.0), 0);
+  const avgRatio = totalRatio / fontSizeData.length;
+  return Math.round(avgRatio * 100 * 100) / 100;
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // TESTS
 // ══════════════════════════════════════════════════════════════════════
 
+interface OffsetSummary {
+  offset: OffsetMode;
+  totalLabels: number;
+  overflows: number;
+  critical: number;
+  overflowScore: number;
+  fontSizeScore: number;
+  placementTimeMs: number;
+}
+
 describe('Wave Algorithm Accuracy', () => {
   const users = loadCachedUsers();
-  const allResults: LabelResult[] = [];
-  let grandTotalLabels = 0;
+  const offsetSummaries: OffsetSummary[] = [];
 
-  const userSummaries: {
-    username: string;
-    totalLabels: number;
-    overflows: number;
-    critical: number;
-    score: number;
-  }[] = [];
+  for (const offset of ALL_OFFSETS) {
+    describe(`offset: ${offset}`, () => {
+      const allResults: LabelResult[] = [];
+      const allFontSizeData: FontSizeData[] = [];
+      let grandTotalLabels = 0;
+      let totalPlacementTimeMs = 0;
 
-  // Run per-user tests
-  for (const user of users) {
-    it(`processes ${user.username} (${user.artists.length} artists)`, () => {
-      const { labels, totalLabels } = runPipeline(user);
-      const critical = labels.filter(l => l.overflowPct > 10);
+      const userSummaries: {
+        username: string;
+        totalLabels: number;
+        overflows: number;
+        critical: number;
+        score: number;
+        fontSizeScore: number;
+      }[] = [];
 
-      allResults.push(...labels);
-      grandTotalLabels += totalLabels;
+      for (const user of users) {
+        it(`processes ${user.username} (${user.artists.length} artists)`, () => {
+          const { labels, totalLabels, fontSizeData, placementTimeMs } = runPipeline(user, offset);
+          const critical = labels.filter(l => l.overflowPct > 10);
 
-      userSummaries.push({
-        username: user.username,
-        totalLabels,
-        overflows: labels.length,
-        critical: critical.length,
-        score: computeScore(labels, totalLabels),
-      });
+          allResults.push(...labels);
+          allFontSizeData.push(...fontSizeData);
+          grandTotalLabels += totalLabels;
+          totalPlacementTimeMs += placementTimeMs;
 
-      // Log per-user results
-      if (critical.length > 0) {
-        const sorted = critical.sort((a, b) => b.overflowPct - a.overflowPct);
-        console.log(`    ${user.username}: ${totalLabels} labels, ${labels.length} overflows (${critical.length} critical >10%)`);
-        for (const r of sorted.slice(0, 5)) {
-          console.log(`      ⚠ ${r.artist}: ${r.overflowPct}%`);
-        }
-        if (sorted.length > 5) console.log(`      ... and ${sorted.length - 5} more`);
+          userSummaries.push({
+            username: user.username,
+            totalLabels,
+            overflows: labels.length,
+            critical: critical.length,
+            score: computeScore(labels, totalLabels),
+            fontSizeScore: computeFontSizeScore(fontSizeData),
+          });
+
+          if (critical.length > 0) {
+            const sorted = critical.sort((a, b) => b.overflowPct - a.overflowPct);
+            console.log(`    [${offset}] ${user.username}: ${totalLabels} labels, ${labels.length} overflows (${critical.length} critical >10%)`);
+            for (const r of sorted.slice(0, 5)) {
+              console.log(`      ⚠ ${r.artist}: ${r.overflowPct}%`);
+            }
+            if (sorted.length > 5) console.log(`      ... and ${sorted.length - 5} more`);
+          }
+
+          expect(totalLabels).toBeGreaterThan(0);
+        });
       }
 
-      // Each user should eventually have 0 critical overflows — soft check for now
-      expect(totalLabels).toBeGreaterThan(0);
+      it(`computes ${offset} accuracy score`, () => {
+        const score = computeScore(allResults, grandTotalLabels);
+        const fontSizeScore = computeFontSizeScore(allFontSizeData);
+        const critical = allResults.filter(l => l.overflowPct > 10);
+        const minor = allResults.filter(l => l.overflowPct <= 10);
+
+        offsetSummaries.push({
+          offset,
+          totalLabels: grandTotalLabels,
+          overflows: minor.length + critical.length,
+          critical: critical.length,
+          overflowScore: score,
+          fontSizeScore,
+          placementTimeMs: totalPlacementTimeMs,
+        });
+
+        console.log(`\n  ── ${offset.toUpperCase()} ──  ${grandTotalLabels} labels | ${minor.length} minor | ${critical.length} critical | overflow: ${score.toFixed(1)} | font: ${fontSizeScore.toFixed(1)}`);
+
+        for (const u of userSummaries.sort((a, b) => a.score - b.score)) {
+          const name = u.username.padEnd(18);
+          const labels = String(u.totalLabels).padStart(4);
+          const crit = u.critical > 0 ? `${u.critical} crit`.padStart(7) : '      —';
+          const sc = u.score.toFixed(1).padStart(5);
+          const fs = u.fontSizeScore.toFixed(1).padStart(5);
+          console.log(`     ${name} ${labels} labels ${crit}  overflow:${sc}  font:${fs}`);
+        }
+
+        expect(score).toBeGreaterThanOrEqual(0);
+        expect(score).toBeLessThanOrEqual(100);
+      });
     });
   }
 
-  // Overall score
-  it('computes overall accuracy score', () => {
-    const score = computeScore(allResults, grandTotalLabels);
-    const critical = allResults.filter(l => l.overflowPct > 10);
-    const minor = allResults.filter(l => l.overflowPct <= 10);
+  // Combined report across all offset modes
+  it('prints combined accuracy report', () => {
+    // Compute aggregate across all modes
+    const avgOverflow = offsetSummaries.reduce((s, o) => s + o.overflowScore, 0) / offsetSummaries.length;
+    const avgFontSize = offsetSummaries.reduce((s, o) => s + o.fontSizeScore, 0) / offsetSummaries.length;
+    const totalTimeMs = offsetSummaries.reduce((s, o) => s + o.placementTimeMs, 0);
+    const avgTimeMs = totalTimeMs / offsetSummaries.length;
 
-    console.log('\n  ╔══════════════════════════════════════════════════╗');
-    console.log('  ║         WAVE ALGORITHM ACCURACY REPORT          ║');
-    console.log('  ╠══════════════════════════════════════════════════╣');
-    console.log(`  ║  Users tested:         ${String(users.length).padStart(5)}                   ║`);
-    console.log(`  ║  Total labels placed:  ${String(grandTotalLabels).padStart(5)}                   ║`);
-    console.log(`  ║  Minor overflows:      ${String(minor.length).padStart(5)}  (≤10%)            ║`);
-    console.log(`  ║  Critical overflows:   ${String(critical.length).padStart(5)}  (>10%)            ║`);
-    console.log('  ╠══════════════════════════════════════════════════╣');
+    console.log('\n  ╔═══════════════════════════════════════════════════════════════════════╗');
+    console.log('  ║                  WAVE ALGORITHM ACCURACY REPORT                      ║');
+    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
+    console.log('  ║  Offset        Labels  Critical  Overflow   Font Size   Time (ms)    ║');
+    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
 
-    // Per-user breakdown
-    for (const u of userSummaries.sort((a, b) => a.score - b.score)) {
-      const name = u.username.padEnd(18);
-      const labels = String(u.totalLabels).padStart(4);
-      const crit = u.critical > 0 ? `${u.critical} crit`.padStart(7) : '      —';
-      const sc = u.score.toFixed(1).padStart(5);
-      console.log(`  ║  ${name} ${labels} labels ${crit}  ${sc}/100 ║`);
+    for (const o of offsetSummaries) {
+      const name = o.offset.padEnd(12);
+      const labels = String(o.totalLabels).padStart(6);
+      const crit = String(o.critical).padStart(6);
+      const ov = o.overflowScore.toFixed(1).padStart(7);
+      const fs = o.fontSizeScore.toFixed(1).padStart(7);
+      const tm = o.placementTimeMs.toFixed(0).padStart(8);
+      console.log(`  ║  ${name}  ${labels}  ${crit}    ${ov}/100  ${fs}/100  ${tm}    ║`);
     }
 
-    console.log('  ╠══════════════════════════════════════════════════╣');
-    console.log(`  ║  OVERALL SCORE:              ${score.toFixed(1).padStart(5)}/100          ║`);
-    console.log('  ╚══════════════════════════════════════════════════╝\n');
+    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
+    console.log(`  ║  AVG OVERFLOW SCORE:                    ${avgOverflow.toFixed(1).padStart(5)}/100                ║`);
+    console.log(`  ║  AVG FONT SIZE SCORE:                   ${avgFontSize.toFixed(1).padStart(5)}/100                ║`);
+    console.log(`  ║  AVG PLACEMENT TIME:                  ${avgTimeMs.toFixed(0).padStart(6)} ms                  ║`);
+    console.log(`  ║  TOTAL PLACEMENT TIME:                ${totalTimeMs.toFixed(0).padStart(6)} ms                  ║`);
+    console.log('  ╚═══════════════════════════════════════════════════════════════════════╝\n');
 
-    // The score is a benchmark — log it clearly so we can track improvements
-    expect(score).toBeGreaterThanOrEqual(0);
-    expect(score).toBeLessThanOrEqual(100);
+    for (const o of offsetSummaries) {
+      expect(o.overflowScore).toBeGreaterThanOrEqual(0);
+    }
   });
 });

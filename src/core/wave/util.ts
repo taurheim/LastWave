@@ -1,3 +1,12 @@
+/*
+  The four algorithms (W, X, Y, Z) cover distinct slope patterns of the
+  four peak boundary lines (A, B, C, D). Some slope combinations — like
+  flat bottoms or symmetric pinch points — intentionally match NONE of
+  them. These "unclassified" peaks represent narrow constriction points
+  in the stream where there is no good place for text. The label will
+  instead be placed at a neighboring peak where the band is wider.
+*/
+
 export interface TextDimensions {
   height: number;
   width: number;
@@ -13,16 +22,21 @@ export function createCanvasMeasurer(): MeasureTextFn {
     ctx.font = `${fontSize}px ${font}`;
     const metrics = ctx.measureText(text);
     const width = metrics.width;
-    // Approximate height from font size (canvas doesn't give great height metrics)
+    // We use fontSize*1.2 rather than actual glyph metrics because this is the
+    // measurement the placement algorithms use to decide text size and position.
+    // Changing this would alter every label placement across the app. Actual
+    // glyph bounds (actualBoundingBoxAscent/Descent) are only used separately
+    // for post-render overflow detection, where pixel-accurate bounds matter.
     const height = fontSize * 1.2;
     return { height, width, slope: height / width };
   };
 }
 
 /*
-  A "Label Point" is where we are adding a label on a ripple.
-  @param list of counts for a ripple
-  @return list of indices, each one should have a label
+  Greedy label placement: picks the highest-count segment first, then
+  excludes nearby segments (within segmentsBetweenLabels) so labels
+  don't crowd together. This means labels always appear at the most
+  prominent peaks for each artist, with guaranteed minimum spacing.
 */
 export function findLabelIndices(rippleCounts: number[], segmentsBetweenLabels: number) {
   // Possible points is a list of numbers representing the indices
