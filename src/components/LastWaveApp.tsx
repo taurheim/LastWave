@@ -46,9 +46,10 @@ async function pooled<T>(
   return results;
 }
 
-function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
+function ImageScaler({ showFullSvg, setShowFullSvg, expandable = true, children }: {
   showFullSvg: boolean;
   setShowFullSvg: (v: boolean) => void;
+  expandable?: boolean;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,7 +62,7 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     const svg = el.querySelector('svg');
     if (!svg) return;
     const svgWidth = parseFloat(svg.getAttribute('width') ?? '0');
-    setIsOverflowing(svgWidth > window.innerWidth);
+    setIsOverflowing(svgWidth > el.clientWidth);
   }, [showFullSvg]);
 
   useEffect(() => {
@@ -69,6 +70,17 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
   }, [checkOverflow]);
+
+  // Non-expandable preview: always scale to fit
+  if (!expandable) {
+    return (
+      <div ref={containerRef} className="mx-4">
+        <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto">
+          {children}
+        </div>
+      </div>
+    );
+  }
 
   // Full size: native dimensions, container scrolls horizontally
   if (showFullSvg) {
@@ -86,16 +98,26 @@ function ImageScaler({ showFullSvg, setShowFullSvg, children }: {
     return <div ref={containerRef} className="mx-4">{children}</div>;
   }
 
-  // Image overflows — shrink to fit, click to expand
+  // Image overflows — shrink to fit, with expand button
   return (
-    <div ref={containerRef} className="group relative mx-4 cursor-pointer" onClick={() => setShowFullSvg(true)}>
-      <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto">
+    <div ref={containerRef} className="group relative mx-4">
+      <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto cursor-pointer" onClick={() => setShowFullSvg(true)}>
         {children}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200">
+      {/* Desktop: overlay on hover */}
+      <div className="hidden lg:flex absolute inset-0 items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 cursor-pointer" onClick={() => setShowFullSvg(true)}>
         <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
           ⤢ Full size
         </span>
+      </div>
+      {/* Mobile: always-visible button */}
+      <div className="flex lg:hidden justify-center mt-2">
+        <button
+          onClick={() => setShowFullSvg(true)}
+          className="bg-lw-surface/90 border border-lw-border text-lw-muted text-xs tracking-widest uppercase px-4 py-1.5 rounded-lg"
+        >
+          ⤢ Full size
+        </button>
       </div>
     </div>
   );
@@ -118,6 +140,8 @@ export default function LastWaveApp() {
   const [highlightOverflows, setHighlightOverflows] = useState(false);
 
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
+  const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
+  const rOpts = useLastWaveStore((s) => s.rendererOptions);
 
   // Re-filter data when minPlays changes (debounced)
   useEffect(() => {
@@ -319,37 +343,111 @@ export default function LastWaveApp() {
       {/* Loading Bar */}
       {showLoadingBar && <StageLoadingBar />}
 
-      {/* Customize toggle */}
-      {showActions && (
-        <div className="flex justify-center px-4 py-3">
-          <button
-            onClick={() => setShowCustomize(!showCustomize)}
-            className={`rounded-lg px-6 py-2.5 text-xs tracking-wider uppercase font-medium transition-all ${
-              showCustomize
-                ? 'bg-lw-accent text-lw-bg'
-                : 'bg-lw-surface border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
-            }`}
+      {/* Desktop layout */}
+      <div className="hidden lg:block">
+        {showActions && showCustomize ? (
+          <div className="flex items-start gap-4">
+            <div className="relative flex-[3] min-w-0">
+              {showVisualization && (
+                <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
+                  <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
+                </ImageScaler>
+              )}
+              <div className="absolute top-2 right-6">
+                <button
+                  onClick={() => setShowCustomize(false)}
+                  className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-accent text-lw-bg opacity-80 hover:opacity-100"
+                >
+                  Hide customize
+                </button>
+              </div>
+            </div>
+            <div className="flex-[2] min-w-0">
+              <CustomizePanel maxPlays={maxPlaysInDataset} />
+            </div>
+          </div>
+        ) : (
+          showVisualization && (
+            <div className="relative">
+              <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
+              </ImageScaler>
+              {showActions && (
+                <div className="absolute top-2 right-6">
+                  <button
+                    onClick={() => setShowCustomize(true)}
+                    className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent backdrop-blur-sm"
+                  >
+                    ⚙ Customize
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Mobile layout — single WaveVisualization instance to avoid remount flash */}
+      <div className={`lg:hidden ${showVisualization && !showCustomize && !showFullSvg ? 'min-h-[calc(100svh-10rem)] flex flex-col justify-center' : ''}`}>
+        {showVisualization && (
+          <div
+            onClick={showCustomize ? () => setShowCustomize(false) : undefined}
+            className={showCustomize ? 'cursor-pointer' : 'relative'}
           >
-            {showCustomize ? 'Hide customize' : '⚙ Customize'}
-          </button>
-        </div>
-      )}
-
-      {/* Customize Panel */}
-      {showActions && showCustomize && <CustomizePanel maxPlays={maxPlaysInDataset} />}
-
-      {/* Visualization */}
-      {showVisualization && (
-        <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
-          <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
-        </ImageScaler>
-      )}
+            <ImageScaler
+              showFullSvg={showCustomize ? false : showFullSvg}
+              setShowFullSvg={showCustomize ? () => {} : setShowFullSvg}
+              expandable={!showCustomize}
+            >
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
+            </ImageScaler>
+            {showActions && !showCustomize && (
+              <div className="absolute top-2 right-6">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowCustomize(true); }}
+                  className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-surface/80 border border-lw-border text-lw-text backdrop-blur-sm"
+                >
+                  ⚙ Customize
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {showActions && showCustomize && (
+          <CustomizePanel maxPlays={maxPlaysInDataset} />
+        )}
+      </div>
 
       {/* Misaligned labels warning — always below the image */}
       {showActions && overflows.length > 0 && (
         <div className="flex justify-center py-2">
-          <button
-            onClick={() => {}}
+          <a
+            href={(() => {
+              const labels = overflows.map((o) => o.artist).join(', ');
+              const title = `Misaligned label: ${labels}`;
+              const body = [
+                '## Misaligned Label Report',
+                '',
+                `**Last.fm Username:** ${dsOpts.username ?? ''}`,
+                `**Misaligned Labels:** ${labels}`,
+                `**Minimum Plays:** ${dsOpts.min_plays ?? '10'}`,
+                `**Date Range:** ${dsOpts._datePreset ?? 'Custom'} (${dsOpts.time_start ?? ''} – ${dsOpts.time_end ?? ''})`,
+                `**Color Scheme:** ${rOpts.color_scheme ?? 'lastwave'}`,
+                `**Graph Type:** ${rOpts.offset ?? 'silhouette'}`,
+                `**Group By:** ${dsOpts.group_by ?? 'week'}`,
+                `**Data Set:** ${dsOpts.method ?? 'artist'}`,
+                '',
+                '## Screenshot',
+                'Please paste a screenshot of the chart showing the misaligned label(s):',
+                '',
+                '',
+                '## Additional Context',
+                '',
+              ].join('\n');
+              return `https://github.com/taurheim/LastWave/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=bug,label-alignment`;
+            })()}
+            target="_blank"
+            rel="noopener noreferrer"
             onMouseEnter={() => setHighlightOverflows(true)}
             onMouseLeave={() => setHighlightOverflows(false)}
             className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/50 hover:border-orange-400 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg px-4 py-2 transition-all"
@@ -361,19 +459,19 @@ export default function LastWaveApp() {
                 : `${overflows.length} labels may be misaligned`}
               {' — '}Report issue
             </span>
-          </button>
+          </a>
         </div>
       )}
 
       {/* Image Actions (download/share) — sticky on mobile */}
       {showActions && (
-        <div className="md:relative fixed bottom-0 left-0 right-0 z-40 md:z-auto bg-lw-bg/90 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none border-t border-lw-border md:border-t-0">
+        <div className="lg:relative fixed bottom-0 left-0 right-0 z-40 lg:z-auto bg-lw-bg/90 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-lw-border lg:border-t-0">
           <ImageActions />
         </div>
       )}
 
       {/* Spacer so fixed mobile bar doesn't cover content */}
-      {showActions && <div className="h-20 md:hidden" />}
+      {showActions && <div className="h-20 lg:hidden" />}
 
       {/* Highlight overflowing labels when hovering the bug report button */}
       {highlightOverflows && (
