@@ -89,7 +89,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
-    const deformText = rendererOptions.deform_text ?? false;
+    const deformText = rendererOptions.deform_text ?? true;
 
     // Determine dimensions
     const numSegments = seriesData[0]?.counts.length ?? 0;

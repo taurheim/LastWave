@@ -44,7 +44,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const addYears = rendererOptions.add_years ?? false;
   const showUsername = rendererOptions.show_username ?? false;
   const showWatermark = rendererOptions.show_watermark ?? true;
-  const deformText = rendererOptions.deform_text ?? false;
+  const deformText = rendererOptions.deform_text ?? true;
 
   const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
   const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];

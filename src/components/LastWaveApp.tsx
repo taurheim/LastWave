@@ -158,7 +158,7 @@ export default function LastWaveApp() {
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
   const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
-  const deformText = rOpts.deform_text ?? false;
+  const deformText = rOpts.deform_text ?? true;
 
   // Show "Drawing…" whenever the core effect will re-run with deform text on.
   // Track the same deps as WaveVisualization's core useEffect so the indicator

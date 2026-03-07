@@ -1,0 +1,415 @@
+{
+  "generatedAt": "2026-03-07T03:44:58.625Z",
+  "numTrials": 100,
+  "kValues": [
+    1,
+    2,
+    3
+  ],
+  "algorithms": [
+    "Scaled Target (current)",
+    "Peak Extrapolation",
+    "Direct Ratio",
+    "Percentile-Based",
+    "Artist Count Ratio",
+    "Weighted Combo",
+    "Sqrt-Scaled Ratio",
+    "Log-Scaled Ratio",
+    "Median Peak Scaling",
+    "Conservative (max)"
+  ],
+  "metrics": [
+    {
+      "algorithm": "Artist Count Ratio",
+      "k": 1,
+      "mae": 7.93,
+      "medianAE": 5,
+      "meanPctError": -3.35,
+      "within20pct": 40.6,
+      "within50pct": 79.7,
+      "meanSignedError": -4.05,
+      "n": 1000
+    },
+    {
+      "algorithm": "Scaled Target (current)",
+      "k": 1,
+      "mae": 9.41,
+      "medianAE": 7,
+      "meanPctError": 4.73,
+      "within20pct": 27.1,
+      "within50pct": 69.3,
+      "meanSignedError": 0.93,
+      "n": 1000
+    },
+    {
+      "algorithm": "Sqrt-Scaled Ratio",
+      "k": 1,
+      "mae": 17.84,
+      "medianAE": 17,
+      "meanPctError": 116.28,
+      "within20pct": 18.6,
+      "within50pct": 30.2,
+      "meanSignedError": 16.85,
+      "n": 1000
+    },
+    {
+      "algorithm": "Log-Scaled Ratio",
+      "k": 1,
+      "mae": 17.84,
+      "medianAE": 17,
+      "meanPctError": 116.28,
+      "within20pct": 18.6,
+      "within50pct": 30.2,
+      "meanSignedError": 16.85,
+      "n": 1000
+    },
+    {
+      "algorithm": "Peak Extrapolation",
+      "k": 1,
+      "mae": 73.46,
+      "medianAE": 37,
+      "meanPctError": 486.26,
+      "within20pct": 0,
+      "within50pct": 6.6,
+      "meanSignedError": 72.77,
+      "n": 1000
+    },
+    {
+      "algorithm": "Median Peak Scaling",
+      "k": 1,
+      "mae": 113.86,
+      "medianAE": 68,
+      "meanPctError": 632.5,
+      "within20pct": 0.3,
+      "within50pct": 4.1,
+      "meanSignedError": 113.05,
+      "n": 1000
+    },
+    {
+      "algorithm": "Weighted Combo",
+      "k": 1,
+      "mae": 146.65,
+      "medianAE": 122,
+      "meanPctError": 888.47,
+      "within20pct": 0,
+      "within50pct": 1,
+      "meanSignedError": 146.49,
+      "n": 1000
+    },
+    {
+      "algorithm": "Direct Ratio",
+      "k": 1,
+      "mae": 256.66,
+      "medianAE": 246,
+      "meanPctError": 1489.51,
+      "within20pct": 0,
+      "within50pct": 0,
+      "meanSignedError": 256.66,
+      "n": 1000
+    },
+    {
+      "algorithm": "Conservative (max)",
+      "k": 1,
+      "mae": 256.66,
+      "medianAE": 246,
+      "meanPctError": 1489.51,
+      "within20pct": 0,
+      "within50pct": 0,
+      "meanSignedError": 256.66,
+      "n": 1000
+    },
+    {
+      "algorithm": "Percentile-Based",
+      "k": 1,
+      "mae": 260.51,
+      "medianAE": 174,
+      "meanPctError": 1425.74,
+      "within20pct": 0,
+      "within50pct": 2,
+      "meanSignedError": 259.82,
+      "n": 1000
+    },
+    {
+      "algorithm": "Artist Count Ratio",
+      "k": 2,
+      "mae": 8.58,
+      "medianAE": 6,
+      "meanPctError": -25.73,
+      "within20pct": 30.2,
+      "within50pct": 80.2,
+      "meanSignedError": -7.52,
+      "n": 1000
+    },
+    {
+      "algorithm": "Sqrt-Scaled Ratio",
+      "k": 2,
+      "mae": 9.32,
+      "medianAE": 10,
+      "meanPctError": 48.1,
+      "within20pct": 20.2,
+      "within50pct": 58.9,
+      "meanSignedError": 5.79,
+      "n": 1000
+    },
+    {
+      "algorithm": "Log-Scaled Ratio",
+      "k": 2,
+      "mae": 11.22,
+      "medianAE": 10,
+      "meanPctError": 65.12,
+      "within20pct": 9.9,
+      "within50pct": 48.2,
+      "meanSignedError": 8.85,
+      "n": 1000
+    },
+    {
+      "algorithm": "Scaled Target (current)",
+      "k": 2,
+      "mae": 11.38,
+      "medianAE": 7.5,
+      "meanPctError": 36.64,
+      "within20pct": 24.8,
+      "within50pct": 64.1,
+      "meanSignedError": 7.97,
+      "n": 1000
+    },
+    {
+      "algorithm": "Peak Extrapolation",
+      "k": 2,
+      "mae": 71.89,
+      "medianAE": 39,
+      "meanPctError": 368.4,
+      "within20pct": 3.1,
+      "within50pct": 16,
+      "meanSignedError": 71.35,
+      "n": 1000
+    },
+    {
+      "algorithm": "Median Peak Scaling",
+      "k": 2,
+      "mae": 81.35,
+      "medianAE": 56,
+      "meanPctError": 435.03,
+      "within20pct": 2.8,
+      "within50pct": 12.5,
+      "meanSignedError": 80.89,
+      "n": 1000
+    },
+    {
+      "algorithm": "Weighted Combo",
+      "k": 2,
+      "mae": 88.99,
+      "medianAE": 71,
+      "meanPctError": 483.35,
+      "within20pct": 0,
+      "within50pct": 0.2,
+      "meanSignedError": 88.95,
+      "n": 1000
+    },
+    {
+      "algorithm": "Direct Ratio",
+      "k": 2,
+      "mae": 115.68,
+      "medianAE": 114,
+      "meanPctError": 657.92,
+      "within20pct": 0.1,
+      "within50pct": 0.1,
+      "meanSignedError": 115.67,
+      "n": 1000
+    },
+    {
+      "algorithm": "Conservative (max)",
+      "k": 2,
+      "mae": 131.18,
+      "medianAE": 117,
+      "meanPctError": 727.06,
+      "within20pct": 0.1,
+      "within50pct": 0.1,
+      "meanSignedError": 131.17,
+      "n": 1000
+    },
+    {
+      "algorithm": "Percentile-Based",
+      "k": 2,
+      "mae": 131.69,
+      "medianAE": 101,
+      "meanPctError": 732.6,
+      "within20pct": 0.3,
+      "within50pct": 1.2,
+      "meanSignedError": 131.54,
+      "n": 1000
+    },
+    {
+      "algorithm": "Log-Scaled Ratio",
+      "k": 3,
+      "mae": 6.51,
+      "medianAE": 4,
+      "meanPctError": 3.11,
+      "within20pct": 39.2,
+      "within50pct": 78.5,
+      "meanSignedError": -2.07,
+      "n": 1000
+    },
+    {
+      "algorithm": "Sqrt-Scaled Ratio",
+      "k": 3,
+      "mae": 6.64,
+      "medianAE": 7,
+      "meanPctError": 20.13,
+      "within20pct": 39.8,
+      "within50pct": 87.2,
+      "meanSignedError": 1.03,
+      "n": 1000
+    },
+    {
+      "algorithm": "Artist Count Ratio",
+      "k": 3,
+      "mae": 8.98,
+      "medianAE": 7,
+      "meanPctError": -31.39,
+      "within20pct": 29.9,
+      "within50pct": 81.9,
+      "meanSignedError": -8.38,
+      "n": 1000
+    },
+    {
+      "algorithm": "Scaled Target (current)",
+      "k": 3,
+      "mae": 13.9,
+      "medianAE": 9,
+      "meanPctError": 55.19,
+      "within20pct": 22.7,
+      "within50pct": 56.4,
+      "meanSignedError": 12.06,
+      "n": 1000
+    },
+    {
+      "algorithm": "Direct Ratio",
+      "k": 3,
+      "mae": 71.13,
+      "medianAE": 69,
+      "meanPctError": 403.92,
+      "within20pct": 0,
+      "within50pct": 0,
+      "meanSignedError": 71.13,
+      "n": 1000
+    },
+    {
+      "algorithm": "Weighted Combo",
+      "k": 3,
+      "mae": 76.51,
+      "medianAE": 62,
+      "meanPctError": 393.01,
+      "within20pct": 0,
+      "within50pct": 0.9,
+      "meanSignedError": 76.51,
+      "n": 1000
+    },
+    {
+      "algorithm": "Peak Extrapolation",
+      "k": 3,
+      "mae": 80.45,
+      "medianAE": 57,
+      "meanPctError": 385.61,
+      "within20pct": 7.7,
+      "within50pct": 10.4,
+      "meanSignedError": 80.07,
+      "n": 1000
+    },
+    {
+      "algorithm": "Median Peak Scaling",
+      "k": 3,
+      "mae": 84.79,
+      "medianAE": 64,
+      "meanPctError": 426.08,
+      "within20pct": 6.2,
+      "within50pct": 9.5,
+      "meanSignedError": 84.46,
+      "n": 1000
+    },
+    {
+      "algorithm": "Percentile-Based",
+      "k": 3,
+      "mae": 103.8,
+      "medianAE": 87,
+      "meanPctError": 556.3,
+      "within20pct": 0,
+      "within50pct": 0.8,
+      "meanSignedError": 103.8,
+      "n": 1000
+    },
+    {
+      "algorithm": "Conservative (max)",
+      "k": 3,
+      "mae": 103.9,
+      "medianAE": 74,
+      "meanPctError": 547.62,
+      "within20pct": 0,
+      "within50pct": 0,
+      "meanSignedError": 103.9,
+      "n": 1000
+    }
+  ],
+  "perUserTruth": [
+    {
+      "username": "0x255",
+      "numSegments": 53,
+      "numArtists": 386,
+      "trueMinPlays": 21
+    },
+    {
+      "username": "aura636",
+      "numSegments": 53,
+      "numArtists": 98,
+      "trueMinPlays": 21
+    },
+    {
+      "username": "BeensVonBenis",
+      "numSegments": 53,
+      "numArtists": 101,
+      "trueMinPlays": 19
+    },
+    {
+      "username": "crewsackan",
+      "numSegments": 53,
+      "numArtists": 88,
+      "trueMinPlays": 14
+    },
+    {
+      "username": "cwalkpinoy",
+      "numSegments": 53,
+      "numArtists": 39,
+      "trueMinPlays": 10
+    },
+    {
+      "username": "grimmless",
+      "numSegments": 53,
+      "numArtists": 302,
+      "trueMinPlays": 38
+    },
+    {
+      "username": "gudetamaguy86",
+      "numSegments": 53,
+      "numArtists": 161,
+      "trueMinPlays": 32
+    },
+    {
+      "username": "reose",
+      "numSegments": 53,
+      "numArtists": 90,
+      "trueMinPlays": 16
+    },
+    {
+      "username": "Taurheim",
+      "numSegments": 53,
+      "numArtists": 247,
+      "trueMinPlays": 14
+    },
+    {
+      "username": "yvesdot",
+      "numSegments": 53,
+      "numArtists": 132,
+      "trueMinPlays": 24
+    }
+  ]
+}
