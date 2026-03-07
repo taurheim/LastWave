@@ -27,16 +27,19 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
   zero: d3.stackOffsetNone,
 };
 
-function hashString(str: string): number {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+// Assign colors to stacked layers so that adjacent bands never share a color.
+// Uses a stride roughly equal to the golden ratio of the palette size to
+// maximise visual separation between neighbouring bands.
+function assignStackColors(keys: string[], colors: string[]): Map<string, string> {
+  const n = colors.length;
+  const stride = Math.max(1, Math.round(n * 0.618));
+  const map = new Map<string, string>();
+  let ci = 0;
+  for (const key of keys) {
+    map.set(key, colors[ci % n]);
+    ci += stride;
   }
-  return Math.abs(hash);
-}
-
-function colorForKey(key: string, colors: string[]): string {
-  return colors[hashString(key) % colors.length];
+  return map;
 }
 
 interface WaveVisualizationProps {
@@ -98,6 +101,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // Pivot data: from SeriesData[] to tabular format for d3.stack
     const keys = seriesData.map((s) => s.title);
+    const colorMap = assignStackColors(keys, colors);
     const tableData: Record<string, number>[] = [];
     for (let i = 0; i < numSegments; i++) {
       const row: Record<string, number> = { index: i };
@@ -143,7 +147,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         .join('path')
         .attr('class', 'wave')
         .attr('d', (d) => area(d as any) ?? '')
-        .attr('fill', (d: any) => colorForKey(d.key, colors))
+        .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
         .attr('stroke', 'none')
         .attr('stroke-width', 0);
 
@@ -229,7 +233,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         pathStrings.push(pathD);
         return pathD;
       })
-      .attr('fill', (d: any) => colorForKey(d.key, colors))
+      .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
       .attr('stroke', 'none')
       .attr('stroke-width', 0);
 
