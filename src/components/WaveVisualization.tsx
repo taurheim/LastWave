@@ -655,7 +655,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         .attr('opacity', 0.2)
         .text(username);
     }
-  }, [seriesData, rendererOptions, username, timeStart, timeEnd]);
+  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
 
   return (
     <div id="svg-wrapper" className="overflow-x-auto flex justify-center">
