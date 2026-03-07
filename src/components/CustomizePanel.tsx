@@ -108,12 +108,12 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4 sm:mb-2 lg:mb-4">Options</h3>
             <div className="space-y-3 sm:space-y-1.5 lg:space-y-3">
               {[
+                { label: 'Deform text', checked: deformText, key: 'deform_text' },
                 { label: 'Username', checked: showUsername, key: 'show_username' },
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
                 { label: 'Year names', checked: addYears, key: 'add_years' },
                 { label: 'Watermark', checked: showWatermark, key: 'show_watermark' },
                 { label: 'Artist / album / tag names', checked: addLabels, key: 'add_labels' },
-                { label: 'Deform text', checked: deformText, key: 'deform_text' },
               ].map((opt) => (
                 <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer group">
                   <input
