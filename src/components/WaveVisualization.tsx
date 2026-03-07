@@ -82,6 +82,16 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
     const fontColor = (!isDark && scheme.fontColorLight)
       ? scheme.fontColorLight
       : scheme.fontColor;
+    // Axis labels (months/years) sit on the background, not on waves —
+    // pick white or black based on background luminance
+    const axisLabelColor = (() => {
+      const hex = bgColor.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16) / 255;
+      const g = parseInt(hex.substring(2, 4), 16) / 255;
+      const b = parseInt(hex.substring(4, 6), 16) / 255;
+      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return luminance > 0.5 ? '#000000' : '#ffffff';
+    })();
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
@@ -254,10 +264,11 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
 
         // Band geometry + centerline (needed for deformed text, computed lazily)
         let bandData: Array<{ x: number; topY: number; botY: number; centerY: number; thickness: number }> | null = null;
-        let clNode: SVGPathElement | null = null;
         let totalLen = 0;
         let bandXStep = 1;
         let bandX0 = 0;
+        // Pre-sampled centerline lookup table: avoids expensive getPointAtLength calls
+        let clSamples: Array<{ x: number; y: number; len: number }> = [];
 
         if (deformText) {
           bandData = layer.map((d, i) => ({
@@ -277,10 +288,35 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
             .append('path')
             .attr('id', `cl-${layerIndex}`)
             .attr('d', clPathD);
-          clNode = clPathEl.node() as SVGPathElement;
+          const clNode = clPathEl.node() as SVGPathElement;
           totalLen = clNode.getTotalLength();
           bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
           bandX0 = bandData[0].x;
+
+          // Pre-sample the centerline path at ~2px intervals
+          const sampleStep = Math.max(1, totalLen / Math.max(1, Math.ceil(totalLen / 2)));
+          const numSamples = Math.ceil(totalLen / sampleStep) + 1;
+          clSamples = new Array(numSamples);
+          for (let s = 0; s < numSamples; s++) {
+            const len = Math.min(s * sampleStep, totalLen);
+            const pt = clNode.getPointAtLength(len);
+            clSamples[s] = { x: pt.x, y: pt.y, len };
+          }
+          // Remove the SVG path element — no longer needed after sampling
+          clPathEl.remove();
+        }
+
+        // Interpolate centerline point at a given arc length using the pre-sampled table
+        function clPointAtLength(len: number): { x: number; y: number } {
+          const clamped = Math.max(0, Math.min(totalLen, len));
+          const sampleStep = clSamples.length > 1 ? clSamples[1].len - clSamples[0].len : totalLen;
+          const fi = clamped / (sampleStep || 1);
+          const i = Math.max(0, Math.min(clSamples.length - 2, Math.floor(fi)));
+          const t = fi - i;
+          return {
+            x: clSamples[i].x * (1 - t) + clSamples[i + 1].x * t,
+            y: clSamples[i].y * (1 - t) + clSamples[i + 1].y * t,
+          };
         }
 
         function bandAtX(x: number): { thickness: number; topY: number; botY: number; centerY: number } {
@@ -297,13 +333,19 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         }
 
         function lengthAtX(targetX: number): number {
-          let lo = 0, hi = totalLen;
-          for (let i = 0; i < 20; i++) {
-            const mid = (lo + hi) / 2;
-            if (clNode!.getPointAtLength(mid).x < targetX) lo = mid;
+          // Binary search on pre-sampled table instead of SVG DOM calls
+          let lo = 0, hi = clSamples.length - 1;
+          while (lo < hi) {
+            const mid = (lo + hi) >>> 1;
+            if (clSamples[mid].x < targetX) lo = mid + 1;
             else hi = mid;
           }
-          return (lo + hi) / 2;
+          // Interpolate for sub-sample precision
+          const idx = Math.max(0, Math.min(clSamples.length - 2, lo > 0 ? lo - 1 : 0));
+          const s0 = clSamples[idx], s1 = clSamples[idx + 1];
+          const dx = s1.x - s0.x;
+          const t = dx > 0 ? Math.max(0, Math.min(1, (targetX - s0.x) / dx)) : 0;
+          return s0.len * (1 - t) + s1.len * t;
         }
 
         // Determine label indices
@@ -326,7 +368,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
           }
 
           if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-            if (deformText && bandData && clNode) {
+            if (deformText && bandData && clSamples.length > 1) {
               // ── Deformed text: per-character placement along the centerline ──
               const text = label.text;
               const baseFontSize = label.fontSize;
@@ -383,7 +425,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
               }> = [];
               let estLen = startLen;
               for (let c = 0; c < text.length; c++) {
-                const pt = clNode.getPointAtLength(Math.min(estLen, totalLen));
+                const pt = clPointAtLength(Math.min(estLen, totalLen));
                 const band = bandAtX(pt.x);
                 const localThick = band.thickness;
                 const thickRatio = peakThickness > 0 ? localThick / peakThickness : 1;
@@ -425,10 +467,10 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
                 if (fontSize < 4) { curLen += charW + fontSize * 0.04; continue; }
 
                 const midLen = Math.min(curLen + charW / 2, totalLen);
-                const midPt = clNode.getPointAtLength(midLen);
+                const midPt = clPointAtLength(midLen);
                 const dt = 1.5;
-                const p1 = clNode.getPointAtLength(Math.max(0, midLen - dt));
-                const p2 = clNode.getPointAtLength(Math.min(totalLen, midLen + dt));
+                const p1 = clPointAtLength(Math.max(0, midLen - dt));
+                const p2 = clPointAtLength(Math.min(totalLen, midLen + dt));
                 const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
                 const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
 
@@ -498,7 +540,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
             .attr('y', height - 5)
             .attr('font-size', '10px')
             .attr('font-family', fontFamily)
-            .attr('fill', fontColor)
+            .attr('fill', axisLabelColor)
             .text(monthNames[month]);
         }
       }
@@ -525,7 +567,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
             .attr('y', 15)
             .attr('font-size', '12px')
             .attr('font-family', fontFamily)
-            .attr('fill', fontColor)
+            .attr('fill', axisLabelColor)
             .attr('font-weight', 'bold')
             .text(String(year));
         }
