@@ -131,7 +131,7 @@ export default function LastWaveApp() {
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  const prevDeformTextRef = useRef<boolean>(false);
+  const prevCoreRef = useRef<{ sd: any; key: string }>({ sd: null, key: '' });
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
@@ -160,12 +160,17 @@ export default function LastWaveApp() {
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
   const deformText = rOpts.deform_text ?? false;
 
-  // Detect deform_text toggle during render so "Drawing…" appears immediately
-  // (before any useEffect or paint), not after the heavy wave-rendering effect.
-  if (seriesData.length > 0 && deformText !== prevDeformTextRef.current) {
-    prevDeformTextRef.current = deformText;
-    if (!isDrawing) setIsDrawing(true);
+  // Show "Drawing…" whenever the core effect will re-run with deform text on.
+  // Track the same deps as WaveVisualization's core useEffect so the indicator
+  // appears on the same render — before any useEffect or paint.
+  const coreKey = `${rOpts.color_scheme}|${rOpts.font}|${rOpts.offset}|${rOpts.width}|${rOpts.height}|${rOpts.add_labels}|${deformText}|${suppressLabels}`;
+  if (seriesData.length > 0 && deformText &&
+      (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key) &&
+      !isDrawing) {
+    setIsDrawing(true);
   }
+  prevCoreRef.current = { sd: seriesData, key: coreKey };
+
   const loadingAnimEnabled = rOpts.loading_animation ?? true;
   const loadingStages = useLastWaveStore((s) => s.stages);
   const loadingStageIndex = useLastWaveStore((s) => s.currentStage);
