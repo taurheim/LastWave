@@ -85,24 +85,10 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
     const fontColor = (!isDark && scheme.fontColorLight)
       ? scheme.fontColorLight
       : scheme.fontColor;
-    // Axis labels (months/years) sit on the background, not on waves —
-    // pick white or black based on background luminance
-    const axisLabelColor = (() => {
-      const hex = bgColor.replace('#', '');
-      const r = parseInt(hex.substring(0, 2), 16) / 255;
-      const g = parseInt(hex.substring(2, 4), 16) / 255;
-      const b = parseInt(hex.substring(4, 6), 16) / 255;
-      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-      return luminance > 0.5 ? '#000000' : '#ffffff';
-    })();
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
-    const addMonths = rendererOptions.add_months ?? true;
-    const addYears = rendererOptions.add_years ?? false;
-    const showUsername = rendererOptions.show_username ?? false;
-    const showWatermark = rendererOptions.show_watermark ?? true;
     const deformText = rendererOptions.deform_text ?? false;
 
     // Determine dimensions
@@ -528,6 +514,50 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     onOverflowsDetected?.(detectedOverflows);
 
+  }, [seriesData, rendererOptions.color_scheme, rendererOptions.font, rendererOptions.offset,
+      rendererOptions.width, rendererOptions.height, rendererOptions.add_labels,
+      rendererOptions.deform_text, suppressLabels]);
+
+  // ── Overlay effect: cheap decorations that can toggle without re-rendering waves+labels ──
+  useEffect(() => {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+
+    // Remove only the overlay group (not the entire SVG)
+    svg.selectAll('.overlays').remove();
+    const overlayG = svg.append('g').attr('class', 'overlays');
+
+    // Recompute shared layout values
+    const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+    const scheme = (schemes as Record<string, any>)[schemeName] ?? schemes.lastwave;
+    const isDark = document.documentElement.classList.contains('dark');
+    const bgColor = (!isDark && scheme.backgroundColorLight)
+      ? scheme.backgroundColorLight
+      : scheme.backgroundColor;
+    const fontColor = (!isDark && scheme.fontColorLight)
+      ? scheme.fontColorLight
+      : scheme.fontColor;
+    const axisLabelColor = (() => {
+      const hex = bgColor.replace('#', '');
+      const r = parseInt(hex.substring(0, 2), 16) / 255;
+      const g = parseInt(hex.substring(2, 4), 16) / 255;
+      const b = parseInt(hex.substring(4, 6), 16) / 255;
+      const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      return luminance > 0.5 ? '#000000' : '#ffffff';
+    })();
+    const fontFamily = rendererOptions.font ?? 'DM Sans';
+    const height = rendererOptions.height ? parseInt(rendererOptions.height, 10) : DEFAULT_HEIGHT;
+    const numSegments = seriesData[0]?.counts.length ?? 0;
+    if (numSegments === 0) return;
+    const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
+    const width = userWidth > 0 ? userWidth : numSegments * DEFAULT_WIDTH_PER_PEAK;
+    const xScale = d3.scaleLinear().domain([0, numSegments - 1]).range([0, width]);
+
+    const addMonths = rendererOptions.add_months ?? true;
+    const addYears = rendererOptions.add_years ?? false;
+    const showUsername = rendererOptions.show_username ?? false;
+    const showWatermark = rendererOptions.show_watermark ?? true;
+
     // Month labels along the bottom
     if (addMonths && timeStart && timeEnd) {
       const startMs = timeStart instanceof Date
@@ -545,7 +575,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         const month = segDate.getMonth();
         if (month !== lastMonth) {
           lastMonth = month;
-          svg.append('text')
+          overlayG.append('text')
             .attr('x', xScale(i))
             .attr('y', height - 5)
             .attr('font-size', '10px')
@@ -572,7 +602,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           lastYear = year;
-          svg.append('text')
+          overlayG.append('text')
             .attr('x', xScale(i))
             .attr('y', 15)
             .attr('font-size', '12px')
@@ -586,7 +616,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // Watermark
     if (showWatermark) {
-      svg.append('text')
+      overlayG.append('text')
         .attr('x', width - 5)
         .attr('y', height - 5)
         .attr('text-anchor', 'end')
@@ -599,7 +629,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // Username
     if (username && showUsername) {
-      // Scale font size so the username fits within 1/3 of the graph width
       const maxWidth = width / 3;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
@@ -615,7 +644,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         ? (isDark ? '#ffffff' : '#000000')
         : fontColor;
 
-      svg.append('text')
+      overlayG.append('text')
         .attr('x', 5)
         .attr('y', fontSize + 2)
         .attr('font-size', `${fontSize}px`)
@@ -625,7 +654,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         .attr('opacity', 0.2)
         .text(username);
     }
-  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
+  }, [seriesData, rendererOptions, username, timeStart, timeEnd]);
 
   return (
     <div id="svg-wrapper" className="overflow-x-auto flex justify-center">
