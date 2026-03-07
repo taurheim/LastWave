@@ -88,7 +88,7 @@ const { title = 'LastWave' } = Astro.props;
       .nav-link:hover::after { width: 100%; }
     </style>
   </head>
-  <body class="font-body text-lw-text min-h-screen pb-16">
+  <body class="font-body text-lw-text min-h-screen pb-3 lg:pb-6">
     <!-- Theme toggle -->
     <button
       id="theme-toggle"
@@ -104,9 +104,9 @@ const { title = 'LastWave' } = Astro.props;
       </svg>
     </button>
 
-    <header class="pt-12 md:pt-16 pb-6 text-center">
-      <div class="inline-flex items-center gap-4">
-        <svg class="h-14" xmlns="http://www.w3.org/2000/svg"
+    <header class="pt-4 max-lg:landscape:pt-2 lg:pt-10 pb-1 max-lg:landscape:pb-0 lg:pb-3 text-center">
+      <div class="inline-flex items-center gap-2 lg:gap-4">
+        <svg class="h-7 max-lg:landscape:h-5 lg:h-14" xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 64 56" aria-label="LastWave logo" transition:persist="logo">
           <!-- Band 1 -->
           <path fill="rgb(var(--lw-accent))" fill-opacity="0.25">
@@ -130,18 +130,18 @@ const { title = 'LastWave' } = Astro.props;
           </path>
         </svg>
         <div>
-          <h1 class="text-5xl md:text-6xl font-thin tracking-tight text-lw-heading" style="font-family: 'Roboto', sans-serif;">
+          <h1 class="text-3xl max-lg:landscape:text-2xl lg:text-6xl font-thin tracking-tight text-lw-heading" style="font-family: 'Roboto', sans-serif;">
             Last<span class="text-lw-accent">Wave</span>
           </h1>
-          <p class="text-lw-muted text-sm tracking-[0.25em] uppercase mt-1 font-light">
+          <p class="text-lw-muted text-xs lg:text-sm tracking-[0.25em] uppercase mt-0.5 lg:mt-1 font-light hidden lg:block">
             Graph your music listening history!
           </p>
         </div>
       </div>
     </header>
 
-    <nav class="text-center mb-10">
-      <div class="inline-flex items-center gap-8 text-sm tracking-widest uppercase text-lw-muted">
+    <nav class="text-center mb-2 max-lg:landscape:mb-1 lg:mb-6">
+      <div class="inline-flex items-center gap-4 max-lg:landscape:gap-3 lg:gap-8 text-xs lg:text-sm tracking-widest uppercase text-lw-muted">
         <a href="/" id="nav-home-link" class="nav-link hover:text-lw-accent">Home</a>
         <span class="w-px h-3 bg-lw-border inline-block"></span>
         <a href="/gallery" class="nav-link hover:text-lw-accent">Gallery</a>
@@ -158,10 +158,20 @@ const { title = 'LastWave' } = Astro.props;
 
     <ErrorToast client:load />
 
-    <footer class="text-center mt-20 pb-8 text-lw-muted/40 text-xs tracking-wider">
-      <div class="w-12 h-px bg-gradient-to-r from-transparent via-lw-border to-transparent mx-auto mb-4"></div>
+    <footer id="site-footer" class="text-center mt-4 lg:mt-6 pb-2 lg:pb-3 text-lw-muted/40 text-xs tracking-wider">
+      <div class="w-12 h-px bg-gradient-to-r from-transparent via-lw-border to-transparent mx-auto mb-2"></div>
       LastWave &middot; built by <a href="https://savas.ca" class="hover:text-lw-accent transition-colors">Niko Savas</a>
     </footer>
+
+    <script is:inline>
+      // Clear React island content during view transitions to prevent stale cached DOM
+      document.addEventListener('astro:before-swap', function(e) {
+        var islands = e.newDocument.querySelectorAll('astro-island');
+        for (var i = 0; i < islands.length; i++) {
+          islands[i].innerHTML = '';
+        }
+      });
+    </script>
 
     <script is:inline>
       (function() {

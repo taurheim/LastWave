@@ -180,20 +180,20 @@ export default function ImageActions() {
   const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   return (
-    <div className="py-4 px-4">
-      {/* Mobile layout */}
-      <div className="flex flex-col items-center gap-3 md:hidden">
+    <div className="py-4 max-lg:landscape:py-2.5 px-4">
+      {/* Mobile layout — vertical in portrait, horizontal in landscape */}
+      <div className="flex flex-col max-lg:landscape:flex-row items-center max-lg:landscape:justify-center gap-3 max-lg:landscape:gap-2 lg:hidden">
         {canNativeShare && (
           <button
             onClick={nativeShare}
-            className="w-full max-w-xs bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-3 text-sm tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]"
+            className="w-full max-lg:landscape:w-auto max-w-xs bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-3 max-lg:landscape:py-1.5 text-sm tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] max-lg:landscape:order-last max-lg:landscape:ml-auto"
           >
             Share
           </button>
         )}
         <button
           onClick={downloadPng}
-          className={`w-full max-w-xs rounded-lg px-6 py-3 text-sm tracking-wider uppercase font-semibold transition-all ${
+          className={`w-full max-lg:landscape:w-auto max-w-xs rounded-lg px-6 py-3 max-lg:landscape:py-1.5 text-sm tracking-wider uppercase font-semibold transition-all ${
             canNativeShare
               ? 'border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
               : 'bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]'
@@ -203,7 +203,7 @@ export default function ImageActions() {
         </button>
         <button
           onClick={cloudinaryUpload}
-          className="text-lw-muted hover:text-lw-accent text-xs tracking-wider uppercase transition-colors py-1"
+          className="text-lw-muted hover:text-lw-accent text-xs tracking-wider uppercase transition-colors py-1 max-lg:landscape:px-4"
         >
           {uploadInProgress ? (
             <span className="inline-block w-4 h-4 border-2 border-lw-muted border-t-transparent rounded-full animate-spin" />
@@ -214,7 +214,7 @@ export default function ImageActions() {
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden md:flex justify-center items-center gap-3">
+      <div className="hidden lg:flex justify-center items-center gap-3">
         <button
           onClick={downloadPng}
           className="bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-2.5 text-xs tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] hover:scale-[1.02] active:scale-[0.98]"

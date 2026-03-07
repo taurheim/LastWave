@@ -10,5 +10,7 @@ export {
   joinSegments,
   cleanByMinPlays,
   cleanByTopN,
+  findOptimalMinPlays,
+  getAnimationSteps,
   getTopTags,
 } from './util';

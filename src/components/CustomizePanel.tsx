@@ -36,7 +36,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const minPlays = parseInt(dataSourceOptions.min_plays ?? '10', 10) || 1;
 
   const width = rendererOptions.width ?? '';
-  const height = rendererOptions.height ?? '600';
+  const height = rendererOptions.height ?? '550';
   const offset = rendererOptions.offset ?? 'silhouette';
   const font = rendererOptions.font ?? 'DM Sans';
   const addLabels = rendererOptions.add_labels ?? true;
@@ -49,14 +49,14 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-4">
-      <div className="bg-lw-surface/50 border border-lw-border rounded-xl p-6 space-y-6">
-        {/* Top controls — full width, stacked */}
-        <div className="space-y-4">
+    <div className="px-6 py-4 sm:py-2 sm:px-3 lg:px-6 lg:py-4">
+      <div className="bg-lw-surface/50 border border-lw-border rounded-xl p-6 sm:p-4 lg:p-6 space-y-6 sm:space-y-4 lg:space-y-6">
+        {/* Top controls */}
+        <div className="space-y-4 sm:space-y-3 lg:space-y-4">
           <div>
-            <div className="flex items-baseline justify-between mb-2">
+            <div className="flex items-baseline justify-between mb-2 sm:mb-1 lg:mb-2">
               <label htmlFor="min-plays" className="text-sm text-lw-text font-medium">Minimum plays</label>
-              <span className="text-lg font-semibold text-lw-accent tabular-nums">{minPlays}</span>
+              <span className="text-lg sm:text-base lg:text-lg font-semibold text-lw-accent tabular-nums">{minPlays}</span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -85,12 +85,12 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             </div>
           </div>
           <div>
-            <label htmlFor="graph-type" className="block text-sm text-lw-text font-medium mb-2">Graph type</label>
+            <label htmlFor="graph-type" className="block text-sm text-lw-text font-medium mb-2 sm:mb-1 lg:mb-2">Graph type</label>
             <select
               id="graph-type"
               value={offset}
               onChange={(e) => setRendererOption('offset', e.target.value)}
-              className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+              className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 sm:py-1.5 lg:py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
             >
               {['silhouette', 'wiggle', 'expand', 'zero'].map((v) => (
                 <option key={v} value={v}>{v}</option>
@@ -101,11 +101,11 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
 
         <div className="w-full h-px bg-lw-border" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-4 lg:gap-8">
           {/* Options */}
           <div>
-            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4">Options</h3>
-            <div className="space-y-3">
+            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4 sm:mb-2 lg:mb-4">Options</h3>
+            <div className="space-y-3 sm:space-y-1.5 lg:space-y-3">
               {[
                 { label: 'Username', checked: showUsername, key: 'show_username' },
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
@@ -128,8 +128,8 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
 
           {/* Image */}
           <div>
-            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4">Image</h3>
-            <div className="space-y-3">
+            <h3 className="text-xs tracking-widest uppercase text-lw-accent mb-4 sm:mb-2 lg:mb-4">Image</h3>
+            <div className="space-y-3 sm:space-y-2 lg:space-y-3">
               <div>
                 <label htmlFor="img-width" className="block text-xs text-lw-muted mb-1">Width</label>
                 <input
@@ -138,7 +138,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   value={width}
                   onChange={(e) => setRendererOption('width', e.target.value)}
                   placeholder="auto"
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text placeholder-lw-muted/40 focus:outline-none focus:border-lw-accent transition-all"
+                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 sm:py-1.5 lg:py-2 text-sm text-lw-text placeholder-lw-muted/40 focus:outline-none focus:border-lw-accent transition-all"
                 />
               </div>
               <div>
@@ -148,7 +148,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   type="text"
                   value={height}
                   onChange={(e) => setRendererOption('height', e.target.value)}
-                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+                  className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 sm:py-1.5 lg:py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
                 />
               </div>
               <div>
@@ -157,7 +157,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   <select
                     value={font}
                     onChange={(e) => setRendererOption('font', e.target.value)}
-                    className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+                    className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 sm:py-1.5 lg:py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
                   >
                     {displayFonts.map((f) => (
                       <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>

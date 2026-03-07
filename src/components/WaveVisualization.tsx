@@ -16,7 +16,7 @@ import FontData from '@/core/models/FontData';
 import type Label from '@/core/models/Label';
 
 const DEFAULT_WIDTH_PER_PEAK = 150;
-const DEFAULT_HEIGHT = 600;
+const DEFAULT_HEIGHT = 550;
 const MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
 const MINIMUM_FONT_SIZE_PIXELS = 8;
 
@@ -30,18 +30,20 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
 interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
+  suppressLabels?: boolean;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
-  const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
+  const username = useLastWaveStore((s) => s.dataSourceOptions.username);
+  const timeStart = useLastWaveStore((s) => s.dataSourceOptions.time_start);
+  const timeEnd = useLastWaveStore((s) => s.dataSourceOptions.time_end);
 
   useEffect(() => {
     if (!svgRef.current || seriesData.length === 0) return;
 
     const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
 
     const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
     const scheme = (schemes as Record<string, any>)[schemeName] ?? schemes.lastwave;
@@ -58,7 +60,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
-    const addLabels = rendererOptions.add_labels ?? true;
+    const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
     const addMonths = rendererOptions.add_months ?? true;
     const addYears = rendererOptions.add_years ?? false;
     const showUsername = rendererOptions.show_username ?? false;
@@ -107,6 +109,43 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
       .y1((d) => yScale(d[1]))
       .curve(d3.curveMonotoneX);
 
+    // Animation mode: morph existing paths with D3 transitions
+    const existingWaves = svg.selectAll<SVGPathElement, any>('path.wave');
+    if (suppressLabels && existingWaves.size() > 0) {
+      svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
+      svg.select('rect').attr('fill', bgColor);
+
+      // Flat area for entering paths (start from center line)
+      const centerY = height / 2;
+      const flatArea = d3.area<[number, number]>()
+        .x((_, i) => xScale(i))
+        .y0(() => centerY)
+        .y1(() => centerY)
+        .curve(d3.curveMonotoneX);
+
+      svg.selectAll<SVGPathElement, any>('path.wave')
+        .data(stackedData, (d: any) => d.key)
+        .join(
+          (enter) => enter.append('path')
+            .attr('class', 'wave')
+            .attr('stroke', 'none')
+            .attr('stroke-width', 0)
+            .attr('fill', (_, i) => colors[i % colors.length])
+            .attr('d', (d) => flatArea(d as any) ?? ''),
+          (update) => update,
+          (exit) => exit.transition().duration(50).attr('opacity', 0).remove(),
+        )
+        .transition()
+        .duration(55)
+        .attr('d', (d) => area(d as any) ?? '')
+        .attr('fill', (_, i) => colors[i % colors.length]);
+
+      return;
+    }
+
+    // Full rebuild (first frame or final render with labels)
+    svg.selectAll('*').remove();
+
     // Set SVG attributes
     svg
       .attr('width', width)
@@ -128,7 +167,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     // Draw paths — capture path strings for overflow detection
     const pathStrings: string[] = [];
     svg.selectAll('path.wave')
-      .data(stackedData)
+      .data(stackedData, (d: any) => d.key)
       .join('path')
       .attr('class', 'wave')
       .attr('d', (d) => {
@@ -206,19 +245,19 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     onOverflowsDetected?.(detectedOverflows);
 
     // Month labels along the bottom
-    if (addMonths && dataSourceOptions.time_start && dataSourceOptions.time_end) {
-      const startTime = dataSourceOptions.time_start instanceof Date
-        ? dataSourceOptions.time_start.getTime()
-        : new Date(dataSourceOptions.time_start).getTime();
-      const endTime = dataSourceOptions.time_end instanceof Date
-        ? dataSourceOptions.time_end.getTime()
-        : new Date(dataSourceOptions.time_end).getTime();
-      const timePerSegment = (endTime - startTime) / numSegments;
+    if (addMonths && timeStart && timeEnd) {
+      const startMs = timeStart instanceof Date
+        ? timeStart.getTime()
+        : new Date(timeStart).getTime();
+      const endMs = timeEnd instanceof Date
+        ? timeEnd.getTime()
+        : new Date(timeEnd).getTime();
+      const timePerSegment = (endMs - startMs) / numSegments;
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       let lastMonth = -1;
 
       for (let i = 0; i < numSegments; i++) {
-        const segDate = new Date(startTime + i * timePerSegment);
+        const segDate = new Date(startMs + i * timePerSegment);
         const month = segDate.getMonth();
         if (month !== lastMonth) {
           lastMonth = month;
@@ -234,18 +273,18 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     }
 
     // Year labels
-    if (addYears && dataSourceOptions.time_start && dataSourceOptions.time_end) {
-      const startTime = dataSourceOptions.time_start instanceof Date
-        ? dataSourceOptions.time_start.getTime()
-        : new Date(dataSourceOptions.time_start).getTime();
-      const endTime = dataSourceOptions.time_end instanceof Date
-        ? dataSourceOptions.time_end.getTime()
-        : new Date(dataSourceOptions.time_end).getTime();
-      const timePerSegment = (endTime - startTime) / numSegments;
+    if (addYears && timeStart && timeEnd) {
+      const startMs = timeStart instanceof Date
+        ? timeStart.getTime()
+        : new Date(timeStart).getTime();
+      const endMs = timeEnd instanceof Date
+        ? timeEnd.getTime()
+        : new Date(timeEnd).getTime();
+      const timePerSegment = (endMs - startMs) / numSegments;
       let lastYear = -1;
 
       for (let i = 0; i < numSegments; i++) {
-        const segDate = new Date(startTime + i * timePerSegment);
+        const segDate = new Date(startMs + i * timePerSegment);
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           lastYear = year;
@@ -275,7 +314,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
     }
 
     // Username
-    const username = dataSourceOptions.username;
     if (username && showUsername) {
       // Scale font size so the username fits within 1/3 of the graph width
       const maxWidth = width / 3;
@@ -303,7 +341,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected }: W
         .attr('opacity', 0.2)
         .text(username);
     }
-  }, [seriesData, rendererOptions, dataSourceOptions]);
+  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
 
   return (
     <div id="svg-wrapper" className="overflow-x-auto flex justify-center">

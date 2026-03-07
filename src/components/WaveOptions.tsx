@@ -74,9 +74,9 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-6 py-8">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-6 py-3 lg:py-6">
       {/* Main Options */}
-      <div className="space-y-6 mb-8">
+      <div className="space-y-4 lg:space-y-5 mb-6">
         {/* Username */}
         <div>
           <label className="block text-xs tracking-widest uppercase text-lw-muted mb-2">last.fm username</label>
@@ -153,7 +153,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                       className="block"
                     />
                   </div>
-                  <span className={`text-xs capitalize ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}>{name}</span>
+                  <span className={`text-xs ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}>{name === 'lastwave' ? 'LastWave' : name.charAt(0).toUpperCase() + name.slice(1)}</span>
                 </button>
               );
             })}
@@ -200,6 +200,15 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 ))}
               </select>
             </div>
+            <label className="flex items-center gap-2.5 cursor-pointer group pt-1">
+              <input
+                type="checkbox"
+                checked={rendererOptions.loading_animation ?? true}
+                onChange={(e) => setRendererOption('loading_animation', e.target.checked)}
+                className="rounded border-lw-border bg-lw-bg accent-lw-accent"
+              />
+              <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">Loading animation</span>
+            </label>
           </div>
         </div>
       )}

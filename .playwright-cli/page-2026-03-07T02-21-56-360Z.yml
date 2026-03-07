@@ -1,0 +1,67 @@
+- generic [active] [ref=e1]:
+  - button "Toggle theme" [ref=e2] [cursor=pointer]:
+    - img [ref=e3]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - img "LastWave logo" [ref=e7]
+      - generic [ref=e13]:
+        - heading "LastWave" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Graph your music listening history!
+  - navigation [ref=e16]:
+    - generic [ref=e17]:
+      - link "Home" [ref=e18] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e20] [cursor=pointer]:
+        - /url: /gallery
+      - link "About" [ref=e22] [cursor=pointer]:
+        - /url: /about
+  - main [ref=e24]:
+    - generic [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e29]:
+          - generic [ref=e30]: last.fm username
+          - textbox "Enter your username" [ref=e31]
+        - generic [ref=e32]:
+          - generic [ref=e33]: Date range
+          - combobox [ref=e34] [cursor=pointer]:
+            - option "Last 2 weeks"
+            - option "Last 3 months" [selected]
+            - option "Last year"
+            - option "Custom"
+        - generic [ref=e35]:
+          - generic [ref=e36]: Theme
+          - generic [ref=e37]:
+            - button "lastwave theme preview LastWave" [ref=e38] [cursor=pointer]:
+              - img "lastwave theme preview" [ref=e40]
+              - generic [ref=e41]: LastWave
+            - button "ember theme preview Ember" [ref=e42] [cursor=pointer]:
+              - img "ember theme preview" [ref=e44]
+              - generic [ref=e45]: Ember
+            - button "budapest theme preview Budapest" [ref=e46] [cursor=pointer]:
+              - img "budapest theme preview" [ref=e48]
+              - generic [ref=e49]: Budapest
+            - button "mosaic theme preview Mosaic" [ref=e50] [cursor=pointer]:
+              - img "mosaic theme preview" [ref=e52]
+              - generic [ref=e53]: Mosaic
+            - button "ocean theme preview Ocean" [ref=e54] [cursor=pointer]:
+              - img "ocean theme preview" [ref=e56]
+              - generic [ref=e57]: Ocean
+      - button "Advanced Options +" [ref=e59] [cursor=pointer]
+      - button "Generate" [ref=e61] [cursor=pointer]
+  - contentinfo [ref=e62]:
+    - text: LastWave · built by
+    - link "Niko Savas" [ref=e64] [cursor=pointer]:
+      - /url: https://savas.ca
+  - generic [ref=e67]:
+    - button "Menu" [ref=e68]:
+      - img [ref=e70]
+      - generic: Menu
+    - button "Inspect" [ref=e74]:
+      - img [ref=e76]
+      - generic: Inspect
+    - button "Audit" [ref=e78]:
+      - img [ref=e80]
+      - generic: Audit
+    - button "Settings" [ref=e83]:
+      - img [ref=e85]
+      - generic: Settings

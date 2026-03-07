@@ -17,6 +17,8 @@ import {
   joinSegments,
   cleanByMinPlays,
   combineArtistTags,
+  findOptimalMinPlays,
+  getAnimationSteps,
   getTopTags,
 } from '@/core/lastfm';
 import type ArtistTags from '@/core/lastfm/models/ArtistTags';
@@ -46,10 +48,10 @@ async function pooled<T>(
   return results;
 }
 
-function ImageScaler({ showFullSvg, setShowFullSvg, expandable = true, children }: {
+function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, children }: {
   showFullSvg: boolean;
   setShowFullSvg: (v: boolean) => void;
-  expandable?: boolean;
+  onOverflowChange?: (overflowing: boolean) => void;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -62,62 +64,38 @@ function ImageScaler({ showFullSvg, setShowFullSvg, expandable = true, children 
     const svg = el.querySelector('svg');
     if (!svg) return;
     const svgWidth = parseFloat(svg.getAttribute('width') ?? '0');
-    setIsOverflowing(svgWidth > el.clientWidth);
-  }, [showFullSvg]);
+    const overflows = svgWidth > el.clientWidth;
+    setIsOverflowing(overflows);
+    onOverflowChange?.(overflows);
+  }, [showFullSvg, onOverflowChange]);
 
   useEffect(() => {
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
-    return () => window.removeEventListener('resize', checkOverflow);
+    const el = containerRef.current;
+    let ro: ResizeObserver | undefined;
+    if (el) {
+      ro = new ResizeObserver(checkOverflow);
+      ro.observe(el);
+    }
+    return () => {
+      window.removeEventListener('resize', checkOverflow);
+      ro?.disconnect();
+    };
   }, [checkOverflow]);
 
-  // Non-expandable preview: always scale to fit
-  if (!expandable) {
-    return (
-      <div ref={containerRef} className="mx-4">
-        <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto">
-          {children}
-        </div>
-      </div>
-    );
-  }
-
-  // Full size: native dimensions, container scrolls horizontally
-  if (showFullSvg) {
-    return (
-      <div ref={containerRef} className="mx-4 overflow-x-auto cursor-pointer" onClick={() => setShowFullSvg(false)}>
-        <div className="[&_svg]:block" style={{ minWidth: 'max-content' }}>
-          {children}
-        </div>
-      </div>
-    );
-  }
-
-  // Image fits the screen — render as-is, no controls needed
-  if (!isOverflowing) {
-    return <div ref={containerRef} className="mx-4">{children}</div>;
-  }
-
-  // Image overflows — shrink to fit, with expand button
+  // Single DOM structure to avoid remounting children when switching modes
+  const scaleDown = !showFullSvg && isOverflowing;
   return (
-    <div ref={containerRef} className="group relative mx-4">
-      <div className="overflow-hidden [&_svg]:w-full [&_svg]:h-auto cursor-pointer" onClick={() => setShowFullSvg(true)}>
+    <div
+      ref={containerRef}
+      className={`mx-4 ${showFullSvg ? 'overflow-x-auto [&_#svg-wrapper]:!overflow-visible' : ''}`}
+    >
+      <div
+        className={scaleDown ? 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto' : ''}
+        style={showFullSvg ? { minWidth: 'max-content' } : undefined}
+      >
         {children}
-      </div>
-      {/* Desktop: overlay on hover */}
-      <div className="hidden lg:flex absolute inset-0 items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all duration-200 cursor-pointer" onClick={() => setShowFullSvg(true)}>
-        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-lw-surface/90 border border-lw-border text-lw-text text-xs tracking-widest uppercase px-5 py-2.5 rounded-lg backdrop-blur-sm">
-          ⤢ Full size
-        </span>
-      </div>
-      {/* Mobile: always-visible button */}
-      <div className="flex lg:hidden justify-center mt-2">
-        <button
-          onClick={() => setShowFullSvg(true)}
-          className="bg-lw-surface/90 border border-lw-border text-lw-muted text-xs tracking-widest uppercase px-4 py-1.5 rounded-lg"
-        >
-          ⤢ Full size
-        </button>
       </div>
     </div>
   );
@@ -138,20 +116,39 @@ export default function LastWaveApp() {
   const [showCustomize, setShowCustomize] = useState(false);
   const [overflows, setOverflows] = useState<OverflowInfo[]>([]);
   const [highlightOverflows, setHighlightOverflows] = useState(false);
+  const [imageOverflows, setImageOverflows] = useState(false);
+  const [suppressLabels, setSuppressLabels] = useState(false);
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const animTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const isAnimatingRef = useRef(false);
+
+  const showFullSizeBtn = showFullSvg || imageOverflows;
 
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
   const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
 
-  // Re-filter data when minPlays changes (debounced)
+  // Clean up animation timer on unmount
+  useEffect(() => () => clearTimeout(animTimerRef.current), []);
+
+  // Reset to input page if we lost chart data (e.g. navigated away and back)
+  useEffect(() => {
+    if (showVisualization && seriesData.length === 0 && rawSeriesDataRef.current.length === 0) {
+      resetToOptions();
+    }
+  }, []);
+
+  // Re-filter data when minPlays changes — suppress labels during rapid changes
   useEffect(() => {
     if (rawSeriesDataRef.current.length === 0) return;
-    const timer = setTimeout(() => {
-      const mp = parseInt(minPlays, 10);
-      if (isNaN(mp)) return;
-      setSeriesData(cleanByMinPlays(rawSeriesDataRef.current, mp));
-    }, 300);
-    return () => clearTimeout(timer);
+    if (isAnimatingRef.current) return;
+    const mp = parseInt(minPlays, 10);
+    if (isNaN(mp)) return;
+    setSuppressLabels(true);
+    setSeriesData(cleanByMinPlays(rawSeriesDataRef.current, mp));
+    clearTimeout(labelTimerRef.current);
+    labelTimerRef.current = setTimeout(() => setSuppressLabels(false), 400);
+    return () => clearTimeout(labelTimerRef.current);
   }, [minPlays]);
 
   // Swap nav "Home" link to "← New graph" when graph is visible
@@ -170,6 +167,14 @@ export default function LastWaveApp() {
       link.textContent = 'Home';
     }
   }, [showActions, resetToOptions]);
+
+  // Hide footer when visualization is showing
+  useEffect(() => {
+    const footer = document.getElementById('site-footer');
+    if (!footer) return;
+    footer.style.display = showActions ? 'none' : '';
+    return () => { footer.style.display = ''; };
+  }, [showActions]);
 
   async function handleSubmit() {
     const store = useLastWaveStore.getState();
@@ -210,7 +215,6 @@ export default function LastWaveApp() {
       const startUnix = Math.floor(startDate.getTime() / 1000);
       const endUnix = Math.floor(endDate.getTime() / 1000);
       const groupBy = dsOpts.group_by ?? 'week';
-      const minPlays = parseInt(dsOpts.min_plays ?? '10', 10);
 
       const timeSpan = new TimeSpan(startUnix, endUnix);
       const segments = splitTimeSpan(groupBy, timeSpan, store.log);
@@ -237,6 +241,8 @@ export default function LastWaveApp() {
       // Join and clean data
       let data = joinSegments(segmentData, store.log);
       let rawData = data;
+      let minPlays = findOptimalMinPlays(rawData, 30, store.log);
+      store.setDataSourceOption('min_plays', String(minPlays));
       data = cleanByMinPlays(data, minPlays, store.log);
 
       // If tag mode, fetch tags for each artist
@@ -279,6 +285,8 @@ export default function LastWaveApp() {
 
         data = combineArtistTags(data, tagData);
         rawData = data;
+        minPlays = findOptimalMinPlays(rawData, 30, store.log);
+        store.setDataSourceOption('min_plays', String(minPlays));
         data = cleanByMinPlays(data, minPlays, store.log);
       }
 
@@ -294,12 +302,38 @@ export default function LastWaveApp() {
         }
       }
       setMaxPlaysInDataset(datasetMax);
-      setSeriesData(data);
 
       store.progressCurrentStage();
       store.setShowLoadingBar(false);
       store.setShowActions(true);
       store.setShowVisualization(true);
+
+      // Animate the graph "building up" from few artists to the final count
+      clearTimeout(animTimerRef.current);
+      const loadingAnim = rOpts.loading_animation ?? true;
+      const steps = loadingAnim ? getAnimationSteps(rawData, minPlays) : [];
+
+      if (steps.length > 1) {
+        isAnimatingRef.current = true;
+        setSuppressLabels(true);
+        let i = 0;
+        const runStep = () => {
+          if (i < steps.length - 1) {
+            // Intermediate frames: render without labels
+            setSeriesData(cleanByMinPlays(rawData, steps[i]));
+            i++;
+            animTimerRef.current = setTimeout(runStep, 60);
+          } else {
+            // Final frame: render the target data with labels
+            isAnimatingRef.current = false;
+            setSeriesData(data);
+            setSuppressLabels(false);
+          }
+        };
+        runStep();
+      } else {
+        setSeriesData(data);
+      }
     } catch (e: any) {
       store.log(String(e));
       setError(String(e?.message ?? e));
@@ -345,76 +379,98 @@ export default function LastWaveApp() {
 
       {/* Desktop layout */}
       <div className="hidden lg:block">
-        {showActions && showCustomize ? (
-          <div className="flex items-start gap-4">
-            <div className="relative flex-[3] min-w-0">
-              {showVisualization && (
-                <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
-                  <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
-                </ImageScaler>
-              )}
-              <div className="absolute top-2 right-6">
-                <button
-                  onClick={() => setShowCustomize(false)}
-                  className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-accent text-lw-bg opacity-80 hover:opacity-100"
-                >
-                  Hide customize
-                </button>
-              </div>
-            </div>
-            <div className="flex-[2] min-w-0">
-              <CustomizePanel maxPlays={maxPlaysInDataset} />
-            </div>
-          </div>
-        ) : (
-          showVisualization && (
-            <div className="relative">
-              <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
+        {showVisualization && (
+          <div className={showActions && showCustomize ? 'flex items-start gap-4' : ''}>
+            <div className={`relative ${showCustomize ? 'flex-[3] min-w-0' : !imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
+              <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
-                <div className="absolute top-2 right-6">
-                  <button
-                    onClick={() => setShowCustomize(true)}
-                    className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent backdrop-blur-sm"
-                  >
-                    ⚙ Customize
-                  </button>
-                </div>
+                <>
+                  {showFullSizeBtn && (
+                    <div className="absolute top-2 left-6 z-10">
+                      <button
+                        onClick={() => setShowFullSvg(!showFullSvg)}
+                        className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm bg-lw-surface/80 border border-lw-border text-lw-text hover:text-lw-accent hover:border-lw-accent"
+                      >
+                        {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
+                      </button>
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-6 z-10">
+                    <button
+                      onClick={() => setShowCustomize(!showCustomize)}
+                      className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
+                        showCustomize
+                          ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
+                          : 'bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+                      }`}
+                    >
+                      {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
+                    </button>
+                  </div>
+                </>
               )}
             </div>
-          )
-        )}
-      </div>
-
-      {/* Mobile layout — single WaveVisualization instance to avoid remount flash */}
-      <div className={`lg:hidden ${showVisualization && !showCustomize && !showFullSvg ? 'min-h-[calc(100svh-10rem)] flex flex-col justify-center' : ''}`}>
-        {showVisualization && (
-          <div
-            onClick={showCustomize ? () => setShowCustomize(false) : undefined}
-            className={showCustomize ? 'cursor-pointer' : 'relative'}
-          >
-            <ImageScaler
-              showFullSvg={showCustomize ? false : showFullSvg}
-              setShowFullSvg={showCustomize ? () => {} : setShowFullSvg}
-              expandable={!showCustomize}
-            >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} />
-            </ImageScaler>
-            {showActions && !showCustomize && (
-              <div className="absolute top-2 right-6">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowCustomize(true); }}
-                  className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all bg-lw-surface/80 border border-lw-border text-lw-text backdrop-blur-sm"
-                >
-                  ⚙ Customize
-                </button>
+            {showActions && showCustomize && (
+              <div className="flex-[2] min-w-0">
+                <CustomizePanel maxPlays={maxPlaysInDataset} />
               </div>
             )}
           </div>
         )}
+      </div>
+
+      {/* Mobile layout — single WaveVisualization instance to avoid remount flash */}
+      <div className={`lg:hidden ${
+        showVisualization && !showCustomize && !showFullSvg
+          ? 'min-h-[calc(100svh-10rem)] max-lg:landscape:min-h-[calc(100svh-8rem)] flex flex-col justify-center'
+          : showVisualization && showCustomize
+            ? 'max-lg:landscape:flex max-lg:landscape:flex-row max-lg:landscape:items-stretch max-lg:landscape:h-[calc(100svh-5.25rem)]'
+            : ''
+      }`}>
+        {showVisualization && (
+          <div
+            className={`relative ${showCustomize ? 'max-lg:landscape:flex-1 max-lg:landscape:min-w-0 max-lg:landscape:[&>div]:mr-0 max-lg:landscape:flex max-lg:landscape:items-center max-lg:landscape:pb-14' : ''}`}
+          >
+            <ImageScaler
+              showFullSvg={showCustomize ? false : showFullSvg}
+              setShowFullSvg={setShowFullSvg}
+            >
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
+            </ImageScaler>
+            {showActions && (
+              <>
+                {showFullSizeBtn && (
+                  <div className="absolute top-2 left-6 z-10">
+                    <button
+                      onClick={() => setShowFullSvg(!showFullSvg)}
+                      className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm bg-lw-surface/80 border border-lw-border text-lw-text hover:text-lw-accent hover:border-lw-accent"
+                    >
+                      {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
+                    </button>
+                  </div>
+                )}
+                <div className="absolute top-2 right-6 z-10">
+                  <button
+                    onClick={() => setShowCustomize(!showCustomize)}
+                    className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
+                      showCustomize
+                        ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
+                        : 'bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+                    }`}
+                  >
+                    {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
         {showActions && showCustomize && (
-          <CustomizePanel maxPlays={maxPlaysInDataset} />
+          <div className="max-lg:landscape:flex-1 max-lg:landscape:min-w-0 max-lg:landscape:overflow-y-auto max-lg:landscape:max-h-[calc(100svh-5.25rem)]">
+            <CustomizePanel maxPlays={maxPlaysInDataset} />
+          </div>
         )}
       </div>
 
@@ -471,7 +527,7 @@ export default function LastWaveApp() {
       )}
 
       {/* Spacer so fixed mobile bar doesn't cover content */}
-      {showActions && <div className="h-20 lg:hidden" />}
+      {showActions && <div className={`lg:hidden ${showCustomize ? 'h-20 max-lg:landscape:h-0' : 'h-20 max-lg:landscape:h-10'}`} />}
 
       {/* Highlight overflowing labels when hovering the bug report button */}
       {highlightOverflows && (

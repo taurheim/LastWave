@@ -138,6 +138,111 @@ export function cleanByMinPlays(data: SeriesData[], minPlays: number, logger?: (
 }
 
 /*
+  Find the optimal minimum-plays threshold so that:
+  1. The peak number of active artists in any single time slice ≈ targetMaxConcurrent
+  2. The number of completely empty time slices is minimised
+*/
+export function findOptimalMinPlays(
+  data: SeriesData[],
+  targetMaxConcurrent = 30,
+  logger?: (msg: string) => void,
+): number {
+  if (data.length === 0) return 1;
+  const numSegments = data[0].counts.length;
+  if (numSegments === 0) return 1;
+
+  // Pre-compute each artist's peak play count (the threshold at which they'd be removed)
+  const peakCounts: number[] = data.map((s) => {
+    let max = 0;
+    for (const c of s.counts) {
+      if (c > max) max = c;
+    }
+    return max;
+  });
+
+  // Only evaluate at the unique peak-count breakpoints (sorted ascending)
+  const thresholds = [...new Set(peakCounts)].sort((a, b) => a - b);
+
+  let bestMinPlays = 1;
+  let bestScore = Infinity;
+
+  for (const threshold of thresholds) {
+    // Artists surviving this threshold
+    const surviving: SeriesData[] = [];
+    for (let i = 0; i < data.length; i++) {
+      if (peakCounts[i] >= threshold) surviving.push(data[i]);
+    }
+    if (surviving.length === 0) break;
+
+    // Count max concurrent active artists and empty slices
+    let maxConcurrent = 0;
+    let emptySlices = 0;
+    for (let seg = 0; seg < numSegments; seg++) {
+      let concurrent = 0;
+      for (const s of surviving) {
+        if (s.counts[seg] > 0) concurrent++;
+      }
+      if (concurrent > maxConcurrent) maxConcurrent = concurrent;
+      if (concurrent === 0) emptySlices++;
+    }
+
+    // Score: distance from target concurrent + penalty for empty slices
+    const score = Math.abs(maxConcurrent - targetMaxConcurrent) + emptySlices * 2;
+
+    if (score < bestScore) {
+      bestScore = score;
+      bestMinPlays = threshold;
+    }
+  }
+
+  logger?.(`Optimal min plays: ${bestMinPlays} (target concurrent: ${targetMaxConcurrent})`);
+  return Math.max(bestMinPlays, 5);
+}
+
+/*
+  Build a descending sequence of min-plays thresholds for the "build-up"
+  loading animation.  Starts from a high threshold (few artists visible)
+  and steps down to targetMinPlays (full chart).
+*/
+export function getAnimationSteps(
+  data: SeriesData[],
+  targetMinPlays: number,
+  startArtistCount = 3,
+  maxSteps = 15,
+): number[] {
+  if (data.length <= startArtistCount) return [targetMinPlays];
+
+  // Each artist's peak play count, sorted descending
+  const peakCounts = data.map((s) => {
+    let max = 0;
+    for (const c of s.counts) if (c > max) max = c;
+    return max;
+  }).sort((a, b) => b - a);
+
+  // Start at the threshold where only ~startArtistCount artists survive
+  const startThreshold = peakCounts[Math.min(startArtistCount - 1, peakCounts.length - 1)];
+  if (startThreshold <= targetMinPlays) return [targetMinPlays];
+
+  // Unique breakpoints between start and target, descending
+  const breakpoints = [...new Set(peakCounts)]
+    .filter((t) => t >= targetMinPlays && t <= startThreshold)
+    .sort((a, b) => b - a);
+
+  if (breakpoints.length <= maxSteps) return breakpoints;
+
+  // Evenly sample maxSteps points
+  const steps: number[] = [];
+  for (let i = 0; i < maxSteps; i++) {
+    const idx = Math.floor(i * (breakpoints.length - 1) / (maxSteps - 1));
+    steps.push(breakpoints[idx]);
+  }
+  if (steps[steps.length - 1] !== targetMinPlays) {
+    steps[steps.length - 1] = targetMinPlays;
+  }
+  return steps;
+}
+
+/*
   Only keep the top N groups
 */
 export function cleanByTopN(data: SeriesData[], n: number) {

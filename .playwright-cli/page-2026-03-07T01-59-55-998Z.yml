@@ -1,0 +1,52 @@
+- generic [active] [ref=e1]:
+  - button "Toggle theme" [ref=e2] [cursor=pointer]:
+    - img [ref=e3]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - img "LastWave logo" [ref=e7]
+      - generic [ref=e13]:
+        - heading "LastWave" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Graph your music listening history!
+  - navigation [ref=e16]:
+    - generic [ref=e17]:
+      - link "← New graph" [ref=e91] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e20] [cursor=pointer]:
+        - /url: /gallery
+      - link "About" [ref=e22] [cursor=pointer]:
+        - /url: /about
+  - main [ref=e24]:
+    - generic [ref=e26]:
+      - generic [ref=e94]:
+        - img [ref=e98]:
+          - generic [ref=e110]: HUNTR/X
+          - generic [ref=e111]: HUNTR/X
+          - generic [ref=e112]: Saja Boys
+          - generic [ref=e113]: Andy And The Odd Socks
+          - generic [ref=e114]: The Shadows
+          - generic [ref=e115]: The Shadows
+          - generic [ref=e116]: Green Day
+          - generic [ref=e117]: The Gaslight Anthem
+          - generic [ref=e118]: Five
+          - generic [ref=e119]: Dec
+          - generic [ref=e120]: Jan
+          - generic [ref=e121]: Feb
+          - generic [ref=e122]: lastwave
+        - button "⚙ Customize" [ref=e124] [cursor=pointer]
+      - generic [ref=e127]:
+        - button "Download PNG" [ref=e128] [cursor=pointer]
+        - button "Download SVG (Vectorized)" [ref=e129] [cursor=pointer]
+        - button "Get share link" [ref=e130] [cursor=pointer]
+  - generic [ref=e67]:
+    - button "Menu" [ref=e68]:
+      - img [ref=e70]
+      - generic: Menu
+    - button "Inspect" [ref=e74]:
+      - img [ref=e76]
+      - generic: Inspect
+    - button "Audit" [ref=e78]:
+      - img [ref=e80]
+      - generic: Audit
+    - button "Settings" [ref=e86]:
+      - img [ref=e88]
+      - generic: Settings

@@ -1,0 +1,60 @@
+- generic [active] [ref=e1]:
+  - button "Toggle theme" [ref=e2] [cursor=pointer]:
+    - img [ref=e3]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - img "LastWave logo" [ref=e7]
+      - generic [ref=e13]:
+        - heading "LastWave" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Graph your music listening history!
+  - navigation [ref=e16]:
+    - generic [ref=e17]:
+      - link "← New graph" [ref=e91] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e20] [cursor=pointer]:
+        - /url: /gallery
+      - link "About" [ref=e22] [cursor=pointer]:
+        - /url: /about
+  - main [ref=e24]:
+    - generic [ref=e26]:
+      - generic [ref=e94]:
+        - img [ref=e98]:
+          - generic [ref=e195]: HUNTR/X
+          - generic [ref=e196]: The Offspring
+          - generic [ref=e197]: Foo Fighters
+          - generic [ref=e198]: Saja Boys
+          - generic [ref=e199]: TWICE
+          - generic [ref=e200]: Andy And The Odd Socks
+          - generic [ref=e201]: Andy And The Odd Socks
+          - generic [ref=e202]: The Shadows
+          - generic [ref=e203]: Green Day
+          - generic [ref=e204]: The Gaslight Anthem
+          - generic [ref=e205]: Fall Out Boy
+          - generic [ref=e206]: Jack Black
+          - generic [ref=e207]: Jack Black
+          - generic [ref=e208]: Five
+          - generic [ref=e209]: Miss Saigon Original Cast
+          - generic [ref=e210]: Mad Dog Mcrea
+          - generic [ref=e211]: Dec
+          - generic [ref=e212]: Jan
+          - generic [ref=e213]: Feb
+          - generic [ref=e214]: lastwave
+        - button "⤢ Full size" [ref=e216] [cursor=pointer]
+        - button "⚙ Customize" [ref=e218] [cursor=pointer]
+      - generic [ref=e221]:
+        - button "Download PNG" [ref=e222] [cursor=pointer]
+        - button "Download SVG (Vectorized)" [ref=e223] [cursor=pointer]
+        - button "Get share link" [ref=e224] [cursor=pointer]
+  - generic [ref=e67]:
+    - button "Menu" [ref=e68]:
+      - img [ref=e70]
+      - generic: Menu
+    - button "Inspect" [ref=e74]:
+      - img [ref=e76]
+      - generic: Inspect
+    - button "Audit" [ref=e78]:
+      - img [ref=e80]
+      - generic: Audit
+    - button "Settings" [ref=e86]:
+      - img [ref=e88]
+      - generic: Settings

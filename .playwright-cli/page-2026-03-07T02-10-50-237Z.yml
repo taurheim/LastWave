@@ -1,0 +1,110 @@
+- generic [ref=e1]:
+  - button "Toggle theme" [ref=e2] [cursor=pointer]:
+    - img [ref=e3]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - img "LastWave logo" [ref=e7]
+      - generic [ref=e13]:
+        - heading "LastWave" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Graph your music listening history!
+  - navigation [ref=e16]:
+    - generic [ref=e17]:
+      - link "← New graph" [ref=e91] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e20] [cursor=pointer]:
+        - /url: /gallery
+      - link "About" [ref=e22] [cursor=pointer]:
+        - /url: /about
+  - main [ref=e24]:
+    - generic [ref=e26]:
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - img [ref=e98]:
+            - generic [ref=e195]: HUNTR/X
+            - generic [ref=e196]: The Offspring
+            - generic [ref=e197]: Foo Fighters
+            - generic [ref=e198]: Saja Boys
+            - generic [ref=e199]: TWICE
+            - generic [ref=e200]: Andy And The Odd Socks
+            - generic [ref=e201]: Andy And The Odd Socks
+            - generic [ref=e202]: The Shadows
+            - generic [ref=e203]: Green Day
+            - generic [ref=e204]: The Gaslight Anthem
+            - generic [ref=e205]: Fall Out Boy
+            - generic [ref=e206]: Jack Black
+            - generic [ref=e207]: Jack Black
+            - generic [ref=e208]: Five
+            - generic [ref=e209]: Miss Saigon Original Cast
+            - generic [ref=e210]: Mad Dog Mcrea
+            - generic [ref=e211]: Dec
+            - generic [ref=e212]: Jan
+            - generic [ref=e213]: Feb
+            - generic [ref=e214]: lastwave
+          - button "⤢ Full size" [ref=e216] [cursor=pointer]
+          - button "✕ Hide customize" [active] [ref=e225] [cursor=pointer]
+        - generic [ref=e228]:
+          - generic [ref=e229]:
+            - generic [ref=e230]:
+              - generic [ref=e231]:
+                - generic [ref=e232]: Minimum plays
+                - generic [ref=e233]: "2"
+              - generic [ref=e234]:
+                - button "−" [ref=e235] [cursor=pointer]
+                - slider "Minimum plays Minimum plays" [ref=e236] [cursor=pointer]: "2"
+                - button "+" [ref=e237] [cursor=pointer]
+            - generic [ref=e238]:
+              - generic [ref=e239]: Graph type
+              - combobox "Graph type Graph type" [ref=e240]:
+                - option "silhouette" [selected]
+                - option "wiggle"
+                - option "expand"
+                - option "zero"
+          - generic [ref=e242]:
+            - generic [ref=e243]:
+              - heading "Options" [level=3] [ref=e244]
+              - generic [ref=e245]:
+                - generic [ref=e246] [cursor=pointer]:
+                  - checkbox "Username" [ref=e247]
+                  - generic [ref=e248]: Username
+                - generic [ref=e249] [cursor=pointer]:
+                  - checkbox "Month names" [checked] [ref=e250]
+                  - generic [ref=e251]: Month names
+                - generic [ref=e252] [cursor=pointer]:
+                  - checkbox "Year names" [ref=e253]
+                  - generic [ref=e254]: Year names
+                - generic [ref=e255] [cursor=pointer]:
+                  - checkbox "Watermark" [checked] [ref=e256]
+                  - generic [ref=e257]: Watermark
+                - generic [ref=e258] [cursor=pointer]:
+                  - checkbox "Artist / album / tag names" [checked] [ref=e259]
+                  - generic [ref=e260]: Artist / album / tag names
+            - generic [ref=e261]:
+              - heading "Image" [level=3] [ref=e262]
+              - generic [ref=e263]:
+                - generic [ref=e264]:
+                  - generic [ref=e265]: Width
+                  - textbox "Width Width" [ref=e266]:
+                    - /placeholder: auto
+                - generic [ref=e267]:
+                  - generic [ref=e268]: Height
+                  - textbox "Height Height" [ref=e269]: "550"
+                - generic [ref=e270]:
+                  - generic [ref=e271]: Font
+                  - button "Load available fonts" [ref=e272] [cursor=pointer]
+      - generic [ref=e221]:
+        - button "Download PNG" [ref=e222] [cursor=pointer]
+        - button "Download SVG (Vectorized)" [ref=e223] [cursor=pointer]
+        - button "Get share link" [ref=e224] [cursor=pointer]
+  - generic [ref=e67]:
+    - button "Menu" [ref=e68]:
+      - img [ref=e70]
+      - generic: Menu
+    - button "Inspect" [ref=e74]:
+      - img [ref=e76]
+      - generic: Inspect
+    - button "Audit" [ref=e78]:
+      - img [ref=e80]
+      - generic: Audit
+    - button "Settings" [ref=e86]:
+      - img [ref=e88]
+      - generic: Settings
