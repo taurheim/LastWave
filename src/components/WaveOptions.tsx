@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
@@ -21,6 +21,16 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Auto-detect slow devices and disable animations
+  useEffect(() => {
+    if (rendererOptions.loading_animation !== undefined) return;
+    const cores = navigator.hardwareConcurrency ?? 4;
+    const memoryGB = (navigator as any).deviceMemory ?? 4; // Chrome/Edge only, defaults to 4
+    if (cores <= 2 || memoryGB <= 2) {
+      setRendererOption('loading_animation', false);
+    }
+  }, []);
 
   // Initialize defaults on first render if empty
   const username = dataSourceOptions.username ?? '';

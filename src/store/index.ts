@@ -66,7 +66,7 @@ export const useLastWaveStore = create<LastWaveState>((set, get) => ({
 
   // Options
   rendererOptions: {},
-  dataSourceOptions: {},
+  dataSourceOptions: { username: 'Taurheim' },
   setRendererOption: (key, value) =>
     set((state) => ({ rendererOptions: { ...state.rendererOptions, [key]: value } })),
   setDataSourceOption: (key, value) =>

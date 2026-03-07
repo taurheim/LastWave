@@ -28,13 +28,13 @@ const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
 
 /** Minimum ms between renders while streaming segments during fetch */
-const STREAM_RENDER_INTERVAL_MS = 200;
-/** Duration of each frame in the post-load build-up animation (ms) */
-const BUILDUP_FRAME_DURATION_MS = 60;
-/** Maximum number of frames in the post-load build-up animation */
-const BUILDUP_MAX_STEPS = 15;
+const STREAM_RENDER_INTERVAL_MS = 600;
 /** D3 transition duration for path morphing during animation (ms) */
-const TRANSITION_DURATION_MS = 55;
+const TRANSITION_DURATION_MS = 550;
+/** Minimum total animation duration (ms) before showing final render */
+const MIN_ANIMATION_DURATION_MS = 2500;
+/** Minimum number of animation frames to show during streaming */
+const MIN_ANIM_FRAMES = 25;
 
 /** Run async tasks with a concurrency cap, calling onProgress after each completes. */
 async function pooled<T>(
@@ -131,21 +131,29 @@ export default function LastWaveApp() {
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const animTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
   const streamSegmentsRef = useRef<(SegmentData[] | undefined)[]>([]);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const streamMinPlaysRef = useRef<number>(Infinity);
   const streamTagDataRef = useRef<Record<string, ArtistTags>>({});
+  const streamRevealedRef = useRef<boolean[]>([]);
+  const animFrameTimerRef = useRef<ReturnType<typeof setInterval>>();
+  const animFrameCountRef = useRef(0);
+  const animDoneResolveRef = useRef<(() => void) | null>(null);
+  const animBuildupStepsRef = useRef<number[]>([]);
 
   const showFullSizeBtn= showFullSvg || imageOverflows;
 
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
   const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
+  const loadingAnimEnabled = rOpts.loading_animation ?? true;
 
   // Clean up animation timer on unmount
-  useEffect(() => () => { clearTimeout(animTimerRef.current); clearTimeout(streamTimerRef.current); }, []);
+  useEffect(() => () => {
+    clearTimeout(streamTimerRef.current);
+    clearTimeout(animFrameTimerRef.current);
+  }, []);
 
   // Reset to input page if we lost chart data (e.g. navigated away and back)
   useEffect(() => {
@@ -154,6 +162,8 @@ export default function LastWaveApp() {
     }
   }, []);
 
+  const renderTimeRef = useRef(50); // adaptive render time estimate (ms)
+
   // Re-filter data when minPlays changes — suppress labels during rapid changes
   useEffect(() => {
     if (rawSeriesDataRef.current.length === 0) return;
@@ -161,9 +171,18 @@ export default function LastWaveApp() {
     const mp = parseInt(minPlays, 10);
     if (isNaN(mp)) return;
     setSuppressLabels(true);
+    const t0 = performance.now();
     setSeriesData(cleanByMinPlays(rawSeriesDataRef.current, mp));
+    // Measure after React commits (next microtask)
+    requestAnimationFrame(() => {
+      const elapsed = performance.now() - t0;
+      // Exponential moving average of render time
+      renderTimeRef.current = renderTimeRef.current * 0.5 + elapsed * 0.5;
+    });
     clearTimeout(labelTimerRef.current);
-    labelTimerRef.current = setTimeout(() => setSuppressLabels(false), 400);
+    // Adaptive debounce: slow machines get longer delay before label computation
+    const debounce = Math.max(400, renderTimeRef.current * 3);
+    labelTimerRef.current = setTimeout(() => setSuppressLabels(false), debounce);
     return () => clearTimeout(labelTimerRef.current);
   }, [minPlays]);
 
@@ -193,10 +212,21 @@ export default function LastWaveApp() {
   }, [showActions]);
 
   function renderStreamFrame() {
-    const joined = joinSegments(streamSegmentsRef.current);
+    const allSegments = streamSegmentsRef.current;
+    const revealed = streamRevealedRef.current;
+    const visibleSegments = allSegments.map((seg, i) => revealed[i] ? seg : undefined);
+    const joined = joinSegments(visibleSegments);
     if (joined.length === 0) return;
-    const newMinPlays = findOptimalMinPlays(joined, 30);
-    streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, newMinPlays);
+
+    const totalSegments = allSegments.length;
+    const revealedCount = revealed.filter(Boolean).length;
+
+    // Sqrt-scaled prediction: compute minPlays on partial data, scale up by sqrt(total/revealed)
+    const partialMinPlays = findOptimalMinPlays(joined, 30);
+    const predictedMinPlays = Math.max(5, Math.round(partialMinPlays * Math.sqrt(totalSegments / revealedCount)));
+
+    // Only decrease so artists never disappear during animation
+    streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, predictedMinPlays);
     const cleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
     setSeriesData(cleaned);
   }
@@ -213,6 +243,10 @@ export default function LastWaveApp() {
     }
 
     setError(null);
+
+    // Clear previous graph data
+    setSeriesData([]);
+    rawSeriesDataRef.current = [];
 
     // Hide options, show loading bar
     store.setShowOptions(false);
@@ -250,13 +284,103 @@ export default function LastWaveApp() {
       const loadingAnim = rOpts.loading_animation ?? true;
 
       // Initialize streaming state
+      clearTimeout(animFrameTimerRef.current);
+      animFrameTimerRef.current = undefined;
       streamSegmentsRef.current = new Array(segments.length).fill(undefined);
       streamMinPlaysRef.current = Infinity;
+      streamRevealedRef.current = new Array(segments.length).fill(false);
+      animFrameCountRef.current = 0;
+
+      // Show empty chart immediately
+      store.setShowVisualization(true);
 
       if (loadingAnim) {
         setSuppressLabels(true);
         isAnimatingRef.current = true;
-        store.setShowVisualization(true);
+      }
+
+      // Start frame timer: two phases
+      // Phase 1: reveal arrived segments in batches
+      // Phase 2: all segments revealed, step through decreasing minPlays thresholds
+      const animDone = new Promise<void>((resolve) => {
+        animDoneResolveRef.current = resolve;
+      });
+      if (loadingAnim) {
+        animBuildupStepsRef.current = [];
+        const frameInterval = MIN_ANIMATION_DURATION_MS / MIN_ANIM_FRAMES;
+
+        const tick = () => {
+          const allArrived = streamSegmentsRef.current.every((s) => s !== undefined);
+          const allRevealed = streamRevealedRef.current.every(Boolean);
+          let rendered = false;
+
+          if (!allRevealed) {
+            // Phase 1: reveal segments — always batch, never dump all at once
+            const unrevealed: number[] = [];
+            streamSegmentsRef.current.forEach((seg, i) => {
+              if (seg !== undefined && !streamRevealedRef.current[i]) {
+                unrevealed.push(i);
+              }
+            });
+
+            if (unrevealed.length > 0) {
+              const framesLeft = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current + 1, 1);
+              // Reserve half of remaining frames for buildup phase
+              const revealFramesLeft = Math.max(Math.ceil(framesLeft / 2), 1);
+              const batchSize = Math.max(1, Math.ceil(unrevealed.length / revealFramesLeft));
+              for (let j = 0; j < Math.min(batchSize, unrevealed.length); j++) {
+                streamRevealedRef.current[unrevealed[j]] = true;
+              }
+              renderStreamFrame();
+              rendered = true;
+            }
+
+            // After revealing all, compute buildup steps
+            if (streamRevealedRef.current.every(Boolean)) {
+              const joined = joinSegments(streamSegmentsRef.current);
+              const finalMinPlays = findOptimalMinPlays(joined, 30);
+              const remainingFrames = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current, 4);
+              const steps = getAnimationSteps(joined, finalMinPlays, 3, remainingFrames);
+              const currentThreshold = streamMinPlaysRef.current;
+              animBuildupStepsRef.current = steps.filter((s) => s < currentThreshold);
+            }
+          } else if (animBuildupStepsRef.current.length > 0) {
+            // Phase 2: step through decreasing minPlays thresholds
+            const step = animBuildupStepsRef.current.shift()!;
+            streamMinPlaysRef.current = step;
+            const joined = joinSegments(streamSegmentsRef.current);
+            const cleaned = cleanByMinPlays(joined, step);
+            setSeriesData(cleaned);
+            rendered = true;
+          }
+
+          if (rendered) {
+            animFrameCountRef.current++;
+          }
+
+          // Done when nothing left to render
+          const doneRevealing = streamRevealedRef.current.every(Boolean);
+          const nothingLeftToRender = doneRevealing && animBuildupStepsRef.current.length === 0 && allArrived;
+          if (nothingLeftToRender) {
+            animFrameTimerRef.current = undefined;
+            animDoneResolveRef.current?.();
+            return;
+          }
+
+          // Wait for the browser to paint, THEN schedule the next tick
+          // This ensures each frame is visible regardless of CPU speed
+          if (rendered) {
+            requestAnimationFrame(() => {
+              animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
+            });
+          } else {
+            // Nothing to render yet (waiting for data) — just wait and retry
+            animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
+          }
+        };
+
+        // Start first tick
+        animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
       }
 
       const fetchMethod= isTagMode ? 'artist' : method;
@@ -279,18 +403,8 @@ export default function LastWaveApp() {
         () => store.progressCurrentStage(),
         loadingAnim ? (index, result) => {
           streamSegmentsRef.current[index] = result;
-          if (!streamTimerRef.current) {
-            streamTimerRef.current = setTimeout(() => {
-              streamTimerRef.current = undefined;
-              renderStreamFrame();
-            }, STREAM_RENDER_INTERVAL_MS);
-          }
         } : undefined,
       );
-
-      // Clean up streaming timer after all segments arrive
-      clearTimeout(streamTimerRef.current);
-      streamTimerRef.current = undefined;
 
       // Join and clean data
       let data = joinSegments(segmentData, store.log);
@@ -382,37 +496,25 @@ export default function LastWaveApp() {
       setMaxPlaysInDataset(datasetMax);
 
       store.progressCurrentStage();
-      store.setShowLoadingBar(false);
       store.setShowActions(true);
       store.setShowVisualization(true);
 
-      // Animate the graph "building up" from few artists to the final count
-      clearTimeout(animTimerRef.current);
-      const steps = loadingAnim ? getAnimationSteps(rawData, minPlays, 3, BUILDUP_MAX_STEPS) : [];
-
-      if (steps.length > 1) {
-        isAnimatingRef.current = true;
-        setSuppressLabels(true);
-        let i = 0;
-        const runStep = () => {
-          if (i < steps.length - 1) {
-            // Intermediate frames: render without labels
-            setSeriesData(cleanByMinPlays(rawData, steps[i]));
-            i++;
-            animTimerRef.current = setTimeout(runStep, BUILDUP_FRAME_DURATION_MS);
-          } else {
-            // Final frame: render the target data with labels
-            isAnimatingRef.current = false;
-            setSeriesData(data);
-            setSuppressLabels(false);
-          }
-        };
-        runStep();
-      } else {
-        isAnimatingRef.current = false;
-        setSuppressLabels(false);
-        setSeriesData(data);
+      // Wait for frame timer to finish revealing all segments
+      if (loadingAnim) {
+        await animDone;
       }
+
+      store.setShowLoadingBar(false);
+
+      // First: render the final frame without labels (fast path)
+      isAnimatingRef.current = false;
+      setSeriesData(data);
+
+      // Yield two frames so the browser paints the final wave shapes
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      // Now enable labels — triggers the expensive text placement as a separate render
+      setSuppressLabels(false);
     } catch (e: any) {
       store.log(String(e));
       setError(String(e?.message ?? e));
@@ -453,16 +555,25 @@ export default function LastWaveApp() {
       {/* Options */}
       {showOptions && <WaveOptions onSubmit={handleSubmit} />}
 
-      {/* Loading Bar */}
-      {showLoadingBar && <StageLoadingBar />}
-
       {/* Desktop layout */}
       <div className="hidden lg:block">
         {showVisualization && (
           <div className={showActions && showCustomize ? 'flex items-start gap-4' : ''}>
             <div className={`relative ${showCustomize ? 'flex-[3] min-w-0' : !imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
+              {showLoadingBar && !loadingAnimEnabled && (
+                <div className="absolute inset-x-0 top-0 z-20">
+                  <StageLoadingBar />
+                </div>
+              )}
+              {showLoadingBar && loadingAnimEnabled && (
+                <div className="absolute inset-x-0 top-3 z-20 text-center">
+                  <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
+                    Loading…
+                  </span>
+                </div>
+              )}
               <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} transitionDurationMs={TRANSITION_DURATION_MS} />
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
                 <>
@@ -476,7 +587,7 @@ export default function LastWaveApp() {
                       </button>
                     </div>
                   )}
-                  <div className="absolute top-2 right-6 z-10">
+                  <div className="absolute top-2 right-6 z-10 flex gap-2">
                     <button
                       onClick={() => setShowCustomize(!showCustomize)}
                       className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
@@ -512,11 +623,23 @@ export default function LastWaveApp() {
           <div
             className={`relative ${showCustomize ? 'max-lg:landscape:flex-1 max-lg:landscape:min-w-0 max-lg:landscape:[&>div]:mr-0 max-lg:landscape:flex max-lg:landscape:items-center max-lg:landscape:pb-14' : ''}`}
           >
+            {showLoadingBar && !loadingAnimEnabled && (
+              <div className="absolute inset-x-0 top-0 z-20">
+                <StageLoadingBar />
+              </div>
+            )}
+            {showLoadingBar && loadingAnimEnabled && (
+              <div className="absolute inset-x-0 top-3 z-20 text-center">
+                <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
+                  Loading…
+                </span>
+              </div>
+            )}
             <ImageScaler
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} transitionDurationMs={TRANSITION_DURATION_MS} />
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
             </ImageScaler>
             {showActions && (
               <>

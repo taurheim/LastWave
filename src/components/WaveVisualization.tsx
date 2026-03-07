@@ -27,14 +27,25 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
   zero: d3.stackOffsetNone,
 };
 
+function hashString(str: string): number {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) + hash + str.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function colorForKey(key: string, colors: string[]): string {
+  return colors[hashString(key) % colors.length];
+}
+
 interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
   suppressLabels?: boolean;
-  transitionDurationMs?: number;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels, transitionDurationMs = 55 }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
   const username = useLastWaveStore((s) => s.dataSourceOptions.username);
@@ -42,7 +53,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
   const timeEnd = useLastWaveStore((s) => s.dataSourceOptions.time_end);
 
   useEffect(() => {
-    if (!svgRef.current || seriesData.length === 0) return;
+    if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
 
@@ -55,6 +66,19 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
     const bgColor = (!isDark && scheme.backgroundColorLight)
       ? scheme.backgroundColorLight
       : scheme.backgroundColor;
+
+    const height = rendererOptions.height ? parseInt(rendererOptions.height, 10) : DEFAULT_HEIGHT;
+
+    // When no data yet, render just the background so the chart area is visible immediately
+    if (seriesData.length === 0) {
+      svg.selectAll('*').remove();
+      const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
+      const placeholderWidth = userWidth > 0 ? userWidth : 13 * DEFAULT_WIDTH_PER_PEAK;
+      svg.attr('width', placeholderWidth).attr('height', height).attr('viewBox', `0 0 ${placeholderWidth} ${height}`);
+      svg.append('rect').attr('width', placeholderWidth).attr('height', height).attr('fill', bgColor);
+      return;
+    }
+
     const fontColor = (!isDark && scheme.fontColorLight)
       ? scheme.fontColorLight
       : scheme.fontColor;
@@ -71,7 +95,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
     const numSegments = seriesData[0]?.counts.length ?? 0;
     const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
     const width = userWidth > 0 ? userWidth : numSegments * DEFAULT_WIDTH_PER_PEAK;
-    const height = rendererOptions.height ? parseInt(rendererOptions.height, 10) : DEFAULT_HEIGHT;
 
     // Pivot data: from SeriesData[] to tabular format for d3.stack
     const keys = seriesData.map((s) => s.title);
@@ -110,41 +133,72 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
       .y1((d) => yScale(d[1]))
       .curve(d3.curveMonotoneX);
 
-    // Animation mode: morph existing paths with D3 transitions
-    const existingWaves = svg.selectAll<SVGPathElement, any>('path.wave');
-    if (suppressLabels && existingWaves.size() > 0) {
+    // During animation (suppressLabels), do a fast render: paths + static text, no artist labels
+    if (suppressLabels) {
+      svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
-      svg.select('rect').attr('fill', bgColor);
-
-      // Flat area for entering paths (start from center line)
-      const centerY = height / 2;
-      const flatArea = d3.area<[number, number]>()
-        .x((_, i) => xScale(i))
-        .y0(() => centerY)
-        .y1(() => centerY)
-        .curve(d3.curveMonotoneX);
-
-      svg.selectAll<SVGPathElement, any>('path.wave')
+      svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
+      svg.selectAll('path.wave')
         .data(stackedData, (d: any) => d.key)
-        .join(
-          (enter) => enter.append('path')
-            .attr('class', 'wave')
-            .attr('stroke', 'none')
-            .attr('stroke-width', 0)
-            .attr('fill', (_, i) => colors[i % colors.length])
-            .attr('d', (d) => flatArea(d as any) ?? ''),
-          (update) => update,
-          (exit) => exit.transition().duration(transitionDurationMs).attr('opacity', 0).remove(),
-        )
-        .transition()
-        .duration(transitionDurationMs)
+        .join('path')
+        .attr('class', 'wave')
         .attr('d', (d) => area(d as any) ?? '')
-        .attr('fill', (_, i) => colors[i % colors.length]);
+        .attr('fill', (d: any) => colorForKey(d.key, colors))
+        .attr('stroke', 'none')
+        .attr('stroke-width', 0);
+
+      // Static text that doesn't need the placement algorithm
+      const fontColor = (!isDark && scheme.fontColorLight) ? scheme.fontColorLight : scheme.fontColor;
+      const fontFamily = rendererOptions.font ?? 'DM Sans';
+      const addMonths = rendererOptions.add_months ?? true;
+      const addYears = rendererOptions.add_years ?? false;
+      const showWatermark = rendererOptions.show_watermark ?? true;
+
+      if (addMonths && timeStart && timeEnd) {
+        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
+        const timePerSegment = (endMs - startMs) / numSegments;
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let lastMonth = -1;
+        for (let i = 0; i < numSegments; i++) {
+          const segDate = new Date(startMs + i * timePerSegment);
+          const month = segDate.getMonth();
+          if (month !== lastMonth) {
+            lastMonth = month;
+            svg.append('text').attr('x', xScale(i)).attr('y', height - 5)
+              .attr('font-size', '10px').attr('font-family', fontFamily).attr('fill', fontColor)
+              .text(monthNames[month]);
+          }
+        }
+      }
+
+      if (addYears && timeStart && timeEnd) {
+        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
+        const timePerSegment = (endMs - startMs) / numSegments;
+        let lastYear = -1;
+        for (let i = 0; i < numSegments; i++) {
+          const segDate = new Date(startMs + i * timePerSegment);
+          const year = segDate.getFullYear();
+          if (year !== lastYear) {
+            lastYear = year;
+            svg.append('text').attr('x', xScale(i)).attr('y', 15)
+              .attr('font-size', '12px').attr('font-family', fontFamily).attr('fill', fontColor).attr('font-weight', 'bold')
+              .text(String(year));
+          }
+        }
+      }
+
+      if (showWatermark) {
+        svg.append('text').attr('x', width - 5).attr('y', height - 5).attr('text-anchor', 'end')
+          .attr('font-size', '14px').attr('font-family', fontFamily).attr('fill', fontColor).attr('opacity', 0.5)
+          .text('lastwave');
+      }
 
       return;
     }
 
-    // Full rebuild (first frame or final render with labels)
+    // Full rebuild (final render with labels)
     svg.selectAll('*').remove();
 
     // Set SVG attributes
@@ -176,7 +230,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         pathStrings.push(pathD);
         return pathD;
       })
-      .attr('fill', (_, i) => colors[i % colors.length])
+      .attr('fill', (d: any) => colorForKey(d.key, colors))
       .attr('stroke', 'none')
       .attr('stroke-width', 0);
 
@@ -342,7 +396,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         .attr('opacity', 0.2)
         .text(username);
     }
-  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels, transitionDurationMs]);
+  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
 
   return (
     <div id="svg-wrapper" className="overflow-x-auto flex justify-center">
