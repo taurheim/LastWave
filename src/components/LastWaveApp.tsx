@@ -130,6 +130,7 @@ export default function LastWaveApp() {
   const [highlightOverflows, setHighlightOverflows] = useState(false);
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
@@ -146,10 +147,15 @@ export default function LastWaveApp() {
   const showFullSizeBtn= showFullSvg || imageOverflows;
 
   const handleRenderComplete = useCallback(() => {
+    setIsDrawing(false);
     if (renderCompleteResolveRef.current) {
       renderCompleteResolveRef.current();
       renderCompleteResolveRef.current = null;
     }
+  }, []);
+
+  const handleDrawingStart = useCallback(() => {
+    setIsDrawing(true);
   }, []);
 
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
@@ -607,15 +613,15 @@ export default function LastWaveApp() {
                   <StageLoadingBar />
                 </div>
               )}
-              {showLoadingBar && loadingAnimEnabled && (
+              {(showLoadingBar && loadingAnimEnabled || isDrawing) && (
                 <div className="absolute inset-x-0 top-3 z-20 text-center">
                   <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                    {loadingStatusText}
+                    {isDrawing && !showLoadingBar ? 'Drawing…' : loadingStatusText}
                   </span>
                 </div>
               )}
               <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingStart={handleDrawingStart} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
                 <>
@@ -670,10 +676,10 @@ export default function LastWaveApp() {
                 <StageLoadingBar />
               </div>
             )}
-            {showLoadingBar && loadingAnimEnabled && (
+            {(showLoadingBar && loadingAnimEnabled || isDrawing) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
                 <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                  {loadingStatusText}
+                  {isDrawing && !showLoadingBar ? 'Drawing…' : loadingStatusText}
                 </span>
               </div>
             )}
@@ -681,7 +687,7 @@ export default function LastWaveApp() {
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingStart={handleDrawingStart} suppressLabels={suppressLabels} />
             </ImageScaler>
             {showActions && (
               <>
