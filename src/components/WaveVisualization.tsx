@@ -20,6 +20,9 @@ const DEFAULT_HEIGHT = 550;
 const MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
 const MINIMUM_FONT_SIZE_PIXELS = 8;
 
+// Counter for aborting in-flight deformed text renders when the effect re-runs
+let deformAbortCounter = 0;
+
 const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
   silhouette: d3.stackOffsetSilhouette,
   wiggle: d3.stackOffsetWiggle,
@@ -54,6 +57,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
 
   useEffect(() => {
     if (!svgRef.current) return;
+    deformAbortCounter++; // cancel any in-flight deformed text render
 
     const svg = d3.select(svgRef.current);
 
@@ -250,246 +254,246 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
       const measureText = createCanvasMeasurer();
       const fontData = new FontData(fontFamily, fontColor);
 
-      stackedData.forEach((layer, layerIndex) => {
-        const seriesTitle = keys[layerIndex];
-        const counts = seriesData[layerIndex].counts;
+      if (deformText) {
+        // ── Deformed text: async rendering to avoid blocking the main thread ──
+        // Collect all label work items first, then process them in batches
+        // with frame yields so the UI stays responsive.
+        type DeformJob = {
+          label: Label;
+          layer: (readonly [number, number])[];
+          layerIndex: number;
+          stackPoints: StackPoint[];
+          idx: number;
+        };
+        const jobs: DeformJob[] = [];
 
-        // Build StackPoint array in inverted coordinate space (y=0 at bottom)
-        // to match the coordinate system the wave algorithms expect
-        const stackPoints: StackPoint[] = layer.map((d, i) => ({
-          x: xScale(i),
-          y: (height - yScale(d[1])) - (height - yScale(d[0])),
-          y0: height - yScale(d[0]),
-        }));
-
-        // Band geometry + centerline (needed for deformed text, computed lazily)
-        let bandData: Array<{ x: number; topY: number; botY: number; centerY: number; thickness: number }> | null = null;
-        let totalLen = 0;
-        let bandXStep = 1;
-        let bandX0 = 0;
-        // Pre-sampled centerline lookup table: avoids expensive getPointAtLength calls
-        let clSamples: Array<{ x: number; y: number; len: number }> = [];
-
-        if (deformText) {
-          bandData = layer.map((d, i) => ({
+        stackedData.forEach((layer, layerIndex) => {
+          const seriesTitle = keys[layerIndex];
+          const counts = seriesData[layerIndex].counts;
+          const stackPoints: StackPoint[] = layer.map((d, i) => ({
             x: xScale(i),
-            topY: yScale(d[1]),
-            botY: yScale(d[0]),
-            centerY: (yScale(d[0]) + yScale(d[1])) / 2,
-            thickness: yScale(d[0]) - yScale(d[1]),
+            y: (height - yScale(d[1])) - (height - yScale(d[0])),
+            y0: height - yScale(d[0]),
           }));
-          const centerLineFn = d3.line<{ x: number; centerY: number }>()
-            .x((d) => d.x)
-            .y((d) => d.centerY)
-            .curve(d3.curveMonotoneX);
-          const clPathD = centerLineFn(bandData);
-          if (!clPathD) return;
-          const clPathEl = defs
-            .append('path')
-            .attr('id', `cl-${layerIndex}`)
-            .attr('d', clPathD);
-          const clNode = clPathEl.node() as SVGPathElement;
-          totalLen = clNode.getTotalLength();
-          bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
-          bandX0 = bandData[0].x;
 
-          // Pre-sample the centerline path at ~2px intervals
-          const sampleStep = Math.max(1, totalLen / Math.max(1, Math.ceil(totalLen / 2)));
-          const numSamples = Math.ceil(totalLen / sampleStep) + 1;
-          clSamples = new Array(numSamples);
-          for (let s = 0; s < numSamples; s++) {
-            const len = Math.min(s * sampleStep, totalLen);
-            const pt = clNode.getPointAtLength(len);
-            clSamples[s] = { x: pt.x, y: pt.y, len };
-          }
-          // Remove the SVG path element — no longer needed after sampling
-          clPathEl.remove();
-        }
+          const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
+          labelIndices.forEach((idx) => {
+            if (idx <= 0 || idx >= stackPoints.length - 1) return;
+            const peak = new Peak(idx, stackPoints);
+            let label: Label | null = null;
+            if (isWType(peak)) {
+              label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isZType(peak)) {
+              label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isYType(peak)) {
+              label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isXType(peak)) {
+              label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            }
+            if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
+              jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx });
+            }
+          });
+        });
 
-        // Interpolate centerline point at a given arc length using the pre-sampled table
-        function clPointAtLength(len: number): { x: number; y: number } {
-          const clamped = Math.max(0, Math.min(totalLen, len));
-          const sampleStep = clSamples.length > 1 ? clSamples[1].len - clSamples[0].len : totalLen;
-          const fi = clamped / (sampleStep || 1);
-          const i = Math.max(0, Math.min(clSamples.length - 2, Math.floor(fi)));
-          const t = fi - i;
-          return {
-            x: clSamples[i].x * (1 - t) + clSamples[i + 1].x * t,
-            y: clSamples[i].y * (1 - t) + clSamples[i + 1].y * t,
-          };
-        }
+        // Process deform jobs in batches, yielding between batches
+        const BATCH_SIZE = 8;
+        let jobIndex = 0;
+        const abortId = ++deformAbortCounter;
 
-        function bandAtX(x: number): { thickness: number; topY: number; botY: number; centerY: number } {
-          const bd = bandData!;
-          const fi = (x - bandX0) / bandXStep;
-          const i = Math.max(0, Math.min(bd.length - 2, Math.floor(fi)));
-          const t = Math.max(0, Math.min(1, fi - i));
-          return {
-            thickness: bd[i].thickness * (1 - t) + bd[i + 1].thickness * t,
-            topY: bd[i].topY * (1 - t) + bd[i + 1].topY * t,
-            botY: bd[i].botY * (1 - t) + bd[i + 1].botY * t,
-            centerY: bd[i].centerY * (1 - t) + bd[i + 1].centerY * t,
-          };
-        }
+        function processBatch() {
+          if (abortId !== deformAbortCounter) return; // effect re-ran, abort
+          const end = Math.min(jobIndex + BATCH_SIZE, jobs.length);
 
-        function lengthAtX(targetX: number): number {
-          // Binary search on pre-sampled table instead of SVG DOM calls
-          let lo = 0, hi = clSamples.length - 1;
-          while (lo < hi) {
-            const mid = (lo + hi) >>> 1;
-            if (clSamples[mid].x < targetX) lo = mid + 1;
-            else hi = mid;
-          }
-          // Interpolate for sub-sample precision
-          const idx = Math.max(0, Math.min(clSamples.length - 2, lo > 0 ? lo - 1 : 0));
-          const s0 = clSamples[idx], s1 = clSamples[idx + 1];
-          const dx = s1.x - s0.x;
-          const t = dx > 0 ? Math.max(0, Math.min(1, (targetX - s0.x) / dx)) : 0;
-          return s0.len * (1 - t) + s1.len * t;
-        }
+          for (; jobIndex < end; jobIndex++) {
+            const { label, layer, layerIndex, stackPoints, idx } = jobs[jobIndex];
 
-        // Determine label indices
-        const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
+            const bandData = layer.map((d: readonly [number, number], i: number) => ({
+              x: xScale(i),
+              topY: yScale(d[1]),
+              botY: yScale(d[0]),
+              centerY: (yScale(d[0]) + yScale(d[1])) / 2,
+              thickness: yScale(d[0]) - yScale(d[1]),
+            }));
+            const centerLineFn = d3.line<{ x: number; centerY: number }>()
+              .x((d) => d.x).y((d) => d.centerY).curve(d3.curveMonotoneX);
+            const clPathD = centerLineFn(bandData);
+            if (!clPathD) continue;
+            const clPathEl = defs.append('path').attr('id', `cl-tmp-${jobIndex}`).attr('d', clPathD);
+            const clNode = clPathEl.node() as SVGPathElement;
+            const totalLen = clNode.getTotalLength();
+            const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
+            const bandX0 = bandData[0].x;
 
-        labelIndices.forEach((idx) => {
-          if (idx <= 0 || idx >= stackPoints.length - 1) return;
-
-          const peak = new Peak(idx, stackPoints);
-          let label: Label | null = null;
-
-          if (isWType(peak)) {
-            label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-          } else if (isZType(peak)) {
-            label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-          } else if (isYType(peak)) {
-            label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-          } else if (isXType(peak)) {
-            label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-          }
-
-          if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-            if (deformText && bandData && clSamples.length > 1) {
-              // ── Deformed text: per-character placement along the centerline ──
-              const text = label.text;
-              const baseFontSize = label.fontSize;
-              const peakThickness = bandData[idx]?.thickness ?? 1;
-              const renderFontSize = baseFontSize * 1.15;
-              const peakX = stackPoints[idx].x;
-              const lastBandX = bandData[bandData.length - 1].x;
-              const firstBandX = bandData[0].x;
-
-              const approxCharWidth = renderFontSize * 0.55;
-              const approxTotalWidth = text.length * approxCharWidth;
-
-              // Thickness-weighted centroid for centering
-              const searchRadius = approxTotalWidth * 0.8;
-              let weightedXSum = 0;
-              let weightSum = 0;
-              for (const bd of bandData) {
-                if (Math.abs(bd.x - peakX) > searchRadius) continue;
-                const thickFrac = bd.thickness / (peakThickness || 1);
-                if (thickFrac >= 0.35) {
-                  const w = thickFrac * thickFrac;
-                  weightedXSum += bd.x * w;
-                  weightSum += w;
-                }
+            function bandAtX(x: number) {
+              const fi = (x - bandX0) / bandXStep;
+              const i = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
+              const t = Math.max(0, Math.min(1, fi - i));
+              return {
+                thickness: bandData[i].thickness * (1 - t) + bandData[i + 1].thickness * t,
+                topY: bandData[i].topY * (1 - t) + bandData[i + 1].topY * t,
+                botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
+                centerY: bandData[i].centerY * (1 - t) + bandData[i + 1].centerY * t,
+              };
+            }
+            function lengthAtX(targetX: number) {
+              let lo = 0, hi = totalLen;
+              for (let i = 0; i < 20; i++) {
+                const mid = (lo + hi) / 2;
+                if (clNode.getPointAtLength(mid).x < targetX) lo = mid; else hi = mid;
               }
-              const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : peakX;
+              return (lo + hi) / 2;
+            }
 
-              // Deformation-aware width estimation
-              const tentativeStart = thickCenterX - approxTotalWidth / 2;
-              let deformedTotalWidth = 0;
-              {
-                let walkX = Math.max(firstBandX, tentativeStart);
-                for (let c = 0; c < text.length; c++) {
-                  const band = bandAtX(walkX);
-                  const thickRatio = peakThickness > 0 ? band.thickness / peakThickness : 1;
-                  const charFontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
-                  const charW = measureText(text[c], fontData.family, charFontSize).width;
-                  deformedTotalWidth += charW + charFontSize * 0.04;
-                  walkX += charW + charFontSize * 0.04;
-                }
+            const text = label.text;
+            const baseFontSize = label.fontSize;
+            const peakThickness = bandData[idx]?.thickness ?? 1;
+            const renderFontSize = baseFontSize * 1.15;
+            const peakX = stackPoints[idx].x;
+            const lastBandX = bandData[bandData.length - 1].x;
+            const firstBandX = bandData[0].x;
+
+            const approxCharWidth = renderFontSize * 0.55;
+            const approxTotalWidth = text.length * approxCharWidth;
+
+            const searchRadius = approxTotalWidth * 0.8;
+            let weightedXSum = 0, weightSum = 0;
+            for (const bd of bandData) {
+              if (Math.abs(bd.x - peakX) > searchRadius) continue;
+              const thickFrac = bd.thickness / (peakThickness || 1);
+              if (thickFrac >= 0.35) {
+                const w = thickFrac * thickFrac;
+                weightedXSum += bd.x * w;
+                weightSum += w;
               }
+            }
+            const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : peakX;
 
-              const idealStart = thickCenterX - deformedTotalWidth / 2;
-              const textStartX = Math.max(firstBandX, Math.min(lastBandX - deformedTotalWidth * 0.05, idealStart));
-              const startLen = lengthAtX(textStartX);
-
-              const MAX_ANGLE = 30;
-              const BAND_MARGIN = 0.92;
-
-              // Pass 1: pre-compute per-character geometry with bounds checking
-              const charData: Array<{
-                ch: string; fontSize: number; scaleY: number;
-                opacity: number; width: number; fontWeight: number;
-              }> = [];
-              let estLen = startLen;
+            const tentativeStart = thickCenterX - approxTotalWidth / 2;
+            let deformedTotalWidth = 0;
+            {
+              let walkX = Math.max(firstBandX, tentativeStart);
               for (let c = 0; c < text.length; c++) {
-                const pt = clPointAtLength(Math.min(estLen, totalLen));
-                const band = bandAtX(pt.x);
-                const localThick = band.thickness;
-                const thickRatio = peakThickness > 0 ? localThick / peakThickness : 1;
+                const band = bandAtX(walkX);
+                const thickRatio = peakThickness > 0 ? band.thickness / peakThickness : 1;
+                const charFontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
+                const charW = measureText(text[c], fontData.family, charFontSize).width;
+                deformedTotalWidth += charW + charFontSize * 0.04;
+                walkX += charW + charFontSize * 0.04;
+              }
+            }
 
-                let fontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
-                const naturalH = fontSize * 1.2;
-                let scaleY = naturalH > 0 ? Math.min(1.8, Math.max(0.5, (localThick * 0.85) / naturalH)) : 1;
-                const fontWeight = 400;
+            const idealStart = thickCenterX - deformedTotalWidth / 2;
+            const textStartX = Math.max(firstBandX, Math.min(lastBandX - deformedTotalWidth * 0.05, idealStart));
+            const startLen = lengthAtX(textStartX);
+            const MAX_ANGLE = 30;
+            const BAND_MARGIN = 0.92;
 
-                const availHalfH = (localThick * BAND_MARGIN) / 2;
-                if (availHalfH > 0 && localThick > 0) {
-                  const bPrev = bandAtX(Math.max(firstBandX, pt.x - 3));
-                  const bNext = bandAtX(Math.min(lastBandX, pt.x + 3));
-                  const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 6) * (180 / Math.PI);
-                  const clampedAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
-                  const rad = Math.abs(clampedAngle * Math.PI / 180);
-                  const cosA = Math.cos(rad);
-                  const sinA = Math.sin(rad);
-                  const halfW = fontSize * 0.3;
-                  const halfH = (fontSize * scaleY) / 2;
-                  const bboxH = halfW * sinA + halfH * cosA;
-                  if (bboxH > availHalfH) {
-                    const s = availHalfH / bboxH;
-                    fontSize *= s;
-                    scaleY *= s;
-                  }
+            const charData: Array<{
+              ch: string; fontSize: number; scaleY: number;
+              opacity: number; width: number; fontWeight: number;
+            }> = [];
+            let estLen = startLen;
+            for (let c = 0; c < text.length; c++) {
+              const pt = clNode.getPointAtLength(Math.min(estLen, totalLen));
+              const band = bandAtX(pt.x);
+              const localThick = band.thickness;
+              const thickRatio = peakThickness > 0 ? localThick / peakThickness : 1;
+
+              let fontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
+              const naturalH = fontSize * 1.2;
+              let scaleY = naturalH > 0 ? Math.min(1.8, Math.max(0.5, (localThick * 0.85) / naturalH)) : 1;
+              const fontWeight = 400;
+
+              const availHalfH = (localThick * BAND_MARGIN) / 2;
+              if (availHalfH > 0 && localThick > 0) {
+                const bPrev = bandAtX(Math.max(firstBandX, pt.x - 3));
+                const bNext = bandAtX(Math.min(lastBandX, pt.x + 3));
+                const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 6) * (180 / Math.PI);
+                const clampedAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
+                const rad = Math.abs(clampedAngle * Math.PI / 180);
+                const cosA = Math.cos(rad); const sinA = Math.sin(rad);
+                const halfW = fontSize * 0.3;
+                const halfH = (fontSize * scaleY) / 2;
+                const bboxH = halfW * sinA + halfH * cosA;
+                if (bboxH > availHalfH) {
+                  const s = availHalfH / bboxH;
+                  fontSize *= s; scaleY *= s;
                 }
-
-                const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
-                const charW = measureText(text[c], fontData.family, fontSize).width;
-                charData.push({ ch: text[c], fontSize, scaleY, opacity, width: charW, fontWeight });
-                estLen += charW + fontSize * 0.04;
               }
 
-              // Pass 2: render each character with rotation + vertical stretch
-              let curLen = startLen;
-              for (let c = 0; c < text.length; c++) {
-                const { ch, fontSize, scaleY, opacity, width: charW, fontWeight } = charData[c];
-                if (fontSize < 4) { curLen += charW + fontSize * 0.04; continue; }
+              const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
+              const charW = measureText(text[c], fontData.family, fontSize).width;
+              charData.push({ ch: text[c], fontSize, scaleY, opacity, width: charW, fontWeight });
+              estLen += charW + fontSize * 0.04;
+            }
 
-                const midLen = Math.min(curLen + charW / 2, totalLen);
-                const midPt = clPointAtLength(midLen);
-                const dt = 1.5;
-                const p1 = clPointAtLength(Math.max(0, midLen - dt));
-                const p2 = clPointAtLength(Math.min(totalLen, midLen + dt));
-                const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
-                const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
+            let curLen = startLen;
+            for (let c = 0; c < text.length; c++) {
+              const { ch, fontSize, scaleY, opacity, width: charW, fontWeight } = charData[c];
+              if (fontSize < 4) { curLen += charW + fontSize * 0.04; continue; }
 
-                const tx = `translate(${midPt.x}, ${midPt.y}) rotate(${angle}) scale(1, ${scaleY.toFixed(3)})`;
-                svg.append('text')
-                  .attr('font-size', `${fontSize}px`)
-                  .attr('font-family', fontData.family)
-                  .attr('font-weight', fontWeight)
-                  .attr('fill', fontData.color)
-                  .attr('text-anchor', 'middle')
-                  .attr('dominant-baseline', 'central')
-                  .attr('transform', tx)
-                  .attr('opacity', opacity)
-                  .text(ch);
+              const midLen = Math.min(curLen + charW / 2, totalLen);
+              const midPt = clNode.getPointAtLength(midLen);
+              const dt = 1.5;
+              const p1 = clNode.getPointAtLength(Math.max(0, midLen - dt));
+              const p2 = clNode.getPointAtLength(Math.min(totalLen, midLen + dt));
+              const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+              const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
 
-                curLen += charW + fontSize * 0.04;
-              }
-            } else {
-              // ── Normal horizontal text rendering ──
+              const tx = `translate(${midPt.x}, ${midPt.y}) rotate(${angle}) scale(1, ${scaleY.toFixed(3)})`;
+              svg.append('text')
+                .attr('font-size', `${fontSize}px`)
+                .attr('font-family', fontData.family)
+                .attr('font-weight', fontWeight)
+                .attr('fill', fontData.color)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('transform', tx)
+                .attr('opacity', opacity)
+                .text(ch);
+
+              curLen += charW + fontSize * 0.04;
+            }
+
+            clPathEl.remove();
+          }
+
+          if (jobIndex < jobs.length) {
+            requestAnimationFrame(processBatch);
+          }
+        }
+
+        if (jobs.length > 0) {
+          requestAnimationFrame(processBatch);
+        }
+      } else {
+        // ── Normal horizontal text rendering ──
+        stackedData.forEach((layer, layerIndex) => {
+          const seriesTitle = keys[layerIndex];
+          const counts = seriesData[layerIndex].counts;
+          const stackPoints: StackPoint[] = layer.map((d, i) => ({
+            x: xScale(i),
+            y: (height - yScale(d[1])) - (height - yScale(d[0])),
+            y0: height - yScale(d[0]),
+          }));
+
+          const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
+          labelIndices.forEach((idx) => {
+            if (idx <= 0 || idx >= stackPoints.length - 1) return;
+            const peak = new Peak(idx, stackPoints);
+            let label: Label | null = null;
+            if (isWType(peak)) {
+              label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isZType(peak)) {
+              label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isYType(peak)) {
+              label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else if (isXType(peak)) {
+              label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            }
+
+            if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               const textEl = svg.append('text')
                 .attr('x', label.xPosition)
                 .attr('y', height - label.yPosition)
@@ -498,7 +502,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
                 .attr('fill', fontData.color)
                 .text(label.text);
 
-              // Check for Bezier overflow
               const pathD = pathStrings[layerIndex];
               if (pathD && isFinite(label.xPosition) && isFinite(label.yPosition)) {
                 const bandLUT = buildBandLUT(pathD, width);
@@ -511,9 +514,9 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
                 }
               }
             }
-          }
+          });
         });
-      });
+      }
     }
 
     onOverflowsDetected?.(detectedOverflows);
