@@ -42,10 +42,11 @@ function colorForKey(key: string, colors: string[]): string {
 interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
+  onRenderComplete?: () => void;
   suppressLabels?: boolean;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -458,11 +459,15 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
 
           if (jobIndex < jobs.length) {
             requestAnimationFrame(processBatch);
+          } else {
+            onRenderComplete?.();
           }
         }
 
         if (jobs.length > 0) {
           processBatch(); // first batch runs synchronously for immediate feedback
+        } else {
+          onRenderComplete?.();
         }
       } else {
         // ── Normal horizontal text rendering ──
@@ -514,6 +519,11 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
           });
         });
       }
+    }
+    // For non-deform or no-labels cases, signal render complete synchronously.
+    // (Deform text calls onRenderComplete from its async processBatch loop.)
+    if (!addLabels || !deformText) {
+      onRenderComplete?.();
     }
 
     onOverflowsDetected?.(detectedOverflows);

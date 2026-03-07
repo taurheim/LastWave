@@ -34,7 +34,7 @@ const TRANSITION_DURATION_MS = 550;
 /** Minimum total animation duration (ms) before showing final render */
 const MIN_ANIMATION_DURATION_MS = 2500;
 /** Minimum number of animation frames to show during streaming */
-const MIN_ANIM_FRAMES = 25;
+const MIN_ANIM_FRAMES = 50;
 
 /** Run async tasks with a concurrency cap, calling onProgress after each completes. */
 async function pooled<T>(
@@ -130,13 +130,14 @@ export default function LastWaveApp() {
   const [highlightOverflows, setHighlightOverflows] = useState(false);
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
+  const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
   const streamSegmentsRef = useRef<(SegmentData[] | undefined)[]>([]);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const streamMinPlaysRef = useRef<number>(Infinity);
   const streamTagDataRef = useRef<Record<string, ArtistTags>>({});
-  const streamRevealedRef = useRef<boolean[]>([]);
+  const revealFrontierRef = useRef(0);
   const animFrameTimerRef = useRef<ReturnType<typeof setInterval>>();
   const animFrameCountRef = useRef(0);
   const animDoneResolveRef = useRef<(() => void) | null>(null);
@@ -144,10 +145,27 @@ export default function LastWaveApp() {
 
   const showFullSizeBtn= showFullSvg || imageOverflows;
 
+  const handleRenderComplete = useCallback(() => {
+    if (renderCompleteResolveRef.current) {
+      renderCompleteResolveRef.current();
+      renderCompleteResolveRef.current = null;
+    }
+  }, []);
+
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
   const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
   const loadingAnimEnabled = rOpts.loading_animation ?? true;
+  const loadingStages = useLastWaveStore((s) => s.stages);
+  const loadingStageIndex = useLastWaveStore((s) => s.currentStage);
+
+  const loadingStatusText = (() => {
+    if (loadingStageIndex < 0 || !loadingStages[loadingStageIndex]) return 'Loading…';
+    const isRenderStage = loadingStageIndex === loadingStages.length - 1;
+    if (isRenderStage) return 'Drawing…';
+    const stage = loadingStages[loadingStageIndex];
+    return `Loading ${stage.currentSegment}/${stage.stageSegments}`;
+  })();
 
   // Clean up animation timer on unmount
   useEffect(() => () => {
@@ -213,21 +231,37 @@ export default function LastWaveApp() {
 
   function renderStreamFrame() {
     const allSegments = streamSegmentsRef.current;
-    const revealed = streamRevealedRef.current;
-    const visibleSegments = allSegments.map((seg, i) => revealed[i] ? seg : undefined);
-    const joined = joinSegments(visibleSegments);
+    const frontier = revealFrontierRef.current;
+    const RAMP_WIDTH = 5;
+
+    // Join all arrived segments
+    const joined = joinSegments(allSegments);
     if (joined.length === 0) return;
 
+    // Apply progressive mask: full left of frontier, fading at frontier edge, zero right of it
+    const masked = joined.map(series => ({
+      ...series,
+      counts: series.counts.map((count, i) => {
+        const scale = Math.max(0, Math.min(1, (frontier - i) / RAMP_WIDTH));
+        return Math.round(count * scale);
+      }),
+    }));
+
+    // Compute minPlays on full arrived data for stable prediction
     const totalSegments = allSegments.length;
-    const revealedCount = revealed.filter(Boolean).length;
-
-    // Sqrt-scaled prediction: compute minPlays on partial data, scale up by sqrt(total/revealed)
+    const arrivedCount = allSegments.filter(s => s !== undefined).length;
     const partialMinPlays = findOptimalMinPlays(joined, 30);
-    const predictedMinPlays = Math.max(5, Math.round(partialMinPlays * Math.sqrt(totalSegments / revealedCount)));
+    const predictedMinPlays = Math.max(5, Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)));
 
-    // Only decrease so artists never disappear during animation
-    streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, predictedMinPlays);
-    const cleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
+    // Scale threshold based on sweep progress: start high (big artists first),
+    // taper to predicted value as frontier completes
+    const sweepProgress = Math.min(1, frontier / (totalSegments + RAMP_WIDTH));
+    const startThreshold = predictedMinPlays * 3;
+    const sweepThreshold = Math.round(startThreshold + (predictedMinPlays - startThreshold) * sweepProgress);
+    const effectiveMinPlays = Math.max(sweepThreshold, predictedMinPlays);
+
+    streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, effectiveMinPlays);
+    const cleaned = cleanByMinPlays(masked, streamMinPlaysRef.current);
     setSeriesData(cleaned);
   }
 
@@ -288,7 +322,7 @@ export default function LastWaveApp() {
       animFrameTimerRef.current = undefined;
       streamSegmentsRef.current = new Array(segments.length).fill(undefined);
       streamMinPlaysRef.current = Infinity;
-      streamRevealedRef.current = new Array(segments.length).fill(false);
+      revealFrontierRef.current = 0;
       animFrameCountRef.current = 0;
 
       // Show empty chart immediately
@@ -300,7 +334,7 @@ export default function LastWaveApp() {
       }
 
       // Start frame timer: two phases
-      // Phase 1: reveal arrived segments in batches
+      // Phase 1: sweep frontier left-to-right (progressive reveal)
       // Phase 2: all segments revealed, step through decreasing minPlays thresholds
       const animDone = new Promise<void>((resolve) => {
         animDoneResolveRef.current = resolve;
@@ -308,35 +342,38 @@ export default function LastWaveApp() {
       if (loadingAnim) {
         animBuildupStepsRef.current = [];
         const frameInterval = MIN_ANIMATION_DURATION_MS / MIN_ANIM_FRAMES;
+        const totalSegments = segments.length;
+        const RAMP_WIDTH = 5;
+        const frontierEnd = totalSegments + RAMP_WIDTH;
 
         const tick = () => {
           const allArrived = streamSegmentsRef.current.every((s) => s !== undefined);
-          const allRevealed = streamRevealedRef.current.every(Boolean);
+          const frontier = revealFrontierRef.current;
+          const sweepDone = frontier >= frontierEnd;
           let rendered = false;
 
-          if (!allRevealed) {
-            // Phase 1: reveal segments — always batch, never dump all at once
-            const unrevealed: number[] = [];
-            streamSegmentsRef.current.forEach((seg, i) => {
-              if (seg !== undefined && !streamRevealedRef.current[i]) {
-                unrevealed.push(i);
-              }
-            });
+          if (!sweepDone) {
+            // Phase 1: advance frontier — pace it so sweep uses half the remaining frames
+            const hasData = streamSegmentsRef.current.some(s => s !== undefined);
+            if (hasData) {
+              const framesLeft = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current, 1);
+              const revealFrames = Math.max(Math.ceil(framesLeft / 2), 1);
+              const remaining = frontierEnd - frontier;
+              const advance = Math.max(1, remaining / revealFrames);
 
-            if (unrevealed.length > 0) {
-              const framesLeft = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current + 1, 1);
-              // Reserve half of remaining frames for buildup phase
-              const revealFramesLeft = Math.max(Math.ceil(framesLeft / 2), 1);
-              const batchSize = Math.max(1, Math.ceil(unrevealed.length / revealFramesLeft));
-              for (let j = 0; j < Math.min(batchSize, unrevealed.length); j++) {
-                streamRevealedRef.current[unrevealed[j]] = true;
-              }
+              // Don't sweep past what's arrived (for slow connections)
+              const lastArrived = streamSegmentsRef.current.reduce(
+                (max, seg, i) => seg !== undefined ? i : max, -1
+              );
+              const maxFrontier = lastArrived + 1 + RAMP_WIDTH;
+              revealFrontierRef.current = Math.min(frontier + advance, maxFrontier, frontierEnd);
+
               renderStreamFrame();
               rendered = true;
             }
 
-            // After revealing all, compute buildup steps
-            if (streamRevealedRef.current.every(Boolean)) {
+            // After sweep completes, compute buildup steps
+            if (revealFrontierRef.current >= frontierEnd) {
               const joined = joinSegments(streamSegmentsRef.current);
               const finalMinPlays = findOptimalMinPlays(joined, 30);
               const remainingFrames = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current, 4);
@@ -358,9 +395,8 @@ export default function LastWaveApp() {
             animFrameCountRef.current++;
           }
 
-          // Done when nothing left to render
-          const doneRevealing = streamRevealedRef.current.every(Boolean);
-          const nothingLeftToRender = doneRevealing && animBuildupStepsRef.current.length === 0 && allArrived;
+          // Done when sweep finished, buildup exhausted, and all data arrived
+          const nothingLeftToRender = sweepDone && animBuildupStepsRef.current.length === 0 && allArrived;
           if (nothingLeftToRender) {
             animFrameTimerRef.current = undefined;
             animDoneResolveRef.current?.();
@@ -368,7 +404,6 @@ export default function LastWaveApp() {
           }
 
           // Wait for the browser to paint, THEN schedule the next tick
-          // This ensures each frame is visible regardless of CPU speed
           if (rendered) {
             requestAnimationFrame(() => {
               animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
@@ -504,8 +539,6 @@ export default function LastWaveApp() {
         await animDone;
       }
 
-      store.setShowLoadingBar(false);
-
       // First: render the final frame without labels (fast path)
       isAnimatingRef.current = false;
       setSeriesData(data);
@@ -515,6 +548,15 @@ export default function LastWaveApp() {
 
       // Now enable labels — triggers the expensive text placement as a separate render
       setSuppressLabels(false);
+
+      // Wait for WaveVisualization to signal render complete (handles async deformed text)
+      await new Promise<void>((resolve) => {
+        renderCompleteResolveRef.current = resolve;
+        // Fallback timeout in case onRenderComplete doesn't fire (e.g. no labels)
+        setTimeout(resolve, 10000);
+      });
+
+      store.setShowLoadingBar(false);
     } catch (e: any) {
       store.log(String(e));
       setError(String(e?.message ?? e));
@@ -568,12 +610,12 @@ export default function LastWaveApp() {
               {showLoadingBar && loadingAnimEnabled && (
                 <div className="absolute inset-x-0 top-3 z-20 text-center">
                   <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                    Loading…
+                    {loadingStatusText}
                   </span>
                 </div>
               )}
               <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
                 <>
@@ -631,7 +673,7 @@ export default function LastWaveApp() {
             {showLoadingBar && loadingAnimEnabled && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
                 <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                  Loading…
+                  {loadingStatusText}
                 </span>
               </div>
             )}
@@ -639,7 +681,7 @@ export default function LastWaveApp() {
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} suppressLabels={suppressLabels} />
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
             </ImageScaler>
             {showActions && (
               <>
