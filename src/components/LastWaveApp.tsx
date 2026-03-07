@@ -131,6 +131,7 @@ export default function LastWaveApp() {
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
+  const prevDeformTextRef = useRef<boolean>(false);
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
@@ -154,13 +155,17 @@ export default function LastWaveApp() {
     }
   }, []);
 
-  const handleDrawingStart = useCallback(() => {
-    setIsDrawing(true);
-  }, []);
-
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
   const dsOpts = useLastWaveStore((s) => s.dataSourceOptions);
   const rOpts = useLastWaveStore((s) => s.rendererOptions);
+  const deformText = rOpts.deform_text ?? false;
+
+  // Detect deform_text toggle during render so "Drawing…" appears immediately
+  // (before any useEffect or paint), not after the heavy wave-rendering effect.
+  if (seriesData.length > 0 && deformText !== prevDeformTextRef.current) {
+    prevDeformTextRef.current = deformText;
+    if (!isDrawing) setIsDrawing(true);
+  }
   const loadingAnimEnabled = rOpts.loading_animation ?? true;
   const loadingStages = useLastWaveStore((s) => s.stages);
   const loadingStageIndex = useLastWaveStore((s) => s.currentStage);
@@ -621,7 +626,7 @@ export default function LastWaveApp() {
                 </div>
               )}
               <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingStart={handleDrawingStart} suppressLabels={suppressLabels} />
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
                 <>
@@ -687,7 +692,7 @@ export default function LastWaveApp() {
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingStart={handleDrawingStart} suppressLabels={suppressLabels} />
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
             </ImageScaler>
             {showActions && (
               <>

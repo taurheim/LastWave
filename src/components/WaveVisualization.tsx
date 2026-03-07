@@ -43,11 +43,10 @@ interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
   onRenderComplete?: () => void;
-  onDrawingStart?: () => void;
   suppressLabels?: boolean;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, onDrawingStart, suppressLabels }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -242,7 +241,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
       if (deformText) {
         // ── Deformed text: async rendering to avoid blocking the main thread ──
-        onDrawingStart?.();
         // Collect all label work items first, then process them in batches
         // with frame yields so the UI stays responsive.
         type DeformJob = {
@@ -286,10 +284,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         // Process deform jobs in batches, yielding between batches
         const BATCH_SIZE = 8;
         let jobIndex = 0;
-
-        if (jobs.length > 0) {
-          onDrawingStart?.();
-        }
 
         function processBatch() {
           if (abortId !== deformAbortRef.current) return; // effect re-ran, abort
