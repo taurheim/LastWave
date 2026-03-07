@@ -242,6 +242,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
       if (deformText) {
         // ── Deformed text: async rendering to avoid blocking the main thread ──
+        onDrawingStart?.();
         // Collect all label work items first, then process them in batches
         // with frame yields so the UI stays responsive.
         type DeformJob = {
@@ -456,7 +457,8 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         }
 
         if (jobs.length > 0) {
-          processBatch(); // first batch runs synchronously for immediate feedback
+          // Defer first batch so React can paint the "Drawing…" indicator
+          requestAnimationFrame(processBatch);
         } else {
           onRenderComplete?.();
         }
