@@ -1,0 +1,117 @@
+- generic [active] [ref=e1]:
+  - button "Toggle theme" [ref=e2] [cursor=pointer]:
+    - img [ref=e3]
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - img "LastWave logo" [ref=e7]
+      - generic [ref=e13]:
+        - heading "LastWave" [level=1] [ref=e14]
+        - paragraph [ref=e15]: Graph your music listening history!
+  - navigation [ref=e16]:
+    - generic [ref=e17]:
+      - link "← New graph" [ref=e91] [cursor=pointer]:
+        - /url: /
+      - link "Gallery" [ref=e20] [cursor=pointer]:
+        - /url: /gallery
+      - link "About" [ref=e22] [cursor=pointer]:
+        - /url: /about
+  - main [ref=e24]:
+    - generic [ref=e26]:
+      - generic [ref=e94]:
+        - img [ref=e98]:
+          - generic [ref=e179]: Fakear
+          - generic [ref=e180]: Fakear
+          - generic [ref=e181]: Big Boi
+          - generic [ref=e182]: Big Boi
+          - generic [ref=e183]: CunninLynguists
+          - generic [ref=e184]: FKA twigs
+          - generic [ref=e185]: FKA twigs
+          - generic [ref=e186]: Mac Miller
+          - generic [ref=e187]: Mac Miller
+          - generic [ref=e188]: The Beatles
+          - generic [ref=e189]: Daft Punk
+          - generic [ref=e190]: Alex G
+          - generic [ref=e191]: Queens of the Stone Age
+          - generic [ref=e192]: ROSALÍA
+          - generic [ref=e193]: ROSALÍA
+          - generic [ref=e194]: Sainté
+          - generic [ref=e195]: Goodie Mob
+          - generic [ref=e196]: Lil' Wayne
+          - generic [ref=e197]: 2 Chainz
+          - generic [ref=e198]: Gorillaz
+          - generic [ref=e199]: Gorillaz
+          - generic [ref=e200]: Gorillaz
+          - generic [ref=e201]: Bob Dylan
+          - generic [ref=e202]: Saosin
+          - generic [ref=e203]: Sebastian
+          - generic [ref=e204]: Sebastian
+          - generic [ref=e205]: Anberlin
+          - generic [ref=e206]: Anberlin
+          - generic [ref=e207]: Gunna
+          - generic [ref=e208]: OutKast
+          - generic [ref=e209]: Adrianne Lenker
+          - generic [ref=e210]: Talking Heads
+          - generic [ref=e211]: Death Cab for Cutie
+          - generic [ref=e212]: Death Cab for Cutie
+          - generic [ref=e213]: Loyle Carner
+          - generic [ref=e214]: Loyle Carner
+          - generic [ref=e215]: Green Day
+          - generic [ref=e216]: Kendrick Lamar
+          - generic [ref=e217]: Kanye West
+          - generic [ref=e218]: Linkin Park
+          - generic [ref=e219]: Linkin Park
+          - generic [ref=e220]: Mitski
+          - generic [ref=e221]: Logic
+          - generic [ref=e222]: Logic
+          - generic [ref=e223]: Emancipator
+          - generic [ref=e224]: Emancipator
+          - generic [ref=e225]: Glass Animals
+          - generic [ref=e226]: DNCE
+          - generic [ref=e227]: Milosh
+          - generic [ref=e228]: Dark Tranquillity
+          - generic [ref=e229]: A Day to Remember
+          - generic [ref=e230]: Mustafa
+          - generic [ref=e231]: Jack White
+          - generic [ref=e232]: Jack White
+          - generic [ref=e233]: The Chats
+          - generic [ref=e234]: 椿
+          - generic [ref=e235]: Knuckle Puck
+          - generic [ref=e236]: The Vines
+          - generic [ref=e237]: Deca
+          - generic [ref=e238]: Modest Mouse
+          - generic [ref=e239]: Ezra Collective
+          - generic [ref=e240]: Foxwarren
+          - generic [ref=e241]: Hozier
+          - generic [ref=e242]: Ryo Fukui
+          - generic [ref=e243]: Lula Pena
+          - generic [ref=e244]: Billie Eilish
+          - generic [ref=e245]: Oh Pep!
+          - generic [ref=e246]: Placebo
+          - generic [ref=e247]: The Avalanches
+          - generic [ref=e248]: boygenius
+          - generic [ref=e249]: Girl Talk
+          - generic [ref=e250]: Sum 41
+          - generic [ref=e251]: Lauryn Hill
+          - generic [ref=e252]: Dec
+          - generic [ref=e253]: Jan
+          - generic [ref=e254]: Feb
+          - generic [ref=e255]: lastwave
+        - button "⤢ Full size" [ref=e257] [cursor=pointer]
+        - button "⚙ Customize" [ref=e259] [cursor=pointer]
+      - generic [ref=e262]:
+        - button "Download PNG" [ref=e263] [cursor=pointer]
+        - button "Download SVG (Vectorized)" [ref=e264] [cursor=pointer]
+        - button "Get share link" [ref=e265] [cursor=pointer]
+  - generic [ref=e67]:
+    - button "Menu" [ref=e68]:
+      - img [ref=e70]
+      - generic: Menu
+    - button "Inspect" [ref=e74]:
+      - img [ref=e76]
+      - generic: Inspect
+    - button "Audit" [ref=e78]:
+      - img [ref=e80]
+      - generic: Audit
+    - button "Settings" [ref=e83]:
+      - img [ref=e85]
+      - generic: Settings

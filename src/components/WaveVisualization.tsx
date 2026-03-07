@@ -31,9 +31,10 @@ interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
   suppressLabels?: boolean;
+  transitionDurationMs?: number;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels, transitionDurationMs = 55 }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
   const username = useLastWaveStore((s) => s.dataSourceOptions.username);
@@ -133,10 +134,10 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
             .attr('fill', (_, i) => colors[i % colors.length])
             .attr('d', (d) => flatArea(d as any) ?? ''),
           (update) => update,
-          (exit) => exit.transition().duration(50).attr('opacity', 0).remove(),
+          (exit) => exit.transition().duration(transitionDurationMs).attr('opacity', 0).remove(),
         )
         .transition()
-        .duration(55)
+        .duration(transitionDurationMs)
         .attr('d', (d) => area(d as any) ?? '')
         .attr('fill', (_, i) => colors[i % colors.length]);
 
@@ -341,7 +342,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         .attr('opacity', 0.2)
         .text(username);
     }
-  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
+  }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels, transitionDurationMs]);
 
   return (
     <div id="svg-wrapper" className="overflow-x-auto flex justify-center">

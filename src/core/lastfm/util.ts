@@ -86,11 +86,12 @@ export function combineArtistTags(artistData: SeriesData[], tagData: { [key: str
     counts: [<int>]
   }
 */
-export function joinSegments(segmentData: SegmentData[][], logger?: (msg: string) => void): SeriesData[] {
+export function joinSegments(segmentData: (SegmentData[] | undefined)[], logger?: (msg: string) => void): SeriesData[] {
   // Use a map to join the data
   const countsByName: { [key: string]: SeriesData } = {};
 
   segmentData.forEach((innerSegment, index) => {
+    if (!innerSegment) return;  // Skip unfetched segments
     innerSegment.forEach((nameData) => {
       const name = nameData.title;
       const count = nameData.count;
