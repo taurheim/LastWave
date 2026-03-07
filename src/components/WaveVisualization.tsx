@@ -286,9 +286,8 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         });
 
         // Process deform jobs in batches, yielding between batches
-        const BATCH_SIZE = 20;
+        const BATCH_SIZE = 8;
         let jobIndex = 0;
-        const bandDataCache = new Map<number, Array<{x: number; topY: number; botY: number; centerY: number; thickness: number}>>();
 
         function processBatch() {
           if (abortId !== deformAbortRef.current) return; // effect re-ran, abort
@@ -297,17 +296,20 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
           for (; jobIndex < end; jobIndex++) {
             const { label, layer, layerIndex, stackPoints, idx } = jobs[jobIndex];
 
-            // Cache bandData per layer — multiple labels may share the same one
-            if (!bandDataCache.has(layerIndex)) {
-              bandDataCache.set(layerIndex, layer.map((d: readonly [number, number], i: number) => ({
-                x: xScale(i),
-                topY: yScale(d[1]),
-                botY: yScale(d[0]),
-                centerY: (yScale(d[0]) + yScale(d[1])) / 2,
-                thickness: yScale(d[0]) - yScale(d[1]),
-              })));
-            }
-            const bandData = bandDataCache.get(layerIndex)!;
+            const bandData = layer.map((d: readonly [number, number], i: number) => ({
+              x: xScale(i),
+              topY: yScale(d[1]),
+              botY: yScale(d[0]),
+              centerY: (yScale(d[0]) + yScale(d[1])) / 2,
+              thickness: yScale(d[0]) - yScale(d[1]),
+            }));
+            const centerLineFn = d3.line<{ x: number; centerY: number }>()
+              .x((d) => d.x).y((d) => d.centerY).curve(d3.curveMonotoneX);
+            const clPathD = centerLineFn(bandData);
+            if (!clPathD) continue;
+            const clPathEl = defs.append('path').attr('id', `cl-tmp-${jobIndex}`).attr('d', clPathD);
+            const clNode = clPathEl.node() as SVGPathElement;
+            const totalLen = clNode.getTotalLength();
             const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
             const bandX0 = bandData[0].x;
 
@@ -321,6 +323,14 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
                 botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
                 centerY: bandData[i].centerY * (1 - t) + bandData[i + 1].centerY * t,
               };
+            }
+            function lengthAtX(targetX: number) {
+              let lo = 0, hi = totalLen;
+              for (let i = 0; i < 20; i++) {
+                const mid = (lo + hi) / 2;
+                if (clNode.getPointAtLength(mid).x < targetX) lo = mid; else hi = mid;
+              }
+              return (lo + hi) / 2;
             }
 
             const text = label.text;
@@ -347,7 +357,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
             }
             const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : peakX;
 
-            // Pass 1: compute deformed total width for centering
             const tentativeStart = thickCenterX - approxTotalWidth / 2;
             let deformedTotalWidth = 0;
             {
@@ -364,24 +373,30 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
             const idealStart = thickCenterX - deformedTotalWidth / 2;
             const textStartX = Math.max(firstBandX, Math.min(lastBandX - deformedTotalWidth * 0.05, idealStart));
+            const startLen = lengthAtX(textStartX);
             const MAX_ANGLE = 30;
             const BAND_MARGIN = 0.92;
 
-            // Pass 2: compute sizing and place each character using pure JS bandAtX
-            let curX = textStartX;
+            const charData: Array<{
+              ch: string; fontSize: number; scaleY: number;
+              opacity: number; width: number; fontWeight: number;
+            }> = [];
+            let estLen = startLen;
             for (let c = 0; c < text.length; c++) {
-              const band = bandAtX(curX);
+              const pt = clNode.getPointAtLength(Math.min(estLen, totalLen));
+              const band = bandAtX(pt.x);
               const localThick = band.thickness;
               const thickRatio = peakThickness > 0 ? localThick / peakThickness : 1;
 
               let fontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
               const naturalH = fontSize * 1.2;
               let scaleY = naturalH > 0 ? Math.min(1.8, Math.max(0.5, (localThick * 0.85) / naturalH)) : 1;
+              const fontWeight = 400;
 
               const availHalfH = (localThick * BAND_MARGIN) / 2;
               if (availHalfH > 0 && localThick > 0) {
-                const bPrev = bandAtX(Math.max(firstBandX, curX - 3));
-                const bNext = bandAtX(Math.min(lastBandX, curX + 3));
+                const bPrev = bandAtX(Math.max(firstBandX, pt.x - 3));
+                const bNext = bandAtX(Math.min(lastBandX, pt.x + 3));
                 const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 6) * (180 / Math.PI);
                 const clampedAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
                 const rad = Math.abs(clampedAngle * Math.PI / 180);
@@ -397,31 +412,39 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
               const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
               const charW = measureText(text[c], fontData.family, fontSize).width;
-              const advance = charW + fontSize * 0.04;
-
-              if (fontSize >= 4) {
-                const midX = curX + charW / 2;
-                const midBand = bandAtX(Math.min(lastBandX, midX));
-                const bPrev = bandAtX(Math.max(firstBandX, midX - 1.5));
-                const bNext = bandAtX(Math.min(lastBandX, midX + 1.5));
-                const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 3) * (180 / Math.PI);
-                const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
-
-                const tx = `translate(${midX}, ${midBand.centerY}) rotate(${angle}) scale(1, ${scaleY.toFixed(3)})`;
-                svg.append('text')
-                  .attr('font-size', `${fontSize}px`)
-                  .attr('font-family', fontData.family)
-                  .attr('font-weight', 400)
-                  .attr('fill', fontData.color)
-                  .attr('text-anchor', 'middle')
-                  .attr('dominant-baseline', 'central')
-                  .attr('transform', tx)
-                  .attr('opacity', opacity)
-                  .text(text[c]);
-              }
-
-              curX += advance;
+              charData.push({ ch: text[c], fontSize, scaleY, opacity, width: charW, fontWeight });
+              estLen += charW + fontSize * 0.04;
             }
+
+            let curLen = startLen;
+            for (let c = 0; c < text.length; c++) {
+              const { ch, fontSize, scaleY, opacity, width: charW, fontWeight } = charData[c];
+              if (fontSize < 4) { curLen += charW + fontSize * 0.04; continue; }
+
+              const midLen = Math.min(curLen + charW / 2, totalLen);
+              const midPt = clNode.getPointAtLength(midLen);
+              const dt = 1.5;
+              const p1 = clNode.getPointAtLength(Math.max(0, midLen - dt));
+              const p2 = clNode.getPointAtLength(Math.min(totalLen, midLen + dt));
+              const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+              const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
+
+              const tx = `translate(${midPt.x}, ${midPt.y}) rotate(${angle}) scale(1, ${scaleY.toFixed(3)})`;
+              svg.append('text')
+                .attr('font-size', `${fontSize}px`)
+                .attr('font-family', fontData.family)
+                .attr('font-weight', fontWeight)
+                .attr('fill', fontData.color)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .attr('transform', tx)
+                .attr('opacity', opacity)
+                .text(ch);
+
+              curLen += charW + fontSize * 0.04;
+            }
+
+            clPathEl.remove();
           }
 
           if (jobIndex < jobs.length) {
