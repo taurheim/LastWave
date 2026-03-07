@@ -20,9 +20,6 @@ const DEFAULT_HEIGHT = 550;
 const MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
 const MINIMUM_FONT_SIZE_PIXELS = 8;
 
-// Counter for aborting in-flight deformed text renders when the effect re-runs
-let deformAbortCounter = 0;
-
 const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
   silhouette: d3.stackOffsetSilhouette,
   wiggle: d3.stackOffsetWiggle,
@@ -50,6 +47,7 @@ interface WaveVisualizationProps {
 
 export default function WaveVisualization({ seriesData, onOverflowsDetected, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
   const username = useLastWaveStore((s) => s.dataSourceOptions.username);
   const timeStart = useLastWaveStore((s) => s.dataSourceOptions.time_start);
@@ -57,7 +55,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
 
   useEffect(() => {
     if (!svgRef.current) return;
-    deformAbortCounter++; // cancel any in-flight deformed text render
+    const abortId = ++deformAbortRef.current; // cancel any in-flight deformed text render
 
     const svg = d3.select(svgRef.current);
 
@@ -299,10 +297,9 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         // Process deform jobs in batches, yielding between batches
         const BATCH_SIZE = 8;
         let jobIndex = 0;
-        const abortId = ++deformAbortCounter;
 
         function processBatch() {
-          if (abortId !== deformAbortCounter) return; // effect re-ran, abort
+          if (abortId !== deformAbortRef.current) return; // effect re-ran, abort
           const end = Math.min(jobIndex + BATCH_SIZE, jobs.length);
 
           for (; jobIndex < end; jobIndex++) {
@@ -465,7 +462,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, sup
         }
 
         if (jobs.length > 0) {
-          requestAnimationFrame(processBatch);
+          processBatch(); // first batch runs synchronously for immediate feedback
         }
       } else {
         // ── Normal horizontal text rendering ──
