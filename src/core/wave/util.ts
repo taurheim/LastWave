@@ -16,17 +16,16 @@ export interface TextDimensions {
 export type MeasureTextFn = (text: string, font: string, fontSize: number) => TextDimensions;
 
 export function createCanvasMeasurer(): MeasureTextFn {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+  let lastFont = '';
   return (text: string, font: string, fontSize: number): TextDimensions => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    ctx.font = `${fontSize}px ${font}`;
-    const metrics = ctx.measureText(text);
-    const width = metrics.width;
-    // We use fontSize*1.2 rather than actual glyph metrics because this is the
-    // measurement the placement algorithms use to decide text size and position.
-    // Changing this would alter every label placement across the app. Actual
-    // glyph bounds (actualBoundingBoxAscent/Descent) are only used separately
-    // for post-render overflow detection, where pixel-accurate bounds matter.
+    const fontStr = `${fontSize}px ${font}`;
+    if (fontStr !== lastFont) {
+      ctx.font = fontStr;
+      lastFont = fontStr;
+    }
+    const width = ctx.measureText(text).width;
     const height = fontSize * 1.2;
     return { height, width, slope: height / width };
   };

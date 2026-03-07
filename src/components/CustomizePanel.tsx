@@ -44,6 +44,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const addYears = rendererOptions.add_years ?? false;
   const showUsername = rendererOptions.show_username ?? false;
   const showWatermark = rendererOptions.show_watermark ?? true;
+  const deformText = rendererOptions.deform_text ?? false;
 
   const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
   const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];
@@ -112,6 +113,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 { label: 'Year names', checked: addYears, key: 'add_years' },
                 { label: 'Watermark', checked: showWatermark, key: 'show_watermark' },
                 { label: 'Artist / album / tag names', checked: addLabels, key: 'add_labels' },
+                { label: 'Deform text', checked: deformText, key: 'deform_text' },
               ].map((opt) => (
                 <label key={opt.key} className="flex items-center gap-2.5 cursor-pointer group">
                   <input
