@@ -76,6 +76,14 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
   const timeStart = useLastWaveStore((s) => s.dataSourceOptions.time_start);
   const timeEnd = useLastWaveStore((s) => s.dataSourceOptions.time_end);
 
+  // Auto-enable year labels when time range >= 1 year
+  const isYearRange = (() => {
+    if (!timeStart || !timeEnd) return false;
+    const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
+    const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
+    return (endMs - startMs) >= 365 * 24 * 60 * 60 * 1000;
+  })();
+
   useEffect(() => {
     if (!svgRef.current) return;
     const abortId = ++deformAbortRef.current; // cancel any in-flight deformed text render
@@ -173,7 +181,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       const fontColor = (!isDark && scheme.fontColorLight) ? scheme.fontColorLight : scheme.fontColor;
       const fontFamily = rendererOptions.font ?? 'DM Sans';
       const addMonths = rendererOptions.add_months ?? true;
-      const addYears = rendererOptions.add_years ?? false;
+      const addYears = rendererOptions.add_years ?? isYearRange;
       const showWatermark = rendererOptions.show_watermark ?? true;
 
       if (addMonths && timeStart && timeEnd) {
@@ -204,7 +212,11 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
           const year = segDate.getFullYear();
           if (year !== lastYear) {
             lastYear = year;
-            svg.append('text').attr('x', xScale(i)).attr('y', 15)
+            if (i > 0) {
+              svg.append('line').attr('x1', xScale(i)).attr('y1', 0).attr('x2', xScale(i)).attr('y2', height)
+                .attr('stroke', fontColor).attr('stroke-opacity', 0.25).attr('stroke-width', 1);
+            }
+            svg.append('text').attr('x', xScale(i) + (i > 0 ? 4 : 0)).attr('y', 15)
               .attr('font-size', '12px').attr('font-family', fontFamily).attr('fill', fontColor).attr('font-weight', 'bold')
               .text(String(year));
           }
@@ -349,7 +361,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
           }
 
           if (jobIndex < jobs.length) {
-            onDrawingProgress?.(`Drawing Artist ${artistsDone.size}/${uniqueArtists.length}…`);
+            onDrawingProgress?.(`Placing text ${artistsDone.size}/${uniqueArtists.length}…`);
             requestAnimationFrame(processBatch);
           } else {
             onRenderComplete?.();
@@ -357,8 +369,8 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         }
 
         if (jobs.length > 0) {
-          onDrawingProgress?.(`Drawing Artist 0/${uniqueArtists.length}…`);
-          // Defer first batch so React can paint the "Drawing…" indicator
+          onDrawingProgress?.(`Placing text 0/${uniqueArtists.length}…`);
+          // Defer first batch so React can paint the "Placing text…" indicator
           requestAnimationFrame(processBatch);
         } else {
           onRenderComplete?.();
@@ -462,7 +474,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
     const xScale = d3.scaleLinear().domain([0, numSegments - 1]).range([0, width]);
 
     const addMonths = rendererOptions.add_months ?? true;
-    const addYears = rendererOptions.add_years ?? false;
+    const addYears = rendererOptions.add_years ?? isYearRange;
     const showUsername = rendererOptions.show_username ?? false;
     const showWatermark = rendererOptions.show_watermark ?? true;
 
@@ -494,7 +506,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       }
     }
 
-    // Year labels
+    // Year labels + separator lines
     if (addYears && timeStart && timeEnd) {
       const startMs = timeStart instanceof Date
         ? timeStart.getTime()
@@ -510,8 +522,19 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           lastYear = year;
+          // Vertical separator line (skip the very first segment)
+          if (i > 0) {
+            overlayG.append('line')
+              .attr('x1', xScale(i))
+              .attr('y1', 0)
+              .attr('x2', xScale(i))
+              .attr('y2', height)
+              .attr('stroke', axisLabelColor)
+              .attr('stroke-opacity', 0.25)
+              .attr('stroke-width', 1);
+          }
           overlayG.append('text')
-            .attr('x', xScale(i))
+            .attr('x', xScale(i) + (i > 0 ? 4 : 0))
             .attr('y', 15)
             .attr('font-size', '12px')
             .attr('font-family', fontFamily)
