@@ -17,7 +17,7 @@
     "offsets": [31536000000, 0],
     "otherOptions": {
       "min_plays": "10",
-      "group_by": "week"
+      "group_by": "month"
     }
   }
 }
