@@ -169,6 +169,26 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
+
+      // Year separator lines (behind wave paths)
+      if (addYears && timeStart && timeEnd) {
+        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
+        const timePerSegment = (endMs - startMs) / numSegments;
+        let lastYear = -1;
+        for (let i = 0; i < numSegments; i++) {
+          const segDate = new Date(startMs + i * timePerSegment);
+          const year = segDate.getFullYear();
+          if (year !== lastYear) {
+            if (lastYear !== -1) {
+              svg.append('line').attr('x1', xScale(i)).attr('y1', 0).attr('x2', xScale(i)).attr('y2', height)
+                .attr('stroke', fontColor).attr('stroke-opacity', 0.12).attr('stroke-width', 2);
+            }
+            lastYear = year;
+          }
+        }
+      }
+
       svg.selectAll('path.wave')
         .data(stackedData, (d: any) => d.key)
         .join('path')
@@ -212,10 +232,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
           const year = segDate.getFullYear();
           if (year !== lastYear) {
             lastYear = year;
-            if (i > 0) {
-              svg.append('line').attr('x1', xScale(i)).attr('y1', 0).attr('x2', xScale(i)).attr('y2', height)
-                .attr('stroke', fontColor).attr('stroke-opacity', 0.25).attr('stroke-width', 1);
-            }
             svg.append('text').attr('x', xScale(i) + (i > 0 ? 4 : 0)).attr('y', 15)
               .attr('font-size', '12px').attr('font-family', fontFamily).attr('fill', fontColor).attr('font-weight', 'bold')
               .text(String(year));
@@ -246,6 +262,27 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       .attr('width', width)
       .attr('height', height)
       .attr('fill', bgColor);
+
+    // Year separator lines (behind wave paths)
+    if ((rendererOptions.add_years ?? isYearRange) && timeStart && timeEnd) {
+      const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
+      const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
+      const timePerSegment = (endMs - startMs) / numSegments;
+      let lastYear = -1;
+      for (let i = 0; i < numSegments; i++) {
+        const segDate = new Date(startMs + i * timePerSegment);
+        const year = segDate.getFullYear();
+        if (year !== lastYear) {
+          if (lastYear !== -1) {
+            svg.append('line')
+              .attr('x1', xScale(i)).attr('y1', 0)
+              .attr('x2', xScale(i)).attr('y2', height)
+              .attr('stroke', fontColor).attr('stroke-opacity', 0.12).attr('stroke-width', 2);
+          }
+          lastYear = year;
+        }
+      }
+    }
 
     // Embed font in SVG so text renders when downloaded/viewed standalone
     const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
@@ -506,7 +543,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       }
     }
 
-    // Year labels + separator lines
+    // Year labels (separator lines are rendered behind waves in the core effect)
     if (addYears && timeStart && timeEnd) {
       const startMs = timeStart instanceof Date
         ? timeStart.getTime()
@@ -522,17 +559,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           lastYear = year;
-          // Vertical separator line (skip the very first segment)
-          if (i > 0) {
-            overlayG.append('line')
-              .attr('x1', xScale(i))
-              .attr('y1', 0)
-              .attr('x2', xScale(i))
-              .attr('y2', height)
-              .attr('stroke', axisLabelColor)
-              .attr('stroke-opacity', 0.25)
-              .attr('stroke-width', 1);
-          }
           overlayG.append('text')
             .attr('x', xScale(i) + (i > 0 ? 4 : 0))
             .attr('y', 15)
