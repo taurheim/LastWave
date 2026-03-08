@@ -99,21 +99,46 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           />
         </div>
 
-        {/* Date Range Preset */}
+        {/* Date Range + Data Set — sentence style */}
         <div>
-          <label className="block text-xs tracking-widest uppercase text-lw-muted mb-2">Date range</label>
-          <select
-            value={datePreset}
-            onChange={(e) => handleDatePresetChange(e.target.value)}
-            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all appearance-none cursor-pointer"
-          >
-            {easyDateEntries.map(([name]) => (
-              <option key={name} value={name}>{name}</option>
-            ))}
-            <option value="Custom">Custom</option>
-          </select>
+          <div className="flex items-baseline justify-center gap-2 flex-wrap">
+            <span className="text-lw-muted text-lg lg:text-xl">Graph my</span>
+            <span className="relative inline-block">
+              <select
+                value={datePreset}
+                onChange={(e) => handleDatePresetChange(e.target.value)}
+                className="appearance-none bg-transparent border-b-2 border-lw-accent/40 text-lw-accent font-medium text-lg lg:text-xl pl-0.5 pr-6 py-0.5 cursor-pointer focus:outline-none focus:border-lw-accent hover:border-lw-accent transition-colors"
+              >
+                {easyDateEntries.map(([name]) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+                <option value="Custom">Custom range</option>
+              </select>
+              <svg className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-lw-accent/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+            <span className="text-lw-muted text-lg lg:text-xl">of</span>
+            <span className="relative inline-block">
+              <select
+                value={method}
+                onChange={(e) => setDataSourceOption('method', e.target.value)}
+                className="appearance-none bg-transparent border-b-2 border-lw-accent/40 text-lw-accent font-medium text-lg lg:text-xl pl-0.5 pr-6 py-0.5 cursor-pointer focus:outline-none focus:border-lw-accent hover:border-lw-accent transition-colors"
+              >
+                <option value="artist">Artists</option>
+                <option value="album">Albums</option>
+                <option value="tag">Genres</option>
+              </select>
+              <svg className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-lw-accent/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+          {method === 'tag' && (
+            <p className="text-amber-500 text-sm mt-2 text-center">⚠️ Fetching genres is currently very slow due to rate limits. Be prepared to wait a few minutes!</p>
+          )}
           {isCustomDate && (
-            <div className="grid grid-cols-2 gap-3 mt-3">
+            <div className="grid grid-cols-2 gap-3 mt-4 max-w-xs mx-auto">
               <div>
                 <label className="block text-xs text-lw-muted mb-1">Start</label>
                 <input
@@ -194,18 +219,6 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
               >
                 {['week', 'month', 'day', 'year'].map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-lw-muted mb-1">Data set</label>
-              <select
-                value={method}
-                onChange={(e) => setDataSourceOption('method', e.target.value)}
-                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
-              >
-                {['artist', 'album', 'tag'].map((v) => (
                   <option key={v} value={v}>{v}</option>
                 ))}
               </select>
