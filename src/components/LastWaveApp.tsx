@@ -411,6 +411,7 @@ export default function LastWaveApp() {
 
           if (rendered) {
             animFrameCountRef.current++;
+            setDrawingStatus(`Drawing Wave ${animFrameCountRef.current}/${MIN_ANIM_FRAMES}…`);
           }
 
           // Done when sweep finished, buildup exhausted, and all data arrived
