@@ -8,6 +8,7 @@ import { isWType, getWLabel } from '@/core/wave/waveW';
 import { isXType, getXLabel } from '@/core/wave/waveX';
 import { isYType, getYLabel } from '@/core/wave/waveY';
 import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { computeDeformedText } from '@/core/wave/deformTextOptB';
 import { buildBandLUT, checkLabelOverflow } from '@/core/wave/overflowDetection';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import Peak from '@/core/models/Peak';
@@ -303,148 +304,26 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
               centerY: (yScale(d[0]) + yScale(d[1])) / 2,
               thickness: yScale(d[0]) - yScale(d[1]),
             }));
-            const centerLineFn = d3.line<{ x: number; centerY: number }>()
-              .x((d) => d.x).y((d) => d.centerY).curve(d3.curveMonotoneX);
-            const clPathD = centerLineFn(bandData);
-            if (!clPathD) continue;
-            const clPathEl = defs.append('path').attr('id', `cl-tmp-${jobIndex}`).attr('d', clPathD);
-            const clNode = clPathEl.node() as SVGPathElement;
-            const totalLen = clNode.getTotalLength();
-            const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
-            const bandX0 = bandData[0].x;
 
-            function bandAtX(x: number) {
-              const fi = (x - bandX0) / bandXStep;
-              const i = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
-              const t = Math.max(0, Math.min(1, fi - i));
-              return {
-                thickness: bandData[i].thickness * (1 - t) + bandData[i + 1].thickness * t,
-                topY: bandData[i].topY * (1 - t) + bandData[i + 1].topY * t,
-                botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
-                centerY: bandData[i].centerY * (1 - t) + bandData[i + 1].centerY * t,
-              };
-            }
-            function lengthAtX(targetX: number) {
-              let lo = 0, hi = totalLen;
-              for (let i = 0; i < 20; i++) {
-                const mid = (lo + hi) / 2;
-                if (clNode.getPointAtLength(mid).x < targetX) lo = mid; else hi = mid;
-              }
-              return (lo + hi) / 2;
-            }
+            const result = computeDeformedText(
+              label, bandData, idx, stackPoints[idx].x,
+              fontData.family, measureText,
+            );
 
-            const text = label.text;
-            const baseFontSize = label.fontSize;
-            const peakThickness = bandData[idx]?.thickness ?? 1;
-            const renderFontSize = baseFontSize * 1.15;
-            const peakX = stackPoints[idx].x;
-            const lastBandX = bandData[bandData.length - 1].x;
-            const firstBandX = bandData[0].x;
-
-            const approxCharWidth = renderFontSize * 0.55;
-            const approxTotalWidth = text.length * approxCharWidth;
-
-            const searchRadius = approxTotalWidth * 0.8;
-            let weightedXSum = 0, weightSum = 0;
-            for (const bd of bandData) {
-              if (Math.abs(bd.x - peakX) > searchRadius) continue;
-              const thickFrac = bd.thickness / (peakThickness || 1);
-              if (thickFrac >= 0.35) {
-                const w = thickFrac * thickFrac;
-                weightedXSum += bd.x * w;
-                weightSum += w;
-              }
-            }
-            const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : peakX;
-
-            const tentativeStart = thickCenterX - approxTotalWidth / 2;
-            let deformedTotalWidth = 0;
-            {
-              let walkX = Math.max(firstBandX, tentativeStart);
-              for (let c = 0; c < text.length; c++) {
-                const band = bandAtX(walkX);
-                const thickRatio = peakThickness > 0 ? band.thickness / peakThickness : 1;
-                const charFontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
-                const charW = measureText(text[c], fontData.family, charFontSize).width;
-                deformedTotalWidth += charW + charFontSize * 0.04;
-                walkX += charW + charFontSize * 0.04;
-              }
-            }
-
-            const idealStart = thickCenterX - deformedTotalWidth / 2;
-            const textStartX = Math.max(firstBandX, Math.min(lastBandX - deformedTotalWidth * 0.05, idealStart));
-            const startLen = lengthAtX(textStartX);
-            const MAX_ANGLE = 30;
-            const BAND_MARGIN = 0.92;
-
-            const charData: Array<{
-              ch: string; fontSize: number; scaleY: number;
-              opacity: number; width: number; fontWeight: number;
-            }> = [];
-            let estLen = startLen;
-            for (let c = 0; c < text.length; c++) {
-              const pt = clNode.getPointAtLength(Math.min(estLen, totalLen));
-              const band = bandAtX(pt.x);
-              const localThick = band.thickness;
-              const thickRatio = peakThickness > 0 ? localThick / peakThickness : 1;
-
-              let fontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
-              const naturalH = fontSize * 1.2;
-              let scaleY = naturalH > 0 ? Math.min(1.8, Math.max(0.5, (localThick * 0.85) / naturalH)) : 1;
-              const fontWeight = 400;
-
-              const availHalfH = (localThick * BAND_MARGIN) / 2;
-              if (availHalfH > 0 && localThick > 0) {
-                const bPrev = bandAtX(Math.max(firstBandX, pt.x - 3));
-                const bNext = bandAtX(Math.min(lastBandX, pt.x + 3));
-                const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 6) * (180 / Math.PI);
-                const clampedAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
-                const rad = Math.abs(clampedAngle * Math.PI / 180);
-                const cosA = Math.cos(rad); const sinA = Math.sin(rad);
-                const halfW = fontSize * 0.3;
-                const halfH = (fontSize * scaleY) / 2;
-                const bboxH = halfW * sinA + halfH * cosA;
-                if (bboxH > availHalfH) {
-                  const s = availHalfH / bboxH;
-                  fontSize *= s; scaleY *= s;
-                }
-              }
-
-              const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
-              const charW = measureText(text[c], fontData.family, fontSize).width;
-              charData.push({ ch: text[c], fontSize, scaleY, opacity, width: charW, fontWeight });
-              estLen += charW + fontSize * 0.04;
-            }
-
-            let curLen = startLen;
-            for (let c = 0; c < text.length; c++) {
-              const { ch, fontSize, scaleY, opacity, width: charW, fontWeight } = charData[c];
-              if (fontSize < 4) { curLen += charW + fontSize * 0.04; continue; }
-
-              const midLen = Math.min(curLen + charW / 2, totalLen);
-              const midPt = clNode.getPointAtLength(midLen);
-              const dt = 1.5;
-              const p1 = clNode.getPointAtLength(Math.max(0, midLen - dt));
-              const p2 = clNode.getPointAtLength(Math.min(totalLen, midLen + dt));
-              const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
-              const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
-
-              const tx = `translate(${midPt.x}, ${midPt.y}) rotate(${angle}) scale(1, ${scaleY.toFixed(3)})`;
+            for (const p of result.placements) {
+              if (p.fontSize < 4) continue;
+              const tx = `translate(${p.x}, ${p.y}) rotate(${p.angle}) scale(1, ${p.scaleY.toFixed(3)})`;
               svg.append('text')
-                .attr('font-size', `${fontSize}px`)
+                .attr('font-size', `${p.fontSize}px`)
                 .attr('font-family', fontData.family)
-                .attr('font-weight', fontWeight)
+                .attr('font-weight', 400)
                 .attr('fill', fontData.color)
                 .attr('text-anchor', 'middle')
                 .attr('dominant-baseline', 'central')
                 .attr('transform', tx)
-                .attr('opacity', opacity)
-                .text(ch);
-
-              curLen += charW + fontSize * 0.04;
+                .attr('opacity', p.opacity)
+                .text(p.ch);
             }
-
-            clPathEl.remove();
           }
 
           if (jobIndex < jobs.length) {
