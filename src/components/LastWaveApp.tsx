@@ -167,8 +167,7 @@ export default function LastWaveApp() {
   // appears on the same render — before any useEffect or paint.
   const coreKey = `${rOpts.color_scheme}|${rOpts.font}|${rOpts.offset}|${rOpts.width}|${rOpts.height}|${rOpts.add_labels}|${deformText}|${suppressLabels}`;
   if (seriesData.length > 0 && deformText &&
-      (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key) &&
-      !drawingStatus) {
+      (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key)) {
     setDrawingStatus('Drawing…');
   }
   prevCoreRef.current = { sd: seriesData, key: coreKey };
