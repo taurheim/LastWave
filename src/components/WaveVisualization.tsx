@@ -28,17 +28,34 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
   zero: d3.stackOffsetNone,
 };
 
-// Assign colors to stacked layers so that adjacent bands never share a color.
-// Uses a stride roughly equal to the golden ratio of the palette size to
-// maximise visual separation between neighbouring bands.
-function assignStackColors(keys: string[], colors: string[]): Map<string, string> {
+// Hash a string to a stable unsigned 32-bit integer.
+function hashString(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// Assign colors to stacked layers.
+// Each artist gets a stable color from a hash of its name (survives animation).
+// When `fixAdjacency` is true (final render), a post-pass shifts any adjacent
+// bands that ended up with the same color.
+function assignStackColors(keys: string[], colors: string[], fixAdjacency = false): Map<string, string> {
   const n = colors.length;
   const stride = Math.max(1, Math.round(n * 0.618));
   const map = new Map<string, string>();
-  let ci = 0;
   for (const key of keys) {
-    map.set(key, colors[ci % n]);
-    ci += stride;
+    map.set(key, colors[Math.abs(hashString(key) * stride) % n]);
+  }
+  if (fixAdjacency) {
+    for (let i = 1; i < keys.length; i++) {
+      if (map.get(keys[i]) === map.get(keys[i - 1])) {
+        const cur = colors.indexOf(map.get(keys[i])!);
+        map.set(keys[i], colors[(cur + 1) % n]);
+      }
+    }
   }
   return map;
 }
@@ -102,7 +119,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // Pivot data: from SeriesData[] to tabular format for d3.stack
     const keys = seriesData.map((s) => s.title);
-    const colorMap = assignStackColors(keys, colors);
+    const colorMap = assignStackColors(keys, colors, !suppressLabels);
     const tableData: Record<string, number>[] = [];
     for (let i = 0; i < numSegments; i++) {
       const row: Record<string, number> = { index: i };
