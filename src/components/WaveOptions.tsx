@@ -110,9 +110,9 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 className="appearance-none bg-transparent border-b-2 border-lw-accent/40 text-lw-accent font-medium text-lg lg:text-xl pl-0.5 pr-6 py-0.5 cursor-pointer focus:outline-none focus:border-lw-accent hover:border-lw-accent transition-colors"
               >
                 {easyDateEntries.map(([name]) => (
-                  <option key={name} value={name}>{name}</option>
+                  <option key={name} value={name} className="bg-lw-bg text-lw-text">{name}</option>
                 ))}
-                <option value="Custom">Custom range</option>
+                <option value="Custom" className="bg-lw-bg text-lw-text">Custom range</option>
               </select>
               <svg className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-lw-accent/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -219,7 +219,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
               >
                 {['week', 'month', 'day', 'year'].map((v) => (
-                  <option key={v} value={v}>{v}</option>
+                  <option key={v} value={v} className="bg-lw-bg text-lw-text">{v}</option>
                 ))}
               </select>
             </div>
