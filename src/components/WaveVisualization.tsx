@@ -158,7 +158,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // During animation (suppressLabels), do a fast render: paths + static text, no artist labels
     if (suppressLabels) {
-      onDrawingProgress?.(`Drawing Wave ${stackedData.length}/${stackedData.length}…`);
       svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
@@ -243,7 +242,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       .text(`@import url('${fontUrl}');`);
 
     // Draw paths — capture path strings for overflow detection
-    onDrawingProgress?.(`Drawing Waves ${stackedData.length}/${stackedData.length}…`);
     const pathStrings: string[] = [];
     svg.selectAll('path.wave')
       .data(stackedData, (d: any) => d.key)

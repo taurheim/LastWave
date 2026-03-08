@@ -182,7 +182,7 @@ export default function LastWaveApp() {
     const isRenderStage = loadingStageIndex === loadingStages.length - 1;
     if (isRenderStage) return drawingStatus || 'Drawing…';
     const stage = loadingStages[loadingStageIndex];
-    return `Loading ${stage.currentSegment}/${stage.stageSegments}`;
+    return `Loading Data ${stage.currentSegment}/${stage.stageSegments}…`;
   })();
 
   // Clean up animation timer on unmount
