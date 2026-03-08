@@ -170,6 +170,12 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
 
+      const fontColor = (!isDark && scheme.fontColorLight) ? scheme.fontColorLight : scheme.fontColor;
+      const fontFamily = rendererOptions.font ?? 'DM Sans';
+      const addMonths = rendererOptions.add_months ?? true;
+      const addYears = rendererOptions.add_years ?? isYearRange;
+      const showWatermark = rendererOptions.show_watermark ?? true;
+
       // Year separator lines (behind wave paths)
       if (addYears && timeStart && timeEnd) {
         const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
@@ -197,12 +203,6 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
         .attr('stroke', 'none')
         .attr('stroke-width', 0);
-
-      const fontColor = (!isDark && scheme.fontColorLight) ? scheme.fontColorLight : scheme.fontColor;
-      const fontFamily = rendererOptions.font ?? 'DM Sans';
-      const addMonths = rendererOptions.add_months ?? true;
-      const addYears = rendererOptions.add_years ?? isYearRange;
-      const showWatermark = rendererOptions.show_watermark ?? true;
 
       if (addMonths && timeStart && timeEnd) {
         const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
