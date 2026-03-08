@@ -64,10 +64,11 @@ interface WaveVisualizationProps {
   seriesData: SeriesData[];
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
   onRenderComplete?: () => void;
+  onDrawingProgress?: (status: string) => void;
   suppressLabels?: boolean;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, suppressLabels }: WaveVisualizationProps) {
+export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, onDrawingProgress, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -157,6 +158,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
     // During animation (suppressLabels), do a fast render: paths + static text, no artist labels
     if (suppressLabels) {
+      onDrawingProgress?.(`Drawing Wave ${stackedData.length}/${stackedData.length}…`);
       svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
@@ -241,6 +243,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       .text(`@import url('${fontUrl}');`);
 
     // Draw paths — capture path strings for overflow detection
+    onDrawingProgress?.(`Drawing Waves ${stackedData.length}/${stackedData.length}…`);
     const pathStrings: string[] = [];
     svg.selectAll('path.wave')
       .data(stackedData, (d: any) => d.key)
@@ -306,6 +309,9 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         // Process deform jobs in batches, yielding between batches
         const BATCH_SIZE = 8;
         let jobIndex = 0;
+        // Track unique artists for progress display
+        const uniqueArtists = [...new Set(jobs.map(j => j.label.text))];
+        const artistsDone = new Set<string>();
 
         function processBatch() {
           if (abortId !== deformAbortRef.current) return; // effect re-ran, abort
@@ -313,6 +319,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
 
           for (; jobIndex < end; jobIndex++) {
             const { label, layer, layerIndex, stackPoints, idx } = jobs[jobIndex];
+            artistsDone.add(label.text);
 
             const bandData = layer.map((d: readonly [number, number], i: number) => ({
               x: xScale(i),
@@ -344,6 +351,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
           }
 
           if (jobIndex < jobs.length) {
+            onDrawingProgress?.(`Drawing Artist ${artistsDone.size}/${uniqueArtists.length}…`);
             requestAnimationFrame(processBatch);
           } else {
             onRenderComplete?.();
@@ -351,6 +359,7 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
         }
 
         if (jobs.length > 0) {
+          onDrawingProgress?.(`Drawing Artist 0/${uniqueArtists.length}…`);
           // Defer first batch so React can paint the "Drawing…" indicator
           requestAnimationFrame(processBatch);
         } else {

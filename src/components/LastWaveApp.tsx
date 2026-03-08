@@ -20,11 +20,9 @@ import {
   combineArtistTags,
   findOptimalMinPlays,
   getAnimationSteps,
-  getTopTags,
 } from '@/core/lastfm';
-import type ArtistTags from '@/core/lastfm/models/ArtistTags';
 
-const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
+const LAST_FM_API_KEY= '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
 
 /** Minimum ms between renders while streaming segments during fetch */
@@ -130,7 +128,7 @@ export default function LastWaveApp() {
   const [highlightOverflows, setHighlightOverflows] = useState(false);
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawingStatus, setDrawingStatus] = useState('');
   const prevCoreRef = useRef<{ sd: any; key: string }>({ sd: null, key: '' });
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -138,7 +136,7 @@ export default function LastWaveApp() {
   const streamSegmentsRef = useRef<(SegmentData[] | undefined)[]>([]);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const streamMinPlaysRef = useRef<number>(Infinity);
-  const streamTagDataRef = useRef<Record<string, ArtistTags>>({});
+  const streamTagDataRef = useRef<Record<string, { tags: string[] }>>({});
   const revealFrontierRef = useRef(0);
   const animFrameTimerRef = useRef<ReturnType<typeof setInterval>>();
   const animFrameCountRef = useRef(0);
@@ -148,11 +146,15 @@ export default function LastWaveApp() {
   const showFullSizeBtn= showFullSvg || imageOverflows;
 
   const handleRenderComplete = useCallback(() => {
-    setIsDrawing(false);
+    setDrawingStatus('');
     if (renderCompleteResolveRef.current) {
       renderCompleteResolveRef.current();
       renderCompleteResolveRef.current = null;
     }
+  }, []);
+
+  const handleDrawingProgress = useCallback((status: string) => {
+    setDrawingStatus(status);
   }, []);
 
   const minPlays = useLastWaveStore((s) => s.dataSourceOptions.min_plays ?? '10');
@@ -166,8 +168,8 @@ export default function LastWaveApp() {
   const coreKey = `${rOpts.color_scheme}|${rOpts.font}|${rOpts.offset}|${rOpts.width}|${rOpts.height}|${rOpts.add_labels}|${deformText}|${suppressLabels}`;
   if (seriesData.length > 0 && deformText &&
       (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key) &&
-      !isDrawing) {
-    setIsDrawing(true);
+      !drawingStatus) {
+    setDrawingStatus('Drawing…');
   }
   prevCoreRef.current = { sd: seriesData, key: coreKey };
 
@@ -178,7 +180,7 @@ export default function LastWaveApp() {
   const loadingStatusText = (() => {
     if (loadingStageIndex < 0 || !loadingStages[loadingStageIndex]) return 'Loading…';
     const isRenderStage = loadingStageIndex === loadingStages.length - 1;
-    if (isRenderStage) return 'Drawing…';
+    if (isRenderStage) return drawingStatus || 'Drawing…';
     const stage = loadingStages[loadingStageIndex];
     return `Loading ${stage.currentSegment}/${stage.stageSegments}`;
   })();
@@ -464,66 +466,48 @@ export default function LastWaveApp() {
       store.setDataSourceOption('min_plays', String(minPlays));
       data = cleanByMinPlays(data, minPlays, store.log);
 
-      // If tag mode, fetch tags for each artist
+      // If tag mode, look up genres for each artist
       if (isTagMode) {
         store.startNextStage(data.length);
-        const cache = localStorage;
-        const ArtistTagsClass = (await import('@/core/lastfm/models/ArtistTags')).default;
+        const { lookupGenres } = await import('@/core/genres/genreLookup');
+        const artistNames = data.map(s => s.title);
 
-        const tagTasks = data.map((series) => async () => {
-          const artistTags = new ArtistTagsClass(series.title);
-
-          if (cache && artistTags.isInCache(cache as any)) {
-            artistTags.loadFromCache(cache as any);
-          } else {
-            const tagParams = [new URLParameter('artist', series.title)];
-            const tagUrl = api.getAPIRequestURL('tag', tagParams);
-
-            try {
-              const tagResponse = await fetchWithRetry(tagUrl);
-              const tagJson = await tagResponse.json();
-              const tagParsed = api.parseResponseJSON(tagJson);
-              const topTags = getTopTags(tagParsed);
-              artistTags.setTags(topTags);
-              if (cache) {
-                artistTags.cache(cache as any);
-              }
-            } catch {
-              store.addToast(`Could not load tags for "${series.title}" — skipping`, 'warning');
-            }
-          }
-
-          return { title: series.title, tags: artistTags };
-        });
-
-        // Reset streaming state for tag phase
+        // Reset streaming state for genre phase
         streamMinPlaysRef.current = Infinity;
         streamTagDataRef.current = {};
 
-        const tagResults = await pooled(
-          tagTasks,
-          MAX_CONCURRENT,
-          () => store.progressCurrentStage(),
-          loadingAnim ? (_index, result) => {
-            streamTagDataRef.current[result.title] = result.tags;
-            if (!streamTimerRef.current) {
-              streamTimerRef.current = setTimeout(() => {
-                streamTimerRef.current = undefined;
-                const combined = combineArtistTags(data, streamTagDataRef.current);
-                const newMinPlays = findOptimalMinPlays(combined, 30);
-                streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, newMinPlays);
-                setSeriesData(cleanByMinPlays(combined, streamMinPlaysRef.current));
-              }, STREAM_RENDER_INTERVAL_MS);
+        const result = await lookupGenres(
+          artistNames,
+          LAST_FM_API_KEY,
+          (name, genreList) => {
+            store.progressCurrentStage();
+            if (loadingAnim) {
+              streamTagDataRef.current[name] = { tags: genreList };
+              if (!streamTimerRef.current) {
+                streamTimerRef.current = setTimeout(() => {
+                  streamTimerRef.current = undefined;
+                  const combined = combineArtistTags(data, streamTagDataRef.current);
+                  const newMinPlays = findOptimalMinPlays(combined, 30);
+                  streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, newMinPlays);
+                  setSeriesData(cleanByMinPlays(combined, streamMinPlaysRef.current));
+                }, STREAM_RENDER_INTERVAL_MS);
+              }
             }
-          } : undefined,
+          },
         );
 
-        // Clean up streaming timer after all tags arrive
+        // Clean up streaming timer
         clearTimeout(streamTimerRef.current);
         streamTimerRef.current = undefined;
-        const tagData: Record<string, ArtistTags> = {};
-        for (const { title, tags } of tagResults) {
-          tagData[title] = tags;
+
+        // Build tagData from genre results
+        const tagData: Record<string, { tags: string[] }> = {};
+        for (const [name, genreList] of Object.entries(result.genres)) {
+          tagData[name] = { tags: genreList };
+        }
+
+        if (result.missing.length > 0) {
+          store.log?.(`Genre lookup: ${result.cachedCount} cached, ${result.wikidataCount} Wikidata, ${result.musicbrainzCount} MusicBrainz, ${result.missing.length} not found`);
         }
 
         data = combineArtistTags(data, tagData);
@@ -623,15 +607,15 @@ export default function LastWaveApp() {
                   <StageLoadingBar />
                 </div>
               )}
-              {(showLoadingBar && loadingAnimEnabled || isDrawing) && (
+              {(showLoadingBar && loadingAnimEnabled || drawingStatus) && (
                 <div className="absolute inset-x-0 top-3 z-20 text-center">
                   <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                    {isDrawing && !showLoadingBar ? 'Drawing…' : loadingStatusText}
+                    {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                   </span>
                 </div>
               )}
               <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
+                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingProgress={handleDrawingProgress} suppressLabels={suppressLabels} />
               </ImageScaler>
               {showActions && (
                 <>
@@ -686,10 +670,10 @@ export default function LastWaveApp() {
                 <StageLoadingBar />
               </div>
             )}
-            {(showLoadingBar && loadingAnimEnabled || isDrawing) && (
+            {(showLoadingBar && loadingAnimEnabled || drawingStatus) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
                 <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
-                  {isDrawing && !showLoadingBar ? 'Drawing…' : loadingStatusText}
+                  {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                 </span>
               </div>
             )}
@@ -697,7 +681,7 @@ export default function LastWaveApp() {
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} suppressLabels={suppressLabels} />
+              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingProgress={handleDrawingProgress} suppressLabels={suppressLabels} />
             </ImageScaler>
             {showActions && (
               <>
