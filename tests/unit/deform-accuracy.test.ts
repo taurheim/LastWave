@@ -251,6 +251,26 @@ function runDeformPipeline(data: CachedData, offsetMode: string = 'silhouette'):
       // Build spline path (simulates SVG getPointAtLength)
       const spline = buildSplinePath(bandData);
 
+      // Build spline-accurate band bounds (matching d3.curveMonotoneX)
+      const xs = bandData.map(d => d.x);
+      const topYs = bandData.map(d => d.topY);
+      const botYs = bandData.map(d => d.botY);
+      const topSlopes = monotoneSlopes(xs, topYs);
+      const botSlopes = monotoneSlopes(xs, botYs);
+      const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
+      const bandX0 = bandData[0].x;
+
+      function bandBoundsAtX(x: number): { topY: number; botY: number; thickness: number } {
+        const fi = (x - bandX0) / bandXStep;
+        const seg = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
+        const t = Math.max(0, Math.min(1, fi - seg));
+        const topPt = hermitePoint(xs[seg], topYs[seg], xs[seg + 1], topYs[seg + 1],
+                                    topSlopes[seg], topSlopes[seg + 1], t);
+        const botPt = hermitePoint(xs[seg], botYs[seg], xs[seg + 1], botYs[seg + 1],
+                                    botSlopes[seg], botSlopes[seg + 1], t);
+        return { topY: topPt.y, botY: botPt.y, thickness: botPt.y - topPt.y };
+      }
+
       function lengthAtX(targetX: number): number {
         const total = spline.getTotalLength();
         let lo = 0, hi = total;
@@ -267,6 +287,7 @@ function runDeformPipeline(data: CachedData, offsetMode: string = 'silhouette'):
         spline.getPointAtLength.bind(spline),
         spline.getTotalLength(),
         lengthAtX,
+        bandBoundsAtX,
       );
 
       totalChars += result.placements.length;
@@ -331,10 +352,10 @@ describe('Deformed text quality', { timeout: 120_000 }, () => {
     console.log(`Avg font ratio:   ${globalAvgRatio.toFixed(3)}`);
     console.log(`Avg time/user:    ${avgTimeMs.toFixed(0)}ms`);
 
-    // Baseline (current known-good algorithm):
-    //   overflow ~31%, font ratio ~0.58, time ~700ms/user
+    // Baseline (current known-good algorithm with spline-accurate bounds):
+    //   overflow ~0.13%, font ratio ~0.55, time ~500ms/user
     // Thresholds set with margin to catch regressions without false positives.
-    expect(globalOverflowPct).toBeLessThan(36);    // no more than ~5% regression
+    expect(globalOverflowPct).toBeLessThan(3);     // catch any real overflow regression
     expect(globalAvgRatio).toBeGreaterThan(0.4);   // font sizes stay reasonable
     expect(avgTimeMs).toBeLessThan(1500);           // generous for CI variance
   });

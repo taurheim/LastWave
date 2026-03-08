@@ -61,6 +61,7 @@ function bandAtX(bandData: BandPoint[], bandX0: number, bandXStep: number, x: nu
  * @param getPointAtLength  SVG path getPointAtLength for the centerline
  * @param totalLen     Total length of the centerline path
  * @param lengthAtX    Binary-search function: x → arc length
+ * @param bandBoundsAtX Optional spline-accurate band bounds for overflow detection
  */
 export function computeDeformedText(
   label: Label,
@@ -72,6 +73,7 @@ export function computeDeformedText(
   getPointAtLength: (len: number) => { x: number; y: number },
   totalLen: number,
   lengthAtX: (x: number) => number,
+  bandBoundsAtX?: (x: number) => { topY: number; botY: number; thickness: number },
 ): DeformResult {
   const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
   const bandX0 = bandData[0].x;
@@ -180,16 +182,18 @@ export function computeDeformedText(
     placements.push({ ch, x: midPt.x, y: midPt.y, fontSize, scaleY, angle, opacity, width: charW });
 
     // Overflow detection: does the character bounding box exceed band bounds?
-    const band = bandAtX(bandData, bandX0, bandXStep, midPt.x);
+    const bounds = bandBoundsAtX
+      ? bandBoundsAtX(midPt.x)
+      : bandAtX(bandData, bandX0, bandXStep, midPt.x);
     const charHalfH = (fontSize * scaleY * 1.2) / 2;
     const charTop = midPt.y - charHalfH;
     const charBot = midPt.y + charHalfH;
-    if (charTop < band.topY - 1 || charBot > band.botY + 1) {
+    if (charTop < bounds.topY - 1 || charBot > bounds.botY + 1) {
       overflowCount++;
     }
 
-    if (band.thickness > 0) {
-      fontSizeRatioSum += fontSize / band.thickness;
+    if (bounds.thickness > 0) {
+      fontSizeRatioSum += fontSize / bounds.thickness;
       measuredChars++;
     }
 
