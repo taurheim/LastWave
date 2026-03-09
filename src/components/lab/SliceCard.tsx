@@ -9,6 +9,7 @@ import { isXType, getXLabel } from '@/core/wave/waveX';
 import { isYType, getYLabel } from '@/core/wave/waveY';
 import { isZType, getZLabel } from '@/core/wave/waveZ';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
+import { computeDeformedText } from '@/core/wave/deformTextOptB';
 import type { SliceDefinition } from './sliceData';
 
 const CARD_W = 400;
@@ -40,10 +41,11 @@ interface SliceCardProps {
   slice: SliceDefinition;
   showStraightLines: boolean;
   showBezier: boolean;
+  showDeformedText: boolean;
   onStatus?: (id: string, status: 'ok' | 'overflow' | 'hidden') => void;
 }
 
-export default function SliceCard({ slice, showStraightLines, showBezier, onStatus }: SliceCardProps) {
+export default function SliceCard({ slice, showStraightLines, showBezier, showDeformedText, onStatus }: SliceCardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [algoType, setAlgoType] = useState('?');
   const [labelInfo, setLabelInfo] = useState<string>('');
@@ -169,12 +171,49 @@ export default function SliceCard({ slice, showStraightLines, showBezier, onStat
     // 3. Position and draw text label, detect overflow
     const label = getLabel(peak, slice.label, measureText, points, slice.peakIndex);
     if (label) {
-      // Check for Infinity/NaN in label position (hidden/broken label)
       const hasInvalid = !isFinite(label.xPosition) || !isFinite(label.yPosition) || !isFinite(label.fontSize);
 
       if (hasInvalid) {
         setLabelInfo('∞');
         onStatus?.(slice.id, 'hidden');
+      } else if (showDeformedText) {
+        // Deformed text: per-character placement along the band curve
+        const bandData = points.map(p => ({
+          x: p.x,
+          topY: coordH - (p.y0 + p.y),
+          botY: coordH - p.y0,
+          centerY: coordH - (p.y0 + p.y / 2),
+          thickness: p.y,
+        }));
+
+        const result = computeDeformedText(
+          label, bandData, slice.peakIndex, points[slice.peakIndex].x,
+          FONT_FAMILY, measureText,
+        );
+
+        for (const p of result.placements) {
+          if (p.fontSize < 2) continue;
+          const tx = `translate(${p.x}, ${p.y}) rotate(${p.angle}) scale(1, ${p.scaleY.toFixed(3)})`;
+          svg.append('text')
+            .attr('font-size', `${p.fontSize}px`)
+            .attr('font-family', FONT_FAMILY)
+            .attr('font-weight', 400)
+            .attr('fill', FONT_COLOR)
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'central')
+            .attr('transform', tx)
+            .attr('opacity', p.opacity)
+            .text(p.ch);
+        }
+
+        const overflowPct = Math.round(result.overflowFraction * 100);
+        if (overflowPct > 5) {
+          setLabelInfo(`${Math.round(label.fontSize)}px ⚠${overflowPct}%`);
+          onStatus?.(slice.id, 'overflow');
+        } else {
+          setLabelInfo(`${Math.round(label.fontSize)}px deform`);
+          onStatus?.(slice.id, 'ok');
+        }
       } else {
         // SVG text y = baseline position
         const baselineSvgY = coordH - label.yPosition;
@@ -253,7 +292,7 @@ export default function SliceCard({ slice, showStraightLines, showBezier, onStat
       setLabelInfo('no fit');
       onStatus?.(slice.id, 'hidden');
     }
-  }, [slice, showStraightLines, showBezier]);
+  }, [slice, showStraightLines, showBezier, showDeformedText]);
 
   const typeBadgeColors: Record<string, string> = {
     W: 'bg-red-500/20 text-red-400 border-red-500/30',

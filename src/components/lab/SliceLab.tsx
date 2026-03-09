@@ -7,6 +7,7 @@ type LabelStatus = 'ok' | 'overflow' | 'hidden';
 export default function SliceLab() {
   const [showStraightLines, setShowStraightLines] = useState(true);
   const [showBezier, setShowBezier] = useState(true);
+  const [showDeformedText, setShowDeformedText] = useState(false);
   const [filter, setFilter] = useState<string>('all');
   const [statuses, setStatuses] = useState<Record<string, LabelStatus>>({});
 
@@ -51,6 +52,17 @@ export default function SliceLab() {
             />
             <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">
               Straight lines (algorithm model)
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={showDeformedText}
+              onChange={(e) => setShowDeformedText(e.target.checked)}
+              className="rounded border-lw-border bg-lw-bg accent-lw-accent"
+            />
+            <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">
+              Deformed text
             </span>
           </label>
         </div>
@@ -110,6 +122,7 @@ export default function SliceLab() {
             slice={slice}
             showStraightLines={showStraightLines}
             showBezier={showBezier}
+            showDeformedText={showDeformedText}
             onStatus={handleStatus}
           />
         ))}
