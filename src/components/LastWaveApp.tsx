@@ -58,14 +58,16 @@ async function pooled<T>(
   return results;
 }
 
-function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, children }: {
+function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, minChartHeight, children }: {
   showFullSvg: boolean;
   setShowFullSvg: (v: boolean) => void;
   onOverflowChange?: (overflowing: boolean) => void;
+  minChartHeight?: number;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
 
   const checkOverflow = useCallback(() => {
     if (showFullSvg) return;
@@ -74,10 +76,20 @@ function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, children }
     const svg = el.querySelector('svg');
     if (!svg) return;
     const svgWidth = parseFloat(svg.getAttribute('width') ?? '0');
-    const overflows = svgWidth > el.clientWidth;
+    const svgHeight = parseFloat(svg.getAttribute('height') ?? '0');
+    const containerWidth = el.clientWidth;
+    const overflows = svgWidth > containerWidth;
     setIsOverflowing(overflows);
     onOverflowChange?.(overflows);
-  }, [showFullSvg, onOverflowChange]);
+
+    // Compute zoom scale for minChartHeight
+    if (minChartHeight && overflows && svgWidth > 0 && svgHeight > 0) {
+      const naturalHeight = svgHeight * (containerWidth / svgWidth);
+      setZoomScale(naturalHeight < minChartHeight ? minChartHeight / naturalHeight : 1);
+    } else {
+      setZoomScale(1);
+    }
+  }, [showFullSvg, onOverflowChange, minChartHeight]);
 
   useEffect(() => {
     checkOverflow();
@@ -95,16 +107,28 @@ function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, children }
   }, [checkOverflow]);
 
   const scaleDown = !showFullSvg && isOverflowing;
+  const needsZoom = scaleDown && zoomScale > 1;
   return (
     <div
       ref={containerRef}
       className={`mx-4 ${showFullSvg ? 'overflow-x-auto [&_#svg-wrapper]:!overflow-visible' : ''}`}
     >
       <div
-        className={scaleDown ? 'overflow-hidden [&_svg]:w-full [&_svg]:h-auto' : ''}
-        style={showFullSvg ? { minWidth: 'max-content' } : undefined}
+        className={scaleDown ? 'overflow-hidden' : ''}
+        style={
+          showFullSvg
+            ? { minWidth: 'max-content' }
+            : needsZoom
+              ? { height: `${minChartHeight}px`, overflow: 'hidden' }
+              : undefined
+        }
       >
-        {children}
+        <div
+          className={scaleDown ? '[&_svg]:w-full [&_svg]:h-auto' : ''}
+          style={needsZoom ? { transform: `scale(${zoomScale})`, transformOrigin: 'top left' } : undefined}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -678,6 +702,7 @@ export default function LastWaveApp() {
             <ImageScaler
               showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
+              minChartHeight={showCustomize ? 150 : undefined}
             >
               <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingProgress={handleDrawingProgress} suppressLabels={suppressLabels} />
             </ImageScaler>
