@@ -94,7 +94,6 @@ function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, children }
     };
   }, [checkOverflow]);
 
-  // Single DOM structure to avoid remounting children when switching modes
   const scaleDown = !showFullSvg && isOverflowing;
   return (
     <div
@@ -311,7 +310,7 @@ export default function LastWaveApp() {
       new LoadingStage('Getting data...', isTagMode ? 40 : 80),
     ];
     if (isTagMode) {
-      stages.push(new LoadingStage('Getting tags...', 40));
+      stages.push(new LoadingStage('Getting genres...', 40));
     }
     stages.push(new LoadingStage('Rendering...', 20));
     store.setStages(stages);
@@ -350,13 +349,12 @@ export default function LastWaveApp() {
         isAnimatingRef.current = true;
       }
 
-      // Start frame timer: two phases
-      // Phase 1: sweep frontier left-to-right (progressive reveal)
-      // Phase 2: all segments revealed, step through decreasing minPlays thresholds
+      // In tag mode, skip the sweep animation on raw artist data — genres are what we animate.
+      // In artist/album mode, run the normal sweep + buildup animation.
       const animDone = new Promise<void>((resolve) => {
         animDoneResolveRef.current = resolve;
       });
-      if (loadingAnim) {
+      if (loadingAnim && !isTagMode) {
         animBuildupStepsRef.current = [];
         const frameInterval = MIN_ANIMATION_DURATION_MS / MIN_ANIM_FRAMES;
         const totalSegments = segments.length;
@@ -410,7 +408,7 @@ export default function LastWaveApp() {
 
           if (rendered) {
             animFrameCountRef.current++;
-            setDrawingStatus(`Drawing Wave ${animFrameCountRef.current}/${MIN_ANIM_FRAMES}…`);
+            setDrawingStatus(`Drawing wave ${animFrameCountRef.current}/${MIN_ANIM_FRAMES}…`);
           }
 
           // Done when sweep finished, buildup exhausted, and all data arrived
@@ -515,6 +513,9 @@ export default function LastWaveApp() {
         minPlays = findOptimalMinPlays(rawData, 30, store.log);
         store.setDataSourceOption('min_plays', String(minPlays));
         data = cleanByMinPlays(data, minPlays, store.log);
+
+        // Genre streaming is done — resolve animation promise (no sweep in tag mode)
+        animDoneResolveRef.current?.();
       }
 
       // Rendering stage
@@ -541,6 +542,7 @@ export default function LastWaveApp() {
 
       // First: render the final frame without labels (fast path)
       isAnimatingRef.current = false;
+      setDrawingStatus('Placing text…');
       setSeriesData(data);
 
       // Yield two frames so the browser paints the final wave shapes
@@ -600,8 +602,8 @@ export default function LastWaveApp() {
       {/* Desktop layout */}
       <div className="hidden lg:block">
         {showVisualization && (
-          <div className={showActions && showCustomize ? 'flex items-start gap-4' : ''}>
-            <div className={`relative ${showCustomize ? 'flex-[3] min-w-0' : !imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
+          <div className="relative">
+            <div className={`relative ${!imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
               {showLoadingBar && !loadingAnimEnabled && (
                 <div className="absolute inset-x-0 top-0 z-20">
                   <StageLoadingBar />
@@ -645,7 +647,7 @@ export default function LastWaveApp() {
               )}
             </div>
             {showActions && showCustomize && (
-              <div className="flex-[2] min-w-0">
+              <div className="absolute top-12 right-6 z-30 w-[min(420px,40%)] bg-lw-bg/95 backdrop-blur-sm rounded-xl border border-lw-border shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
                 <CustomizePanel maxPlays={maxPlaysInDataset} />
               </div>
             )}
@@ -655,16 +657,12 @@ export default function LastWaveApp() {
 
       {/* Mobile layout — single WaveVisualization instance to avoid remount flash */}
       <div className={`lg:hidden ${
-        showVisualization && !showCustomize && !showFullSvg
+        showVisualization
           ? 'min-h-[calc(100svh-10rem)] max-lg:landscape:min-h-[calc(100svh-8rem)] flex flex-col justify-center'
-          : showVisualization && showCustomize
-            ? 'max-lg:landscape:flex max-lg:landscape:flex-row max-lg:landscape:items-stretch max-lg:landscape:h-[calc(100svh-5.25rem)]'
-            : ''
+          : ''
       }`}>
         {showVisualization && (
-          <div
-            className={`relative ${showCustomize ? 'max-lg:landscape:flex-1 max-lg:landscape:min-w-0 max-lg:landscape:[&>div]:mr-0 max-lg:landscape:flex max-lg:landscape:items-center max-lg:landscape:pb-14' : ''}`}
-          >
+          <div className="relative">
             {showLoadingBar && !loadingAnimEnabled && (
               <div className="absolute inset-x-0 top-0 z-20">
                 <StageLoadingBar />
@@ -712,7 +710,7 @@ export default function LastWaveApp() {
           </div>
         )}
         {showActions && showCustomize && (
-          <div className="max-lg:landscape:flex-1 max-lg:landscape:min-w-0 max-lg:landscape:overflow-y-auto max-lg:landscape:max-h-[calc(100svh-5.25rem)]">
+          <div className="max-lg:landscape:max-h-[calc(100svh-5.25rem)] max-lg:landscape:overflow-y-auto">
             <CustomizePanel maxPlays={maxPlaysInDataset} />
           </div>
         )}

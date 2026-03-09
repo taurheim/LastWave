@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, memo } from 'react';
 import * as d3 from 'd3';
 import type SeriesData from '@/core/models/SeriesData';
 import { useLastWaveStore } from '@/store/index';
@@ -68,7 +68,7 @@ interface WaveVisualizationProps {
   suppressLabels?: boolean;
 }
 
-export default function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, onDrawingProgress, suppressLabels }: WaveVisualizationProps) {
+export default memo(function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, onDrawingProgress, suppressLabels }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -618,4 +618,4 @@ export default function WaveVisualization({ seriesData, onOverflowsDetected, onR
       <svg ref={svgRef} style={{ display: 'block' }} />
     </div>
   );
-}
+})
