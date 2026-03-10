@@ -40,10 +40,8 @@ export function createCanvasMeasurer(): MeasureTextFn {
 export function findLabelIndices(rippleCounts: number[], segmentsBetweenLabels: number) {
   // Possible points is a list of numbers representing the indices
   // in data.count that are being considered as label points
-  // We don't allow for the first or last points to have labels because
-  // They would appear off screen
   const possiblePoints = [];
-  for (let i = 1; i < rippleCounts.length - 1; i++) {
+  for (let i = 0; i < rippleCounts.length; i++) {
     possiblePoints.push(i);
   }
 

@@ -24,7 +24,12 @@ export default class Peak {
   public D: LineSegment;
 
   constructor(index: number, stack: StackPoint[]) {
-    const LEFT_RIGHT_SPREADING_FACTOR = 0.1;
+    // Compute the actual spacing between data points for edge extrapolation
+    const spacing = stack.length >= 2
+      ? stack[Math.min(index + 1, stack.length - 1)].x - stack[Math.max(index - 1, 0)].x
+        || stack[1].x - stack[0].x
+      : 1;
+    const halfSpacing = spacing / 2;
 
     // 1. Grab all the surrounding points
     // y: The amount of vertical space that the ripple takes up
@@ -33,7 +38,8 @@ export default class Peak {
     this.bottom = new Point(stack[index].x, stack[index].y0);
 
     if (index === 0) {
-      const fakeLeftX = -1 * LEFT_RIGHT_SPREADING_FACTOR;
+      // Extrapolate left: band tapers to zero thickness at one interval away
+      const fakeLeftX = this.top.x - halfSpacing;
       const fakeLeftY = this.bottom.y + (this.top.y - this.bottom.y) / 2;
       this.topLeft = new Point(fakeLeftX, fakeLeftY);
       this.bottomLeft = new Point(fakeLeftX, fakeLeftY);
@@ -43,7 +49,8 @@ export default class Peak {
     }
 
     if (index === stack.length - 1) {
-      const fakeRightX = this.top.x + LEFT_RIGHT_SPREADING_FACTOR;
+      // Extrapolate right: band tapers to zero thickness at one interval away
+      const fakeRightX = this.top.x + halfSpacing;
       const fakeRightY = this.bottom.y + (this.top.y - this.bottom.y) / 2;
       this.topRight = new Point(fakeRightX, fakeRightY);
       this.bottomRight = new Point(fakeRightX, fakeRightY);

@@ -46,17 +46,31 @@ function assignStackColors(keys: string[], colors: string[], fixAdjacency = fals
   const n = colors.length;
   const stride = Math.max(1, Math.round(n * 0.618));
   const map = new Map<string, string>();
+
+  // Initial assignment: hash-based with golden-ratio stride for good spread
   for (const key of keys) {
     map.set(key, colors[Math.abs(hashString(key) * stride) % n]);
   }
-  if (fixAdjacency) {
-    for (let i = 1; i < keys.length; i++) {
-      if (map.get(keys[i]) === map.get(keys[i - 1])) {
+
+  // Fix adjacent duplicates: ensure no two stacked neighbors share a color
+  if (fixAdjacency && n >= 2) {
+    for (let i = 0; i < keys.length; i++) {
+      const prev = i > 0 ? map.get(keys[i - 1]) : undefined;
+      const next = i < keys.length - 1 ? map.get(keys[i + 1]) : undefined;
+      if (map.get(keys[i]) === prev || map.get(keys[i]) === next) {
+        // Pick the first color that doesn't conflict with either neighbor
         const cur = colors.indexOf(map.get(keys[i])!);
-        map.set(keys[i], colors[(cur + 1) % n]);
+        for (let offset = 1; offset < n; offset++) {
+          const candidate = colors[(cur + offset) % n];
+          if (candidate !== prev && candidate !== next) {
+            map.set(keys[i], candidate);
+            break;
+          }
+        }
       }
     }
   }
+
   return map;
 }
 
@@ -335,7 +349,6 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
           const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
           labelIndices.forEach((idx) => {
-            if (idx <= 0 || idx >= stackPoints.length - 1) return;
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
             if (isWType(peak)) {
@@ -425,7 +438,6 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
           const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
           labelIndices.forEach((idx) => {
-            if (idx <= 0 || idx >= stackPoints.length - 1) return;
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
             if (isWType(peak)) {

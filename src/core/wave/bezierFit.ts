@@ -196,15 +196,15 @@ export function findOptimalLabel(
     const nextTop = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y + stack[i + 2].y0 } : {};
     const topNeighbors = {
       ...prevTop, ...nextTop,
-      isFirstPoint: i - 1 === 0,
-      isLastPoint: i + 1 === n - 1,
+      isFirstPoint: i <= 1,
+      isLastPoint: i >= n - 2,
     };
     const prevBot = i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y0 } : {};
     const nextBot = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y0 } : {};
     const botNeighbors = {
       ...prevBot, ...nextBot,
-      isFirstPoint: i - 1 === 0,
-      isLastPoint: i + 1 === n - 1,
+      isFirstPoint: i <= 1,
+      isLastPoint: i >= n - 2,
     };
 
     topCurve = computeCurveParams(
