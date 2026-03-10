@@ -8,6 +8,7 @@ import { isWType, getWLabel } from '@/core/wave/waveW';
 import { isXType, getXLabel } from '@/core/wave/waveX';
 import { isYType, getYLabel } from '@/core/wave/waveY';
 import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import { computeDeformedText } from '@/core/wave/deformTextOptB';
 import { buildBandLUT, checkLabelOverflow } from '@/core/wave/overflowDetection';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
@@ -359,12 +360,16 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             } else if (isXType(peak)) {
               label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else {
+              // Unclassified peak — try direct bezier fitting
+              label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             }
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx });
             }
           });
         });
+
 
         // Process deform jobs in batches, yielding between batches
         const BATCH_SIZE = 8;
@@ -448,6 +453,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             } else if (isXType(peak)) {
               label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            } else {
+              label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             }
 
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
