@@ -19,3 +19,9 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
+
+# Test artifacts
+test-results/
+playwright-report/
+.playwright-cli/
+proto-screenshots/
