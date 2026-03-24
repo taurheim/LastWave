@@ -51,7 +51,7 @@ describe('LastFmApi', () => {
       expect(result.length).toBe(5);
       expect(result[0].title).toContain('OK Computer');
       expect(result[0].title).toContain('Radiohead');
-      expect(result[0].title).toContain('<br>');
+      expect(result[0].title).toContain('·');
       expect(result[0].count).toBe(25);
     });
 

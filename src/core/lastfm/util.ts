@@ -1,7 +1,6 @@
 import TimeSpan from './models/TimeSpan';
 import type SeriesData from '../models/SeriesData';
 import SegmentData from '../models/SegmentData';
-import type ArtistTags from './models/ArtistTags';
 
 /**
  * Convert from date in format YY/MM/DD to unix timestamp
@@ -34,7 +33,7 @@ export function splitTimeSpan(splitBy: string, timeSpan: TimeSpan, logger?: (msg
   return segments;
 }
 
-export function combineArtistTags(artistData: SeriesData[], tagData: { [key: string]: ArtistTags }) {
+export function combineArtistTags(artistData: SeriesData[], tagData: { [key: string]: { tags: string[] } }) {
   // Key: tag name
   // Value: {name: <string>, counts: [<int>]}
   const countsByTag: { [key: string]: SeriesData } = {};

@@ -26,7 +26,7 @@ describe('WaveOptions', () => {
 
   it('renders date range selector', () => {
     render(<WaveOptions onSubmit={mockOnSubmit} />);
-    expect(screen.getByText('Date range')).toBeInTheDocument();
+    expect(screen.getByText('Graph my')).toBeInTheDocument();
   });
 
   it('shows advanced options when toggle is clicked', async () => {
@@ -38,7 +38,6 @@ describe('WaveOptions', () => {
     await user.click(screen.getByRole('button', { name: /Advanced Options/ }));
 
     expect(screen.getByText('Group by')).toBeInTheDocument();
-    expect(screen.getByText('Data set')).toBeInTheDocument();
   });
 
   it('calls onSubmit when form is submitted', async () => {

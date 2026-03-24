@@ -42,6 +42,7 @@ interface LastWaveState {
   setStages: (stages: LoadingStage[]) => void;
   startNextStage: (segmentCount: number) => void;
   progressCurrentStage: () => void;
+  setStageSubText: (text: string) => void;
 
   // Reset to initial state (for "back to options")
   resetToOptions: () => void;
@@ -109,7 +110,17 @@ export const useLastWaveStore = create<LastWaveState>((set, get) => ({
         newStages[state.currentStage] = {
           ...current,
           currentSegment: current.currentSegment + 1,
+          subText: '',
         };
+      }
+      return { stages: newStages };
+    }),
+  setStageSubText: (text: string) =>
+    set((state) => {
+      const newStages = [...state.stages];
+      const current = newStages[state.currentStage];
+      if (current) {
+        newStages[state.currentStage] = { ...current, subText: text };
       }
       return { stages: newStages };
     }),

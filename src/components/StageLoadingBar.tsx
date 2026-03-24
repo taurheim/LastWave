@@ -41,6 +41,7 @@ export default function StageLoadingBar() {
       </svg>
       <p className="text-center mb-3 text-xs tracking-widest uppercase text-lw-muted">
         {currentStage.stageName} &middot; {currentStage.currentSegment} / {currentStage.stageSegments}
+        {currentStage.subText && <span className="normal-case tracking-normal"> &middot; {currentStage.subText}</span>}
       </p>
       <div className="w-full bg-lw-surface border border-lw-border rounded-full h-2 overflow-hidden">
         <div

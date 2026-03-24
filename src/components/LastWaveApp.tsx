@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import WaveOptions from '@/components/WaveOptions';
-import StageLoadingBar from '@/components/StageLoadingBar';
 import WaveVisualization from '@/components/WaveVisualization';
 import ImageActions from '@/components/ImageActions';
 import CustomizePanel from '@/components/CustomizePanel';
@@ -204,7 +203,8 @@ export default function LastWaveApp() {
     const isRenderStage = loadingStageIndex === loadingStages.length - 1;
     if (isRenderStage) return drawingStatus || 'Drawing…';
     const stage = loadingStages[loadingStageIndex];
-    return `Loading Data ${stage.currentSegment}/${stage.stageSegments}…`;
+    const sub = stage.subText ? ` (${stage.subText})` : '';
+    return `${stage.stageName} ${stage.currentSegment}/${stage.stageSegments}${sub}…`;
   })();
 
   // Clean up animation timer on unmount
@@ -328,15 +328,17 @@ export default function LastWaveApp() {
 
     const method = dsOpts.method ?? 'artist';
     const isTagMode = method === 'tag';
+    const groupBy = dsOpts.group_by ?? 'week';
+    const groupLabel = groupBy === 'day' ? 'days' : groupBy === 'month' ? 'months' : groupBy === 'year' ? 'years' : 'weeks';
 
     // Set up loading stages
     const stages = [
-      new LoadingStage('Getting data...', isTagMode ? 40 : 80),
+      new LoadingStage(`Loading ${groupLabel}`, isTagMode ? 40 : 80),
     ];
     if (isTagMode) {
-      stages.push(new LoadingStage('Getting genres...', 40));
+      stages.push(new LoadingStage('Loading genres', 40));
     }
-    stages.push(new LoadingStage('Rendering...', 20));
+    stages.push(new LoadingStage('Rendering', 20));
     store.setStages(stages);
 
     try {
@@ -502,7 +504,6 @@ export default function LastWaveApp() {
           artistNames,
           LAST_FM_API_KEY,
           (name, genreList) => {
-            store.progressCurrentStage();
             if (loadingAnim) {
               streamTagDataRef.current[name] = { tags: genreList };
               if (!streamTimerRef.current) {
@@ -514,6 +515,20 @@ export default function LastWaveApp() {
                   setSeriesData(cleanByMinPlays(combined, streamMinPlaysRef.current));
                 }, STREAM_RENDER_INTERVAL_MS);
               }
+            }
+          },
+          (resolved, total, currentArtist) => {
+            const stages = useLastWaveStore.getState().stages;
+            const stageIdx = useLastWaveStore.getState().currentStage;
+            const current = stages[stageIdx];
+            if (current) {
+              const newStages = [...stages];
+              newStages[stageIdx] = {
+                ...current,
+                currentSegment: resolved,
+                subText: currentArtist,
+              };
+              useLastWaveStore.setState({ stages: newStages });
             }
           },
         );
@@ -628,12 +643,7 @@ export default function LastWaveApp() {
         {showVisualization && (
           <div className="relative">
             <div className={`relative ${!imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
-              {showLoadingBar && !loadingAnimEnabled && (
-                <div className="absolute inset-x-0 top-0 z-20">
-                  <StageLoadingBar />
-                </div>
-              )}
-              {(showLoadingBar && loadingAnimEnabled || drawingStatus) && (
+              {(showLoadingBar || drawingStatus) && (
                 <div className="absolute inset-x-0 top-3 z-20 text-center">
                   <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
                     {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
@@ -687,12 +697,7 @@ export default function LastWaveApp() {
       }`}>
         {showVisualization && (
           <div className="relative">
-            {showLoadingBar && !loadingAnimEnabled && (
-              <div className="absolute inset-x-0 top-0 z-20">
-                <StageLoadingBar />
-              </div>
-            )}
-            {(showLoadingBar && loadingAnimEnabled || drawingStatus) && (
+            {(showLoadingBar || drawingStatus) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
                 <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
                   {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}

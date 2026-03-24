@@ -3,7 +3,7 @@ import SegmentData from '../models/SegmentData';
 
 export default class LastFmApi {
   private apiKey: string;
-  private ALBUM_NAME_FORMAT: string = '{album}<br>{artist}';
+  private ALBUM_NAME_FORMAT: string = '{album} · {artist}';
   private API_BASE_URL: string = 'https://ws.audioscrobbler.com/2.0/';
   private METHODS: any = {
     artist: 'user.getweeklyartistchart',
