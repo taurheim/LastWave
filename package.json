@@ -12,7 +12,9 @@
     "test:accuracy": "vitest run tests/unit/wave-accuracy.test.ts --reporter=verbose",
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
     "test:e2e": "playwright test",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit --project tsconfig.check.json",
+    "verify": "npm run test && npm run build"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",

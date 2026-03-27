@@ -45,10 +45,14 @@ When spawning a validation subagent, use the prompt template at `.github/prompts
 
 ## Testing
 
-### Unit / component tests
+### Quick verification (run before pushing)
+- `npm run verify` — runs unit tests + build
+
+### Individual checks
 - Run all tests: `npx vitest run`
 - Run accuracy tests: `npm run test:accuracy`
 - Run e2e tests: `npm run test:e2e`
+- Typecheck: `npm run typecheck` (has pre-existing errors — non-blocking)
 
 ## Import conventions
 
