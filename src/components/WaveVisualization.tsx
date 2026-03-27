@@ -459,25 +459,43 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
             }
 
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-              const textEl = svg.append('text')
+              const dims = measureText(label.text, fontData.family, label.fontSize);
+              const textW = dims.width;
+
+              if (label.xPosition < 0 || label.xPosition + textW > width) {
+                return;
+              }
+
+              // The band must be at least 1.5x the font size for straight text
+              // to look clean within the curved band shape.
+              const textH = label.fontSize * 1.5;
+              const numPts = stackPoints.length;
+
+              const interpBandH = (px: number): number => {
+                const frac = px * (numPts - 1) / width;
+                const i = Math.min(Math.max(0, Math.floor(frac)), numPts - 2);
+                const t = Math.min(1, Math.max(0, frac - i));
+                return stackPoints[i].y * (1 - t) + stackPoints[i + 1].y * t;
+              };
+
+              const sampleXs = [
+                label.xPosition,
+                label.xPosition + textW * 0.5,
+                label.xPosition + textW,
+              ];
+              let tooThin = false;
+              for (const px of sampleXs) {
+                if (interpBandH(px) < textH) { tooThin = true; break; }
+              }
+              if (tooThin) return;
+
+              svg.append('text')
                 .attr('x', label.xPosition)
                 .attr('y', height - label.yPosition)
                 .attr('font-size', `${label.fontSize}px`)
                 .attr('font-family', fontData.family)
                 .attr('fill', fontData.color)
                 .text(label.text);
-
-              const pathD = pathByKey[seriesTitle];
-              if (pathD && isFinite(label.xPosition) && isFinite(label.yPosition)) {
-                const bandLUT = buildBandLUT(pathD, width);
-                if (bandLUT) {
-                  const overflow = checkLabelOverflow(label, fontData.family, height, bandLUT);
-                  if (overflow && overflow.overflowPct >= 5) {
-                    detectedOverflows.push(overflow);
-                    textEl.attr('data-overflow', 'true');
-                  }
-                }
-              }
             }
           });
         });
