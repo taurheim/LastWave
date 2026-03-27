@@ -2,6 +2,7 @@
 node_modules
 /dist
 .claude/
+.validation/
 
 # local env files
 .env.local

@@ -38,8 +38,8 @@ npx playwright-cli goto http://localhost:4321/gallery
 npx playwright-cli go-back
 npx playwright-cli reload
 
-# Capture evidence
-npx playwright-cli screenshot
+# Capture evidence — save to .validation/ directory
+npx playwright-cli screenshot --filename=.validation/01-initial.png
 npx playwright-cli console          # check for errors
 
 # Evaluate JavaScript on the page
@@ -78,6 +78,8 @@ Beyond the spec's explicit criteria, try a few unexpected things:
 
 ### 5. Report Results
 
+Save your report to `.validation/report.md`. Use screenshots saved with `--filename=.validation/XX-description.png`.
+
 For each acceptance criterion, report:
 
 ```
@@ -85,7 +87,7 @@ For each acceptance criterion, report:
 **Result:** PASS / FAIL
 **Observation:** [What you actually saw]
 **Expected:** [What the spec says should happen]
-**Evidence:** [Screenshot filename or DOM observation]
+**Evidence:** [Screenshot filename]
 ```
 
 Then provide an overall summary:

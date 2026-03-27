@@ -4,14 +4,17 @@ This repo uses spec-driven development with AI agent validation.
 
 ## How to add a feature
 
-### 1. Write a spec
+### 1. Write a spec (with agent help)
 
-Copy `specs/_template.md` to `specs/your-feature.md` and fill it in:
-- **Acceptance criteria** — Given/When/Then statements
-- **Visual expectations** — what the user should see
-- **Scope boundaries** — what files to touch (and not touch)
+Tell the agent your feature idea:
 
-Keep it short. The spec is the only thing you write by hand.
+```
+Use the prompt at .github/prompts/build-spec.md to help me write a spec for [your feature idea]
+```
+
+The agent will research the codebase, ask clarifying questions, and draft a spec grounded in actual file paths and component names. Review and confirm — it saves to `specs/your-feature.md`.
+
+Or write one manually: copy `specs/_template.md` to `specs/your-feature.md` and fill it in.
 
 ### 2. Tell the agent to implement it
 
@@ -26,14 +29,17 @@ The agent will:
 - Spawn a validation subagent to independently verify it works
 - Fix any issues the validator finds (up to 3 rounds)
 - Write regression tests after validation passes
+- Run `npm run verify` (tests + build)
+- Produce validation artifacts (screenshots, validation report) in `.validation/`
+- Commit and push
 
-### 3. Verify and push
+### 3. Review artifacts and merge
 
-```bash
-npm run verify    # runs tests + build
-```
+The agent produces a `.validation/` directory (gitignored) containing:
+- **Screenshots** from the validation agent's browser session
+- **Validation report** (PASS/FAIL per acceptance criterion with evidence)
 
-Push and open a PR. CI runs automatically (typecheck, unit tests, accuracy tests, build, e2e).
+Review these to confirm the feature looks right, then merge the PR. You can attach them to the PR description for others to review.
 
 ## Key files
 
@@ -41,9 +47,11 @@ Push and open a PR. CI runs automatically (typecheck, unit tests, accuracy tests
 |------|---------|
 | `specs/_template.md` | Feature spec template |
 | `specs/*.md` | Feature specs (one per feature) |
+| `.github/prompts/build-spec.md` | Spec builder prompt (agent helps you write specs) |
 | `.github/prompts/validate-feature.md` | Validation agent prompt |
 | `.github/copilot-instructions.md` | Agent instructions (read by Copilot/Claude) |
 | `.github/workflows/ci.yml` | CI pipeline |
+| `.validation/` | Validation artifacts — screenshots + report (gitignored) |
 
 ## How validation works
 

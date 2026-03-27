@@ -10,6 +10,9 @@ This repo uses **spec-driven development** with autonomous agent validation.
 3. **Self-check** with Playwright CLI (see below) — inspect DOM, check console, verify visual output
 4. **Spawn a validation subagent** that independently validates the feature against the spec
 5. **Write regression tests** after validation passes
+6. **Run `npm run verify`** to confirm tests pass and build succeeds
+7. **Save validation artifacts** to `.validation/` — screenshots and validation report from the subagent
+8. **Commit and push**
 
 ### Feature Specs
 - Specs live in `specs/` — read the relevant spec before starting work
