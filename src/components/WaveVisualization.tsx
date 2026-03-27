@@ -305,15 +305,16 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     defs.append('style')
       .text(`@import url('${fontUrl}');`);
 
-    // Draw paths — capture path strings for overflow detection
-    const pathStrings: string[] = [];
+    // Draw paths — capture path strings for overflow detection (keyed by series
+    // title so lookup is immune to any DOM vs data ordering differences).
+    const pathByKey: Record<string, string> = {};
     svg.selectAll('path.wave')
       .data(stackedData, (d: any) => d.key)
       .join('path')
       .attr('class', 'wave')
-      .attr('d', (d) => {
+      .attr('d', (d: any) => {
         const pathD = area(d as any) ?? '';
-        pathStrings.push(pathD);
+        pathByKey[d.key] = pathD;
         return pathD;
       })
       .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
@@ -466,7 +467,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
                 .attr('fill', fontData.color)
                 .text(label.text);
 
-              const pathD = pathStrings[layerIndex];
+              const pathD = pathByKey[seriesTitle];
               if (pathD && isFinite(label.xPosition) && isFinite(label.yPosition)) {
                 const bandLUT = buildBandLUT(pathD, width);
                 if (bandLUT) {

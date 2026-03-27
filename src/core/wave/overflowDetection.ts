@@ -132,12 +132,18 @@ export function checkLabelOverflow(
   let overflowArea = 0;
 
   // Pixels outside the band's x range are fully overflowing
-  overflowArea += (Math.max(0, -tL) + Math.max(0, tR - (bandLUT.length - 1))) * textHeight;
+  const outsideLeft = Math.max(0, -tL);
+  const outsideRight = Math.max(0, tR - (bandLUT.length - 1));
+  overflowArea += (outsideLeft + outsideRight) * textHeight;
+  if (outsideLeft > 0 || outsideRight > 0) {
+    worstPx = Math.max(worstPx, textHeight);
+  }
 
   for (let px = clampedL; px <= clampedR; px++) {
     const b = bandLUT[px];
     if (!b) {
       overflowArea += textHeight;
+      worstPx = Math.max(worstPx, textHeight);
       continue;
     }
     const overTop = Math.max(0, b.top - textTop);
