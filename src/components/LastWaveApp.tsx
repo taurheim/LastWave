@@ -146,6 +146,8 @@ export default function LastWaveApp() {
   const [error, setError] = useState<string | null>(null);
   const [showFullSvg, setShowFullSvg] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
+  const customizePanelRef = useRef<HTMLDivElement>(null);
+  const customizeToggleRef = useRef<HTMLButtonElement>(null);
   const [overflows, setOverflows] = useState<OverflowInfo[]>([]);
   const [highlightOverflows, setHighlightOverflows] = useState(false);
   const [imageOverflows, setImageOverflows] = useState(false);
@@ -166,6 +168,21 @@ export default function LastWaveApp() {
   const animBuildupStepsRef = useRef<number[]>([]);
 
   const showFullSizeBtn= showFullSvg || imageOverflows;
+
+  // Close customize panel when clicking outside (desktop only, ≥ 1024px)
+  useEffect(() => {
+    if (!showCustomize) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (window.innerWidth < 1024) return;
+      if (
+        customizePanelRef.current?.contains(e.target as Node) ||
+        customizeToggleRef.current?.contains(e.target as Node)
+      ) return;
+      setShowCustomize(false);
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [showCustomize]);
 
   const handleRenderComplete = useCallback(() => {
     setDrawingStatus('');
@@ -667,6 +684,7 @@ export default function LastWaveApp() {
                   )}
                   <div className="absolute top-2 right-6 z-10 flex gap-2">
                     <button
+                      ref={customizeToggleRef}
                       onClick={() => setShowCustomize(!showCustomize)}
                       className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
                         showCustomize
@@ -681,7 +699,7 @@ export default function LastWaveApp() {
               )}
             </div>
             {showActions && showCustomize && (
-              <div className="absolute top-12 right-6 z-30 w-[min(420px,40%)] bg-lw-bg/95 backdrop-blur-sm rounded-xl border border-lw-border shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div ref={customizePanelRef} className="absolute top-12 right-6 z-30 w-[min(420px,40%)] bg-lw-bg/95 backdrop-blur-sm rounded-xl border border-lw-border shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
                 <CustomizePanel maxPlays={maxPlaysInDataset} />
               </div>
             )}
