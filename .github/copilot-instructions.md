@@ -1,22 +1,29 @@
 # Copilot Instructions
 
-## Spec-Driven Development
+## Development Workflow
 
-This repo uses **spec-driven development** with autonomous agent validation.
+This repo supports two modes of development:
 
-### Workflow
-1. **Read the spec** in `specs/` before implementing any feature
-2. **Implement** the feature based on the spec's acceptance criteria
-3. **Self-check** with Playwright CLI (see below) — inspect DOM, check console, verify visual output
-4. **Spawn a validation subagent** that independently validates the feature against the spec
-5. **Write regression tests** after validation passes
+### Mode 1: Spec-driven (features)
+For new features or significant changes, use a spec from `specs/`. The human writes (or collaboratively builds) a spec first, then says "implement this spec."
+
+### Mode 2: Direct prompt (bugfixes, small changes)
+For bugfixes and small changes, the human just describes what they want in a sentence or two. No spec file needed.
+
+### What to do in both modes
+Regardless of mode, always:
+1. **Implement** the change
+2. **Self-check with Playwright CLI** — start the dev server, open the browser, verify the change works visually
+3. **Spawn a validation subagent** to independently verify (use `.github/prompts/validate-feature.md` as a guide — for direct prompts, pass the user's description as the acceptance criteria instead of a spec file)
+4. **Fix issues** if the validator finds any (up to 3 rounds)
+5. **Write regression tests** if the change is testable
 6. **Run `npm run verify`** to confirm tests pass and build succeeds
-7. **Save validation artifacts** to `.validation/` — screenshots and validation report from the subagent
-8. **Commit and push**
+7. **Save validation artifacts** to `.validation/` — screenshots and report
+8. **Commit**
 
 ### Feature Specs
-- Specs live in `specs/` — read the relevant spec before starting work
-- Template: `specs/_template.md`
+- Specs live in `specs/` — template at `specs/_template.md`
+- Use `.github/prompts/build-spec.md` to collaboratively write specs with the human
 - Each spec defines: acceptance criteria, visual expectations, interaction flow, scope boundaries
 
 ## Browser Interaction (Playwright CLI)

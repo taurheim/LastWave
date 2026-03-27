@@ -4,23 +4,28 @@ This repo uses spec-driven development with AI agent validation.
 
 ## How to add a feature
 
-### 1. Write a spec (with agent help)
+### 1. Describe what you want
 
-Tell the agent your feature idea:
-
+**For features:** collaboratively build a spec with the agent:
 ```
 Use the prompt at .github/prompts/build-spec.md to help me write a spec for [your feature idea]
 ```
 
-The agent will research the codebase, ask clarifying questions, and draft a spec grounded in actual file paths and component names. Review and confirm — it saves to `specs/your-feature.md`.
+**For bugfixes / small changes:** just describe it directly:
+```
+Fix the gallery page so it shows a loading spinner while images load
+```
 
-Or write one manually: copy `specs/_template.md` to `specs/your-feature.md` and fill it in.
+Either way, the agent handles implementation and validation.
 
-### 2. Tell the agent to implement it
+### 2. Let the agent work
 
+For spec-driven features:
 ```
 Implement the feature described in specs/your-feature.md
 ```
+
+For direct prompts, the agent infers requirements from your description and follows the same process automatically.
 
 The agent will:
 - Read the spec

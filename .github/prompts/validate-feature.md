@@ -54,8 +54,12 @@ Each command returns a snapshot showing the current page state. Read the snapsho
 
 ## Process
 
-### 1. Read the Spec
-Read the feature spec file (you'll be told which one). Understand the acceptance criteria, visual expectations, and interaction flow.
+### 1. Understand What to Validate
+You'll receive either:
+- A **spec file path** (e.g., `specs/feature-name.md`) — read it for acceptance criteria
+- A **description of the change** (e.g., "fixed the gallery loading spinner") — use this as your acceptance criteria
+
+Either way, your job is the same: interact with the running app and verify the described behavior works.
 
 ### 2. Open the App
 ```bash
