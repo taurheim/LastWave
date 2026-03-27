@@ -29,7 +29,7 @@ Regardless of mode, always:
 
 ### Feature Specs
 - Specs live in `specs/` — template at `specs/_template.md`
-- Use `.github/prompts/build-spec.md` to collaboratively write specs with the human
+- Use `/agent build-spec` to collaboratively write specs with the human
 - Each spec defines: acceptance criteria, visual expectations, interaction flow, scope boundaries
 
 ## Browser Interaction (Playwright CLI)
@@ -54,10 +54,11 @@ npx playwright-cli goto <url>                    # navigate
 Each command returns a snapshot of the page state with element references (e.g., `e5`, `e12`). Read the snapshot, decide your next action, issue the next command. This is live, iterative interaction — no script writing needed.
 
 ### Validation subagent
-When spawning a validation subagent, use the prompt template at `.github/prompts/validate-feature.md`. The subagent:
+When spawning a validation subagent, use the agent at `.github/agents/validate-feature.agent.md` (invoked via `/agent validate-feature`). The subagent:
 - Has NOT seen the implementation code
 - Reads only the spec + interacts with the running app
 - Reports PASS/FAIL per acceptance criterion
+- Saves screenshots and report to `.validation/`
 
 ## Testing
 

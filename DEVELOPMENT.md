@@ -8,8 +8,9 @@ This repo uses spec-driven development with AI agent validation.
 
 **For features:** collaboratively build a spec with the agent:
 ```
-Use the prompt at .github/prompts/build-spec.md to help me write a spec for [your feature idea]
+/agent build-spec
 ```
+Then describe your feature idea. The agent researches the codebase and drafts a spec.
 
 **For bugfixes / small changes:** just describe it directly:
 ```
@@ -52,9 +53,9 @@ Review these to confirm the feature looks right, then merge the PR. You can atta
 |------|---------|
 | `specs/_template.md` | Feature spec template |
 | `specs/*.md` | Feature specs (one per feature) |
-| `.github/prompts/build-spec.md` | Spec builder prompt (agent helps you write specs) |
-| `.github/prompts/validate-feature.md` | Validation agent prompt |
-| `.github/copilot-instructions.md` | Agent instructions (read by Copilot/Claude) |
+| `.github/agents/build-spec.agent.md` | `/agent build-spec` — collaboratively writes specs |
+| `.github/agents/validate-feature.agent.md` | `/agent validate-feature` — independent QA validation |
+| `.github/copilot-instructions.md` | Agent instructions (always loaded) |
 | `.github/workflows/ci.yml` | CI pipeline |
 | `.validation/` | Validation artifacts — screenshots + report (gitignored) |
 
