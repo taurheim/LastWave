@@ -98,7 +98,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
             data-1p-ignore
             data-lpignore="true"
             data-bwignore
-            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-lw-text placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-lw-text placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all [&::-webkit-search-cancel-button]:hidden"
             placeholder="Enter your username"
           />
         </div>
