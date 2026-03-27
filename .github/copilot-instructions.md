@@ -10,6 +10,12 @@ For new features or significant changes, use a spec from `specs/`. The human wri
 ### Mode 2: Direct prompt (bugfixes, small changes)
 For bugfixes and small changes, the human just describes what they want in a sentence or two. No spec file needed.
 
+**For bugfixes specifically:** Before writing any fix, first reproduce the bug:
+1. Try to reproduce it with Playwright CLI (open the app, follow the steps, observe the broken behavior)
+2. Or write a failing test that captures the bug
+3. Use what you learn to understand the root cause
+4. Then fix it, and confirm the reproduction steps now show correct behavior
+
 ### What to do in both modes
 Regardless of mode, always:
 1. **Implement** the change
