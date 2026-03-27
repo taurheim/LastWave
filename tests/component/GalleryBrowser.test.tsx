@@ -6,35 +6,49 @@ describe('GalleryBrowser', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders pagination buttons', () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ resources: [] }),
-    } as Response);
+  it('shows loading spinner before fetch resolves', () => {
+    vi.spyOn(global, 'fetch').mockReturnValue(new Promise(() => {}));
 
     render(<GalleryBrowser />);
-    expect(screen.getByRole('button', { name: /Previous/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Next/ })).toBeInTheDocument();
+    expect(screen.getByTestId('gallery-spinner')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Previous/ })).not.toBeInTheDocument();
   });
 
-  it('shows page info text', () => {
+  it('renders pagination buttons after loading', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ resources: [] }),
     } as Response);
 
     render(<GalleryBrowser />);
-    expect(screen.getByText(/Page 1/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Previous/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Next/ })).toBeInTheDocument();
+    });
   });
 
-  it('disables Previous Page on first page', () => {
+  it('shows page info text after loading', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ resources: [] }),
     } as Response);
 
     render(<GalleryBrowser />);
-    expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();
+    await waitFor(() => {
+      expect(screen.getByText(/Page 1/)).toBeInTheDocument();
+    });
+  });
+
+  it('disables Previous Page on first page', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ resources: [] }),
+    } as Response);
+
+    render(<GalleryBrowser />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();
+    });
   });
 
   it('renders images after fetch resolves', async () => {

@@ -10,6 +10,7 @@ export default function GalleryBrowser() {
   const [currentPage, setCurrentPage] = useState(0);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const addToast = useLastWaveStore((s) => s.addToast);
 
   useEffect(() => {
@@ -25,6 +26,9 @@ export default function GalleryBrowser() {
       .catch(() => {
         setLoadError(true);
         addToast('Could not load the gallery. Please try refreshing the page.');
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -34,8 +38,15 @@ export default function GalleryBrowser() {
 
   return (
     <div className="text-center py-6 px-4">
+      {/* Loading state */}
+      {isLoading && (
+        <div className="py-16 flex justify-center" data-testid="gallery-spinner">
+          <div className="w-11 h-11 border-[3px] border-lw-border border-t-lw-accent rounded-full animate-spin" />
+        </div>
+      )}
+
       {/* Error state */}
-      {loadError && (
+      {!isLoading && loadError && (
         <div className="py-12">
           <p className="text-lw-muted text-sm mb-2">Could not load gallery images.</p>
           <p className="text-lw-muted/60 text-xs">
@@ -48,7 +59,7 @@ export default function GalleryBrowser() {
       )}
 
       {/* Navigation */}
-      {!loadError && <div className="flex justify-center gap-3 mb-6">
+      {!isLoading && !loadError && <div className="flex justify-center gap-3 mb-6">
         <button
           disabled={currentPage === 0}
           onClick={() => setCurrentPage((p) => p - 1)}
@@ -66,7 +77,7 @@ export default function GalleryBrowser() {
       </div>}
 
       {/* Image Grid */}
-      {!loadError && <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
+      {!isLoading && !loadError && <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
         {thisPageImages.map((url, i) => (
           <div
             key={`${currentPage}-${i}`}
@@ -78,7 +89,7 @@ export default function GalleryBrowser() {
       </div>}
 
       {/* Footer */}
-      {!loadError && <p className="mt-6 text-xs tracking-widest uppercase text-lw-muted">
+      {!isLoading && !loadError && <p className="mt-6 text-xs tracking-widest uppercase text-lw-muted">
         Page {currentPage + 1} / {pageCount}
       </p>}
 
