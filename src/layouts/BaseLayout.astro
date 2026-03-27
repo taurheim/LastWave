@@ -140,17 +140,11 @@ const { title = 'LastWave' } = Astro.props;
     </footer>
 
     <script is:inline>
-      // Clear React island content during view transitions to prevent stale cached DOM
-      // and preserve theme across navigations
+      // Preserve theme across navigations via view transitions
       if (!window.__lwTransitionSetup) {
         window.__lwTransitionSetup = true;
 
         document.addEventListener('astro:before-swap', function(e) {
-          // Clear islands
-          var islands = e.newDocument.querySelectorAll('astro-island');
-          for (var i = 0; i < islands.length; i++) {
-            islands[i].innerHTML = '';
-          }
           // Apply theme to incoming document before swap to prevent flash
           var stored = localStorage.getItem('lw-theme');
           var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

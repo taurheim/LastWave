@@ -139,6 +139,7 @@ export default function LastWaveApp() {
   const showVisualization = useLastWaveStore((s) => s.showVisualization);
   const showActions = useLastWaveStore((s) => s.showActions);
   const resetToOptions = useLastWaveStore((s) => s.resetToOptions);
+  const fullReset = useLastWaveStore((s) => s.fullReset);
 
   const [seriesData, setSeriesData] = useState<SeriesData[]>([]);
   const rawSeriesDataRef = useRef<SeriesData[]>([]);
@@ -260,6 +261,13 @@ export default function LastWaveApp() {
     labelTimerRef.current = setTimeout(() => setSuppressLabels(false), debounce);
     return () => clearTimeout(labelTimerRef.current);
   }, [minPlays]);
+
+  // Reset store before Astro view transitions to prevent hydration mismatches
+  useEffect(() => {
+    const handleBeforeSwap = () => fullReset();
+    document.addEventListener('astro:before-swap', handleBeforeSwap);
+    return () => document.removeEventListener('astro:before-swap', handleBeforeSwap);
+  }, [fullReset]);
 
   // Swap nav "Home" link to "← New graph" when graph is visible
   useEffect(() => {

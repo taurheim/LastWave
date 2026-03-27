@@ -46,6 +46,8 @@ interface LastWaveState {
 
   // Reset to initial state (for "back to options")
   resetToOptions: () => void;
+  // Full reset (for Astro view transitions — must match SSR initial state)
+  fullReset: () => void;
 }
 
 export const useLastWaveStore = create<LastWaveState>((set, get) => ({
@@ -128,6 +130,19 @@ export const useLastWaveStore = create<LastWaveState>((set, get) => ({
   // Reset
   resetToOptions: () =>
     set({
+      showOptions: true,
+      showLoadingBar: false,
+      showActions: false,
+      showVisualization: false,
+      stages: [],
+      currentStage: -1,
+    }),
+  fullReset: () =>
+    set({
+      logs: [],
+      toasts: [],
+      rendererOptions: {},
+      dataSourceOptions: { username: 'Taurheim' },
       showOptions: true,
       showLoadingBar: false,
       showActions: false,
