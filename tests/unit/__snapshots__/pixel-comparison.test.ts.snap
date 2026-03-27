@@ -45,16 +45,22 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "y": 291.98,
   },
   {
-    "fontSize": 22,
-    "text": "Boards of Canada",
-    "x": 1288,
-    "y": 318.74,
-  },
-  {
     "fontSize": 19,
     "text": "Boards of Canada",
     "x": 0,
     "y": 266.42,
+  },
+  {
+    "fontSize": 30,
+    "text": "Boards of Canada",
+    "x": 878,
+    "y": 244.53,
+  },
+  {
+    "fontSize": 14,
+    "text": "Boards of Canada",
+    "x": 486,
+    "y": 247.67,
   },
   {
     "fontSize": 44,
@@ -69,10 +75,10 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "y": 195.68,
   },
   {
-    "fontSize": 11,
+    "fontSize": 14,
     "text": "Aphex Twin",
-    "x": 0,
-    "y": 233.02,
+    "x": 416,
+    "y": 196.42,
   },
   {
     "fontSize": 42,
@@ -81,34 +87,16 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "y": 148.1,
   },
   {
-    "fontSize": 27,
+    "fontSize": 19,
     "text": "Sigur Ros",
-    "x": 1354,
-    "y": 212.75,
+    "x": 1063,
+    "y": 143.5,
   },
   {
-    "fontSize": 26,
+    "fontSize": 16,
     "text": "Burial",
-    "x": 1406,
-    "y": 158.08,
-  },
-  {
-    "fontSize": 20,
-    "text": "Burial",
-    "x": 0,
-    "y": 183.1,
-  },
-  {
-    "fontSize": 17,
-    "text": "Burial",
-    "x": 334,
-    "y": 110.53,
-  },
-  {
-    "fontSize": 11,
-    "text": "Burial",
-    "x": 960,
-    "y": 114.69,
+    "x": 321,
+    "y": 111.37,
   },
   {
     "fontSize": 61,
@@ -144,12 +132,6 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "text": "Pink Floyd",
     "x": 382,
     "y": 229.33,
-  },
-  {
-    "fontSize": 48,
-    "text": "Tame Impala",
-    "x": 245,
-    "y": 98.8,
   },
 ]
 `;

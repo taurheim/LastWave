@@ -45,21 +45,21 @@ describe('findLabelIndices', () => {
     expect(indices).toEqual([]);
   });
 
-  it('does not include first or last index', () => {
+  it('includes first and last index when they are maxima', () => {
     const counts = [100, 1, 1, 1, 100];
     const indices = findLabelIndices(counts, 1);
-    expect(indices).not.toContain(0);
-    expect(indices).not.toContain(4);
+    expect(indices).toContain(0);
+    expect(indices).toContain(4);
   });
 
   it('handles single-element array', () => {
     const indices = findLabelIndices([5], 1);
-    expect(indices).toEqual([]);
+    expect(indices).toEqual([0]);
   });
 
   it('handles two-element array', () => {
     const indices = findLabelIndices([5, 10], 1);
-    expect(indices).toEqual([]);
+    expect(indices).toEqual([1]);
   });
 });
 

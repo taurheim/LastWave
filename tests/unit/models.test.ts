@@ -210,10 +210,11 @@ describe('Peak', () => {
     const stack = makeStack([0, 10, 5], [1, 20, 10]);
     const peak = new Peak(0, stack);
     // top = (0, 15), bottom = (0, 5)
-    // fakeLeftX = -0.1, fakeLeftY = 5 + (15-5)/2 = 10
-    expect(peak.topLeft.x).toBe(-0.1);
+    // spacing = 1, halfSpacing = 0.5
+    // fakeLeftX = -0.5, fakeLeftY = 5 + (15-5)/2 = 10
+    expect(peak.topLeft.x).toBe(-0.5);
     expect(peak.topLeft.y).toBe(10);
-    expect(peak.bottomLeft.x).toBe(-0.1);
+    expect(peak.bottomLeft.x).toBe(-0.5);
     expect(peak.bottomLeft.y).toBe(10);
   });
 
@@ -221,10 +222,11 @@ describe('Peak', () => {
     const stack = makeStack([0, 10, 5], [1, 20, 10]);
     const peak = new Peak(1, stack);
     // top = (1, 30), bottom = (1, 10)
-    // fakeRightX = 1 + 0.1 = 1.1, fakeRightY = 10 + (30-10)/2 = 20
-    expect(peak.topRight.x).toBeCloseTo(1.1);
+    // spacing = 1, halfSpacing = 0.5
+    // fakeRightX = 1 + 0.5 = 1.5, fakeRightY = 10 + (30-10)/2 = 20
+    expect(peak.topRight.x).toBeCloseTo(1.5);
     expect(peak.topRight.y).toBe(20);
-    expect(peak.bottomRight.x).toBeCloseTo(1.1);
+    expect(peak.bottomRight.x).toBeCloseTo(1.5);
     expect(peak.bottomRight.y).toBe(20);
   });
 
