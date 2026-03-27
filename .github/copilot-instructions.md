@@ -20,7 +20,7 @@ For bugfixes and small changes, the human just describes what they want in a sen
 Regardless of mode, always:
 1. **Implement** the change
 2. **Self-check with Playwright CLI** — start the dev server, open the browser, verify the change works visually
-3. **Spawn a validation subagent** to independently verify (use `.github/prompts/validate-feature.md` as a guide — for direct prompts, pass the user's description as the acceptance criteria instead of a spec file)
+3. **Spawn a validation subagent** to independently verify (use `/agent validate-feature` or the agent definition at `.github/agents/validate-feature.agent.md` — for direct prompts, pass the user's description as the acceptance criteria instead of a spec file)
 4. **Fix issues** if the validator finds any (up to 3 rounds)
 5. **Write regression tests** if the change is testable
 6. **Run `npm run verify`** to confirm tests pass and build succeeds
