@@ -91,9 +91,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
         <div>
           <label className="block text-xs tracking-widest uppercase text-lw-muted mb-2">last.fm username</label>
           <input
-            type="text"
+            type="search"
             value={username}
             onChange={(e) => setDataSourceOption('username', e.target.value)}
+            autoComplete="off"
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
             className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-lw-text placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
             placeholder="Enter your username"
           />
