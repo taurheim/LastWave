@@ -276,21 +276,28 @@ export function computeDeformedText(
   const viableLeft = bandData[viableLeftIdx].x;
   const viableRight = bandData[viableRightIdx].x;
 
-  // Thickness-weighted centroid within the viable region.
-  // Uses a high exponent (^5) to strongly favor the thickest area.
-  let weightedXSum = 0, weightSum = 0;
+  // Center text on the thickest point within the viable region.
+  let maxThickVal = 0;
+  let maxThickX = (viableLeft + viableRight) / 2;
   for (let i = viableLeftIdx; i <= viableRightIdx; i++) {
-    const bd = bandData[i];
-    const thickFrac = bd.thickness / (peakThickness || 1);
-    if (thickFrac >= VIABLE_FRAC) {
-      const t2 = thickFrac * thickFrac;
-      const w = t2 * t2 * thickFrac; // ^5
-      weightedXSum += bd.x * w;
-      weightSum += w;
+    if (bandData[i].thickness > maxThickVal) {
+      maxThickVal = bandData[i].thickness;
+      maxThickX = bandData[i].x;
     }
   }
-  const viableMidX = (viableLeft + viableRight) / 2;
-  const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : viableMidX;
+
+  // When the peak is near one edge of the viable region, shift text toward
+  // the side with more room. This prevents deformed text from extending into
+  // thin taper zones at band edges while utilizing the wider thick area.
+  const viableSpan = viableRight - viableLeft;
+  let thickCenterX = maxThickX;
+  if (viableSpan > 0) {
+    const roomLeft = maxThickX - viableLeft;
+    const roomRight = viableRight - maxThickX;
+    // How off-center the peak is (0=centered, approaches 1 at edge)
+    const imbalance = (roomRight - roomLeft) / viableSpan;
+    thickCenterX = maxThickX + imbalance * viableSpan * 0.20;
+  }
 
   // Pass 1: compute deformed total width for centering
   const tentativeStart = thickCenterX - approxTotalWidth / 2;
