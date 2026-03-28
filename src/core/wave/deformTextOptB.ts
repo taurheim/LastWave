@@ -225,38 +225,70 @@ export function computeDeformedText(
   const approxTotalWidth = text.length * approxCharWidth;
 
   // Find the viable region where band is thick enough for readable text.
-  // Search outward from the peak to find where thickness drops below threshold.
+  // Search outward from the peak, stopping when:
+  // 1. Thickness drops below VIABLE_FRAC of peak thickness, OR
+  // 2. A valley is detected (thickness rises after a significant dip), OR
+  // 3. MAX_VIABLE_RADIUS segments from the peak is reached.
+  // This prevents the viable region from spanning across valleys between
+  // separate humps, which would pull the centroid to unexpected locations.
   const VIABLE_FRAC = 0.20;
-  let viableLeftIdx = 0;
-  let viableRightIdx = bandData.length - 1;
-  for (let i = peakIdx; i >= 0; i--) {
-    if (bandData[i].thickness / (peakThickness || 1) < VIABLE_FRAC) {
-      viableLeftIdx = Math.min(i + 1, bandData.length - 1);
-      break;
+  const MAX_VIABLE_RADIUS = 4;
+  const VALLEY_RISE = 1.5;   // rise ratio above running min to detect valley
+  const VALLEY_DIP = 0.7;    // running min must be below this fraction of peak
+
+  let viableLeftIdx = Math.max(0, peakIdx - MAX_VIABLE_RADIUS);
+  let viableRightIdx = Math.min(bandData.length - 1, peakIdx + MAX_VIABLE_RADIUS);
+
+  // Search left from peak
+  {
+    let runMin = peakThickness;
+    for (let i = peakIdx - 1; i >= Math.max(0, peakIdx - MAX_VIABLE_RADIUS); i--) {
+      const thick = bandData[i].thickness;
+      if (thick / (peakThickness || 1) < VIABLE_FRAC) {
+        viableLeftIdx = i + 1;
+        break;
+      }
+      if (thick > runMin * VALLEY_RISE && runMin < peakThickness * VALLEY_DIP) {
+        viableLeftIdx = i + 1;
+        break;
+      }
+      runMin = Math.min(runMin, thick);
     }
   }
-  for (let i = peakIdx; i < bandData.length; i++) {
-    if (bandData[i].thickness / (peakThickness || 1) < VIABLE_FRAC) {
-      viableRightIdx = Math.max(i - 1, 0);
-      break;
+
+  // Search right from peak
+  {
+    let runMin = peakThickness;
+    for (let i = peakIdx + 1; i <= Math.min(bandData.length - 1, peakIdx + MAX_VIABLE_RADIUS); i++) {
+      const thick = bandData[i].thickness;
+      if (thick / (peakThickness || 1) < VIABLE_FRAC) {
+        viableRightIdx = i - 1;
+        break;
+      }
+      if (thick > runMin * VALLEY_RISE && runMin < peakThickness * VALLEY_DIP) {
+        viableRightIdx = i - 1;
+        break;
+      }
+      runMin = Math.min(runMin, thick);
     }
   }
+
   const viableLeft = bandData[viableLeftIdx].x;
   const viableRight = bandData[viableRightIdx].x;
 
-  // Thickness-weighted centroid within the viable region
+  // Thickness-weighted centroid within the viable region.
+  // Uses a high exponent (^5) to strongly favor the thickest area.
   let weightedXSum = 0, weightSum = 0;
   for (let i = viableLeftIdx; i <= viableRightIdx; i++) {
     const bd = bandData[i];
     const thickFrac = bd.thickness / (peakThickness || 1);
     if (thickFrac >= VIABLE_FRAC) {
-      const w = thickFrac * thickFrac * thickFrac;
+      const t2 = thickFrac * thickFrac;
+      const w = t2 * t2 * thickFrac; // ^5
       weightedXSum += bd.x * w;
       weightSum += w;
     }
   }
-  // Center text on the thickness-weighted centroid (thickest point of band).
-  // The viable region search provides accurate centroid across the full band.
   const viableMidX = (viableLeft + viableRight) / 2;
   const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : viableMidX;
 
