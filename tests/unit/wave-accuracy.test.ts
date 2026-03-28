@@ -271,11 +271,10 @@ function computeScore(allResults: LabelResult[], totalLabels: number): number {
   return Math.max(0, Math.min(100, Math.round(score * 100) / 100));
 }
 
-function computeFontSizeScore(fontSizeData: FontSizeData[]): number {
+function computeFontSizeRatio(fontSizeData: FontSizeData[]): number {
   if (fontSizeData.length === 0) return 0;
   const totalRatio = fontSizeData.reduce((sum, d) => sum + Math.min(d.fontSize / d.bandHeight, 1.0), 0);
-  const avgRatio = totalRatio / fontSizeData.length;
-  return Math.round(avgRatio * 100 * 100) / 100;
+  return Math.round((totalRatio / fontSizeData.length) * 1000) / 1000;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -288,7 +287,7 @@ interface OffsetSummary {
   overflows: number;
   critical: number;
   overflowScore: number;
-  fontSizeScore: number;
+  avgFontFill: number;
   placementTimeMs: number;
   deformCoverage: number;
   straightCoverage: number;
@@ -308,17 +307,6 @@ describe('Wave Algorithm Accuracy', () => {
       let grandDeformLabeled = 0;
       let grandStraightLabeled = 0;
 
-      const userSummaries: {
-        username: string;
-        totalLabels: number;
-        overflows: number;
-        critical: number;
-        score: number;
-        fontSizeScore: number;
-        deformCoverage: number;
-        straightCoverage: number;
-      }[] = [];
-
       for (const user of users) {
         it(`processes ${user.username} (${user.artists.length} artists)`, () => {
           const { labels, totalLabels, fontSizeData, placementTimeMs, totalSeries, seriesWithDeformLabel, seriesWithStraightLabel } = runPipeline(user, offset);
@@ -331,20 +319,6 @@ describe('Wave Algorithm Accuracy', () => {
           grandTotalSeries += totalSeries;
           grandDeformLabeled += seriesWithDeformLabel;
           grandStraightLabeled += seriesWithStraightLabel;
-
-          const deformCov = totalSeries > 0 ? (seriesWithDeformLabel / totalSeries) * 100 : 0;
-          const straightCov = totalSeries > 0 ? (seriesWithStraightLabel / totalSeries) * 100 : 0;
-
-          userSummaries.push({
-            username: user.username,
-            totalLabels,
-            overflows: labels.length,
-            critical: critical.length,
-            score: computeScore(labels, totalLabels),
-            fontSizeScore: computeFontSizeScore(fontSizeData),
-            deformCoverage: Math.round(deformCov * 10) / 10,
-            straightCoverage: Math.round(straightCov * 10) / 10,
-          });
 
           if (critical.length > 0) {
             const sorted = critical.sort((a, b) => b.overflowPct - a.overflowPct);
@@ -361,36 +335,21 @@ describe('Wave Algorithm Accuracy', () => {
 
       it(`computes ${offset} accuracy score`, () => {
         const score = computeScore(allResults, grandTotalLabels);
-        const fontSizeScore = computeFontSizeScore(allFontSizeData);
-        const critical = allResults.filter(l => l.overflowPct > 10);
-        const minor = allResults.filter(l => l.overflowPct <= 10);
-        const deformCov = grandTotalSeries > 0 ? (grandDeformLabeled / grandTotalSeries) * 100 : 0;
-        const straightCov = grandTotalSeries > 0 ? (grandStraightLabeled / grandTotalSeries) * 100 : 0;
+        const avgFontFill = computeFontSizeRatio(allFontSizeData);
+        const deformCov = grandTotalSeries > 0 ? Math.round((grandDeformLabeled / grandTotalSeries) * 1000) / 10 : 0;
+        const straightCov = grandTotalSeries > 0 ? Math.round((grandStraightLabeled / grandTotalSeries) * 1000) / 10 : 0;
 
         offsetSummaries.push({
           offset,
           totalLabels: grandTotalLabels,
-          overflows: minor.length + critical.length,
-          critical: critical.length,
+          overflows: allResults.length,
+          critical: allResults.filter(l => l.overflowPct > 10).length,
           overflowScore: score,
-          fontSizeScore,
+          avgFontFill,
           placementTimeMs: totalPlacementTimeMs,
-          deformCoverage: Math.round(deformCov * 10) / 10,
-          straightCoverage: Math.round(straightCov * 10) / 10,
+          deformCoverage: deformCov,
+          straightCoverage: straightCov,
         });
-
-        console.log(`\n  ── ${offset.toUpperCase()} ──  ${grandTotalLabels} labels | ${minor.length} minor | ${critical.length} critical | overflow: ${score.toFixed(1)} | font: ${fontSizeScore.toFixed(1)} | coverage: deform ${deformCov.toFixed(1)}% straight ${straightCov.toFixed(1)}%`);
-
-        for (const u of userSummaries.sort((a, b) => a.score - b.score)) {
-          const name = u.username.padEnd(18);
-          const labels = String(u.totalLabels).padStart(4);
-          const crit = u.critical > 0 ? `${u.critical} crit`.padStart(7) : '      —';
-          const sc = u.score.toFixed(1).padStart(5);
-          const fs = u.fontSizeScore.toFixed(1).padStart(5);
-          const dc = u.deformCoverage.toFixed(1).padStart(5);
-          const stc = u.straightCoverage.toFixed(1).padStart(5);
-          console.log(`     ${name} ${labels} labels ${crit}  overflow:${sc}  font:${fs}  deform:${dc}%  straight:${stc}%`);
-        }
 
         expect(score).toBeGreaterThanOrEqual(0);
         expect(score).toBeLessThanOrEqual(100);
@@ -398,41 +357,46 @@ describe('Wave Algorithm Accuracy', () => {
     });
   }
 
-  // Combined report across all offset modes
+  // Combined report — one row per (text mode × offset) combination
   it('prints combined accuracy report', () => {
-    // Compute aggregate across all modes
-    const avgOverflow = offsetSummaries.reduce((s, o) => s + o.overflowScore, 0) / offsetSummaries.length;
-    const avgFontSize = offsetSummaries.reduce((s, o) => s + o.fontSizeScore, 0) / offsetSummaries.length;
-    const totalTimeMs = offsetSummaries.reduce((s, o) => s + o.placementTimeMs, 0);
-    const avgTimeMs = totalTimeMs / offsetSummaries.length;
-    const avgDeformCov = offsetSummaries.reduce((s, o) => s + o.deformCoverage, 0) / offsetSummaries.length;
-    const avgStraightCov = offsetSummaries.reduce((s, o) => s + o.straightCoverage, 0) / offsetSummaries.length;
-
-    console.log('\n  ╔══════════════════════════════════════════════════════════════════════════════════════════╗');
-    console.log('  ║                           WAVE ALGORITHM ACCURACY REPORT                               ║');
-    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
-    console.log('  ║  Offset        Labels  Critical  Overflow   Font Size   Deform Cov  Straight Cov  Time ║');
-    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
+    type Row = { mode: string; offset: string; labels: number; overflow: number; coverage: number; fontFill: number; time: number };
+    const rows: Row[] = [];
 
     for (const o of offsetSummaries) {
-      const name = o.offset.padEnd(12);
-      const labels = String(o.totalLabels).padStart(6);
-      const crit = String(o.critical).padStart(6);
-      const ov = o.overflowScore.toFixed(1).padStart(7);
-      const fs = o.fontSizeScore.toFixed(1).padStart(7);
-      const dc = (o.deformCoverage.toFixed(1) + '%').padStart(8);
-      const sc = (o.straightCoverage.toFixed(1) + '%').padStart(10);
-      const tm = (o.placementTimeMs.toFixed(0) + 'ms').padStart(6);
-      console.log(`  ║  ${name}  ${labels}  ${crit}    ${ov}/100  ${fs}/100    ${dc}      ${sc}  ${tm} ║`);
+      rows.push({ mode: 'deform', offset: o.offset, labels: o.totalLabels, overflow: o.overflowScore, coverage: o.deformCoverage, fontFill: o.avgFontFill, time: o.placementTimeMs });
+      rows.push({ mode: 'straight', offset: o.offset, labels: o.totalLabels, overflow: o.overflowScore, coverage: o.straightCoverage, fontFill: o.avgFontFill, time: o.placementTimeMs });
     }
 
-    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
-    console.log(`  ║  AVG OVERFLOW SCORE:      ${avgOverflow.toFixed(1).padStart(5)}/100                                                   ║`);
-    console.log(`  ║  AVG FONT SIZE SCORE:     ${avgFontSize.toFixed(1).padStart(5)}/100                                                   ║`);
-    console.log(`  ║  AVG DEFORM COVERAGE:     ${avgDeformCov.toFixed(1).padStart(5)}%                                                     ║`);
-    console.log(`  ║  AVG STRAIGHT COVERAGE:   ${avgStraightCov.toFixed(1).padStart(5)}%                                                     ║`);
-    console.log(`  ║  AVG PLACEMENT TIME:    ${avgTimeMs.toFixed(0).padStart(6)} ms                                                    ║`);
-    console.log('  ╚══════════════════════════════════════════════════════════════════════════════════════════╝\n');
+    console.log('\n  ╔════════════════════════════════════════════════════════════════════════╗');
+    console.log('  ║               WAVE ALGORITHM ACCURACY REPORT                         ║');
+    console.log('  ╠════════════════════════════════════════════════════════════════════════╣');
+    console.log('  ║  Mode      Offset       Labels  Overflow  Coverage  Font Fill  Time   ║');
+    console.log('  ╠════════════════════════════════════════════════════════════════════════╣');
+
+    for (const r of rows) {
+      const mode = r.mode.padEnd(9);
+      const offset = r.offset.padEnd(12);
+      const labels = String(r.labels).padStart(5);
+      const ov = r.overflow.toFixed(1).padStart(6);
+      const cov = (r.coverage.toFixed(1) + '%').padStart(7);
+      const ff = r.fontFill.toFixed(2).padStart(7);
+      const tm = (r.time.toFixed(0) + 'ms').padStart(6);
+      console.log(`  ║  ${mode} ${offset} ${labels}  ${ov}   ${cov}    ${ff}  ${tm}   ║`);
+    }
+
+    const avgOverflow = offsetSummaries.reduce((s, o) => s + o.overflowScore, 0) / offsetSummaries.length;
+    const avgDeformCov = offsetSummaries.reduce((s, o) => s + o.deformCoverage, 0) / offsetSummaries.length;
+    const avgStraightCov = offsetSummaries.reduce((s, o) => s + o.straightCoverage, 0) / offsetSummaries.length;
+    const avgFontFill = offsetSummaries.reduce((s, o) => s + o.avgFontFill, 0) / offsetSummaries.length;
+    const avgTime = offsetSummaries.reduce((s, o) => s + o.placementTimeMs, 0) / offsetSummaries.length;
+
+    console.log('  ╠════════════════════════════════════════════════════════════════════════╣');
+    console.log(`  ║  AVG OVERFLOW:     ${avgOverflow.toFixed(1).padStart(6)}/100                                      ║`);
+    console.log(`  ║  AVG DEFORM COV:   ${avgDeformCov.toFixed(1).padStart(5)}%                                        ║`);
+    console.log(`  ║  AVG STRAIGHT COV: ${avgStraightCov.toFixed(1).padStart(5)}%                                        ║`);
+    console.log(`  ║  AVG FONT FILL:    ${avgFontFill.toFixed(2).padStart(6)}  (fontSize / bandHeight)                  ║`);
+    console.log(`  ║  AVG TIME:         ${avgTime.toFixed(0).padStart(5)}ms                                         ║`);
+    console.log('  ╚════════════════════════════════════════════════════════════════════════╝\n');
 
     for (const o of offsetSummaries) {
       expect(o.overflowScore).toBeGreaterThanOrEqual(0);
