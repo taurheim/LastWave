@@ -71,12 +71,20 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
     e.preventDefault();
 
     // If dates haven't been set yet, apply the default preset
-    if (!dataSourceOptions.time_start) {
+    if (!dataSourceOptions.time_start || !dataSourceOptions.time_end) {
       handleDatePresetChange(datePreset);
     }
 
-    // Let the parent read options from the store
+    // Verify we have valid dates before submitting
     const store = useLastWaveStore.getState();
+    const { time_start, time_end } = store.dataSourceOptions;
+    const startValid = time_start instanceof Date && !isNaN(time_start.getTime());
+    const endValid = time_end instanceof Date && !isNaN(time_end.getTime());
+    if (!startValid || !endValid) {
+      store.addToast('Please set both a start and end date.', 'warning');
+      return;
+    }
+
     onSubmit({
       dataSourceOptions: store.dataSourceOptions,
       rendererOptions: store.rendererOptions,

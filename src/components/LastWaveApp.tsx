@@ -374,6 +374,12 @@ export default function LastWaveApp() {
       const endDate = dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end);
       const startUnix = Math.floor(startDate.getTime() / 1000);
       const endUnix = Math.floor(endDate.getTime() / 1000);
+
+      if (isNaN(startUnix) || isNaN(endUnix)) {
+        store.addToast('Invalid date range. Please go back and set valid dates.', 'error');
+        store.resetToOptions();
+        return;
+      }
       const groupBy = dsOpts.group_by ?? 'week';
 
       const timeSpan = new TimeSpan(startUnix, endUnix);

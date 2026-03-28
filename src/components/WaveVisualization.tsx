@@ -96,6 +96,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     if (!timeStart || !timeEnd) return false;
     const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
     const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
+    if (isNaN(startMs) || isNaN(endMs)) return false;
     return (endMs - startMs) >= 365 * 24 * 60 * 60 * 1000;
   })();
 

@@ -80,10 +80,10 @@ export default function ImageActions() {
 
   function getFileName(): string {
     const username = dataSourceOptions.username ?? 'unknown';
-    const start = dataSourceOptions.time_start instanceof Date
+    const start = dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
       ? dataSourceOptions.time_start.toLocaleDateString('en-US').replace(/\//g, '-')
       : 'start';
-    const end = dataSourceOptions.time_end instanceof Date
+    const end = dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
       ? dataSourceOptions.time_end.toLocaleDateString('en-US').replace(/\//g, '-')
       : 'end';
     return `LastWave_${username}_${start}_${end}`;
