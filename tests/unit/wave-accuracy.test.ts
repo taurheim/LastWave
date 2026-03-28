@@ -111,7 +111,7 @@ interface FontSizeData {
   bandHeight: number;
 }
 
-function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): { labels: LabelResult[]; totalLabels: number; fontSizeData: FontSizeData[]; placementTimeMs: number } {
+function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): { labels: LabelResult[]; totalLabels: number; fontSizeData: FontSizeData[]; placementTimeMs: number; totalSeries: number; seriesWithDeformLabel: number; seriesWithStraightLabel: number } {
   const numSegs = data.numSegments;
   const width = numSegs * WIDTH_PER_PEAK;
   const keys = data.artists.map(d => d.title);
@@ -144,6 +144,19 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
   const fontSizeData: FontSizeData[] = [];
   let totalLabels = 0;
   let placementTimeMs = 0;
+  const totalSeries = stackedData.length;
+  let seriesWithDeformLabel = 0;
+  let seriesWithStraightLabel = 0;
+
+  // Pre-compute total wave envelope height at each data point (for edge-taper detection)
+  const lastLayerIdx = stackedData.length - 1;
+  const waveEnvelopeH: number[] = [];
+  let maxEnvelopeH = 0;
+  for (let i = 0; i < numSegs; i++) {
+    const h = yScale(stackedData[0][i][0]) - yScale(stackedData[lastLayerIdx][i][1]);
+    waveEnvelopeH.push(h);
+    if (h > maxEnvelopeH) maxEnvelopeH = h;
+  }
 
   stackedData.forEach((layer, layerIdx) => {
     const title = keys[layerIdx];
@@ -163,6 +176,9 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
 
     const labelIndices = findLabelIndices(counts, MIN_SEG_BETWEEN_LABELS);
 
+    let hasDeformLabel = false;
+    let hasStraightLabel = false;
+
     labelIndices.forEach(idx => {
       if (idx <= 0 || idx >= stackPoints.length - 1) return;
 
@@ -173,6 +189,50 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
       if (!label || !isFinite(label.fontSize) || label.fontSize < MIN_FONT_SIZE) return;
 
       totalLabels++;
+      hasDeformLabel = true;
+
+      // Check straight-text (non-deform) visibility
+      const dims = measureText(label.text, FONT_FAMILY, label.fontSize);
+      const textW = dims.width;
+      let straightVisible = true;
+
+      if (label.xPosition < 0 || label.xPosition + textW > width) {
+        straightVisible = false;
+      }
+
+      if (straightVisible) {
+        const textH = label.fontSize * 1.2;
+        const numPts = stackPoints.length;
+
+        const interpBandH = (px: number): number => {
+          const frac = px * (numPts - 1) / width;
+          const ii = Math.min(Math.max(0, Math.floor(frac)), numPts - 2);
+          const t = Math.min(1, Math.max(0, frac - ii));
+          return stackPoints[ii].y * (1 - t) + stackPoints[ii + 1].y * t;
+        };
+
+        const sampleXs = [label.xPosition, label.xPosition + textW * 0.5, label.xPosition + textW];
+        for (const px of sampleXs) {
+          if (interpBandH(px) < textH) { straightVisible = false; break; }
+        }
+
+        // Edge-taper check
+        if (straightVisible) {
+          const edgeMargin = Math.ceil(numPts * 0.2);
+          const li = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
+          const ri = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
+          for (let i = li; i <= ri; i++) {
+            const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
+            const waveTapered = waveEnvelopeH[i] < maxEnvelopeH * 0.5;
+            if (stackPoints[i].y < textH && (atEdge || waveTapered)) {
+              straightVisible = false;
+              break;
+            }
+          }
+        }
+      }
+
+      if (straightVisible) hasStraightLabel = true;
 
       const bounds = getActualBounds(label.text, label.fontSize);
       const baselineSvgY = HEIGHT - label.yPosition;
@@ -208,9 +268,12 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
         }
       }
     });
+
+    if (hasDeformLabel) seriesWithDeformLabel++;
+    if (hasStraightLabel) seriesWithStraightLabel++;
   });
 
-  return { labels: results, totalLabels, fontSizeData, placementTimeMs };
+  return { labels: results, totalLabels, fontSizeData, placementTimeMs, totalSeries, seriesWithDeformLabel, seriesWithStraightLabel };
 }
 
 // ── Scoring ─────────────────────────────────────────────────────────
@@ -253,6 +316,8 @@ interface OffsetSummary {
   overflowScore: number;
   fontSizeScore: number;
   placementTimeMs: number;
+  deformCoverage: number;
+  straightCoverage: number;
 }
 
 describe('Wave Algorithm Accuracy', () => {
@@ -265,6 +330,9 @@ describe('Wave Algorithm Accuracy', () => {
       const allFontSizeData: FontSizeData[] = [];
       let grandTotalLabels = 0;
       let totalPlacementTimeMs = 0;
+      let grandTotalSeries = 0;
+      let grandDeformLabeled = 0;
+      let grandStraightLabeled = 0;
 
       const userSummaries: {
         username: string;
@@ -273,17 +341,25 @@ describe('Wave Algorithm Accuracy', () => {
         critical: number;
         score: number;
         fontSizeScore: number;
+        deformCoverage: number;
+        straightCoverage: number;
       }[] = [];
 
       for (const user of users) {
         it(`processes ${user.username} (${user.artists.length} artists)`, () => {
-          const { labels, totalLabels, fontSizeData, placementTimeMs } = runPipeline(user, offset);
+          const { labels, totalLabels, fontSizeData, placementTimeMs, totalSeries, seriesWithDeformLabel, seriesWithStraightLabel } = runPipeline(user, offset);
           const critical = labels.filter(l => l.overflowPct > 10);
 
           allResults.push(...labels);
           allFontSizeData.push(...fontSizeData);
           grandTotalLabels += totalLabels;
           totalPlacementTimeMs += placementTimeMs;
+          grandTotalSeries += totalSeries;
+          grandDeformLabeled += seriesWithDeformLabel;
+          grandStraightLabeled += seriesWithStraightLabel;
+
+          const deformCov = totalSeries > 0 ? (seriesWithDeformLabel / totalSeries) * 100 : 0;
+          const straightCov = totalSeries > 0 ? (seriesWithStraightLabel / totalSeries) * 100 : 0;
 
           userSummaries.push({
             username: user.username,
@@ -292,6 +368,8 @@ describe('Wave Algorithm Accuracy', () => {
             critical: critical.length,
             score: computeScore(labels, totalLabels),
             fontSizeScore: computeFontSizeScore(fontSizeData),
+            deformCoverage: Math.round(deformCov * 10) / 10,
+            straightCoverage: Math.round(straightCov * 10) / 10,
           });
 
           if (critical.length > 0) {
@@ -312,6 +390,8 @@ describe('Wave Algorithm Accuracy', () => {
         const fontSizeScore = computeFontSizeScore(allFontSizeData);
         const critical = allResults.filter(l => l.overflowPct > 10);
         const minor = allResults.filter(l => l.overflowPct <= 10);
+        const deformCov = grandTotalSeries > 0 ? (grandDeformLabeled / grandTotalSeries) * 100 : 0;
+        const straightCov = grandTotalSeries > 0 ? (grandStraightLabeled / grandTotalSeries) * 100 : 0;
 
         offsetSummaries.push({
           offset,
@@ -321,9 +401,11 @@ describe('Wave Algorithm Accuracy', () => {
           overflowScore: score,
           fontSizeScore,
           placementTimeMs: totalPlacementTimeMs,
+          deformCoverage: Math.round(deformCov * 10) / 10,
+          straightCoverage: Math.round(straightCov * 10) / 10,
         });
 
-        console.log(`\n  ── ${offset.toUpperCase()} ──  ${grandTotalLabels} labels | ${minor.length} minor | ${critical.length} critical | overflow: ${score.toFixed(1)} | font: ${fontSizeScore.toFixed(1)}`);
+        console.log(`\n  ── ${offset.toUpperCase()} ──  ${grandTotalLabels} labels | ${minor.length} minor | ${critical.length} critical | overflow: ${score.toFixed(1)} | font: ${fontSizeScore.toFixed(1)} | coverage: deform ${deformCov.toFixed(1)}% straight ${straightCov.toFixed(1)}%`);
 
         for (const u of userSummaries.sort((a, b) => a.score - b.score)) {
           const name = u.username.padEnd(18);
@@ -331,7 +413,9 @@ describe('Wave Algorithm Accuracy', () => {
           const crit = u.critical > 0 ? `${u.critical} crit`.padStart(7) : '      —';
           const sc = u.score.toFixed(1).padStart(5);
           const fs = u.fontSizeScore.toFixed(1).padStart(5);
-          console.log(`     ${name} ${labels} labels ${crit}  overflow:${sc}  font:${fs}`);
+          const dc = u.deformCoverage.toFixed(1).padStart(5);
+          const stc = u.straightCoverage.toFixed(1).padStart(5);
+          console.log(`     ${name} ${labels} labels ${crit}  overflow:${sc}  font:${fs}  deform:${dc}%  straight:${stc}%`);
         }
 
         expect(score).toBeGreaterThanOrEqual(0);
@@ -347,12 +431,14 @@ describe('Wave Algorithm Accuracy', () => {
     const avgFontSize = offsetSummaries.reduce((s, o) => s + o.fontSizeScore, 0) / offsetSummaries.length;
     const totalTimeMs = offsetSummaries.reduce((s, o) => s + o.placementTimeMs, 0);
     const avgTimeMs = totalTimeMs / offsetSummaries.length;
+    const avgDeformCov = offsetSummaries.reduce((s, o) => s + o.deformCoverage, 0) / offsetSummaries.length;
+    const avgStraightCov = offsetSummaries.reduce((s, o) => s + o.straightCoverage, 0) / offsetSummaries.length;
 
-    console.log('\n  ╔═══════════════════════════════════════════════════════════════════════╗');
-    console.log('  ║                  WAVE ALGORITHM ACCURACY REPORT                      ║');
-    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
-    console.log('  ║  Offset        Labels  Critical  Overflow   Font Size   Time (ms)    ║');
-    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
+    console.log('\n  ╔══════════════════════════════════════════════════════════════════════════════════════════╗');
+    console.log('  ║                           WAVE ALGORITHM ACCURACY REPORT                               ║');
+    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
+    console.log('  ║  Offset        Labels  Critical  Overflow   Font Size   Deform Cov  Straight Cov  Time ║');
+    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
 
     for (const o of offsetSummaries) {
       const name = o.offset.padEnd(12);
@@ -360,16 +446,19 @@ describe('Wave Algorithm Accuracy', () => {
       const crit = String(o.critical).padStart(6);
       const ov = o.overflowScore.toFixed(1).padStart(7);
       const fs = o.fontSizeScore.toFixed(1).padStart(7);
-      const tm = o.placementTimeMs.toFixed(0).padStart(8);
-      console.log(`  ║  ${name}  ${labels}  ${crit}    ${ov}/100  ${fs}/100  ${tm}    ║`);
+      const dc = (o.deformCoverage.toFixed(1) + '%').padStart(8);
+      const sc = (o.straightCoverage.toFixed(1) + '%').padStart(10);
+      const tm = (o.placementTimeMs.toFixed(0) + 'ms').padStart(6);
+      console.log(`  ║  ${name}  ${labels}  ${crit}    ${ov}/100  ${fs}/100    ${dc}      ${sc}  ${tm} ║`);
     }
 
-    console.log('  ╠═══════════════════════════════════════════════════════════════════════╣');
-    console.log(`  ║  AVG OVERFLOW SCORE:                    ${avgOverflow.toFixed(1).padStart(5)}/100                ║`);
-    console.log(`  ║  AVG FONT SIZE SCORE:                   ${avgFontSize.toFixed(1).padStart(5)}/100                ║`);
-    console.log(`  ║  AVG PLACEMENT TIME:                  ${avgTimeMs.toFixed(0).padStart(6)} ms                  ║`);
-    console.log(`  ║  TOTAL PLACEMENT TIME:                ${totalTimeMs.toFixed(0).padStart(6)} ms                  ║`);
-    console.log('  ╚═══════════════════════════════════════════════════════════════════════╝\n');
+    console.log('  ╠══════════════════════════════════════════════════════════════════════════════════════════╣');
+    console.log(`  ║  AVG OVERFLOW SCORE:      ${avgOverflow.toFixed(1).padStart(5)}/100                                                   ║`);
+    console.log(`  ║  AVG FONT SIZE SCORE:     ${avgFontSize.toFixed(1).padStart(5)}/100                                                   ║`);
+    console.log(`  ║  AVG DEFORM COVERAGE:     ${avgDeformCov.toFixed(1).padStart(5)}%                                                     ║`);
+    console.log(`  ║  AVG STRAIGHT COVERAGE:   ${avgStraightCov.toFixed(1).padStart(5)}%                                                     ║`);
+    console.log(`  ║  AVG PLACEMENT TIME:    ${avgTimeMs.toFixed(0).padStart(6)} ms                                                    ║`);
+    console.log('  ╚══════════════════════════════════════════════════════════════════════════════════════════╝\n');
 
     for (const o of offsetSummaries) {
       expect(o.overflowScore).toBeGreaterThanOrEqual(0);

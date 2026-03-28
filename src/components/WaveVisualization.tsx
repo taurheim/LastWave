@@ -433,6 +433,18 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
         }
       } else {
         // ── Normal horizontal text rendering ──
+        // Pre-compute the total wave envelope height at each data point.
+        // Used to distinguish edge taper (where labels should be hidden)
+        // from mid-wave dips (where labels still look fine).
+        const lastLayerIdx = stackedData.length - 1;
+        const waveEnvelopeH: number[] = [];
+        let maxEnvelopeH = 0;
+        for (let i = 0; i < numSegments; i++) {
+          const h = yScale(stackedData[0][i][0]) - yScale(stackedData[lastLayerIdx][i][1]);
+          waveEnvelopeH.push(h);
+          if (h > maxEnvelopeH) maxEnvelopeH = h;
+        }
+
         stackedData.forEach((layer, layerIndex) => {
           const seriesTitle = keys[layerIndex];
           const counts = seriesData[layerIndex].counts;
@@ -466,9 +478,10 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
                 return;
               }
 
-              // The band must be at least 1.5x the font size for straight text
-              // to look clean within the curved band shape.
-              const textH = label.fontSize * 1.5;
+              // Check interpolated band height at the text's left, center,
+              // and right edges. Data points are widely spaced, so we linearly
+              // interpolate between the nearest two.
+              const textH = label.fontSize * 1.2;
               const numPts = stackPoints.length;
 
               const interpBandH = (px: number): number => {
@@ -486,6 +499,25 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               let tooThin = false;
               for (const px of sampleXs) {
                 if (interpBandH(px) < textH) { tooThin = true; break; }
+              }
+
+              // Edge-taper check: if the text spans a data point near the
+              // wave edges where the band is thin, hide it. In mid-wave,
+              // a thin band is just a gap in one artist's plays and the
+              // surrounding wave provides visual context. At the edges,
+              // the whole wave is tapering and thin bands cause overflow.
+              if (!tooThin) {
+                const edgeMargin = Math.ceil(numPts * 0.2);
+                const leftIdx = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
+                const rightIdx = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
+                for (let i = leftIdx; i <= rightIdx; i++) {
+                  const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
+                  const waveTapered = waveEnvelopeH[i] < maxEnvelopeH * 0.5;
+                  if (stackPoints[i].y < textH && (atEdge || waveTapered)) {
+                    tooThin = true;
+                    break;
+                  }
+                }
               }
               if (tooThin) return;
 
