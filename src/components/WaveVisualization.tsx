@@ -337,6 +337,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           layerIndex: number;
           stackPoints: StackPoint[];
           idx: number;
+          pathD: string;
         };
         const jobs: DeformJob[] = [];
 
@@ -349,6 +350,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
             y0: height - yScale(d[0]),
           }));
 
+          const pathD = pathByKey[seriesTitle] ?? '';
           const labelIndices = findLabelIndices(counts, MINIMUM_SEGMENTS_BETWEEN_LABELS);
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
@@ -366,7 +368,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             }
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-              jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx });
+              jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx, pathD });
             }
           });
         });
@@ -386,7 +388,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const end = Math.min(jobIndex + BATCH_SIZE, jobs.length);
 
           for (; jobIndex < end; jobIndex++) {
-            const { label, layer, layerIndex, stackPoints, idx } = jobs[jobIndex];
+            const { label, layer, layerIndex, stackPoints, idx, pathD } = jobs[jobIndex];
             artistsDone.add(label.text);
 
             const bandData = layer.map((d: readonly [number, number], i: number) => ({
@@ -397,9 +399,29 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               thickness: yScale(d[0]) - yScale(d[1]),
             }));
 
+            // Build Bezier-accurate band bounds from the actual SVG path
+            // (bandAtX uses linear interpolation which overestimates thickness)
+            const bandLUT = pathD ? buildBandLUT(pathD, width) : null;
+            const bandBoundsAtX = bandLUT ? (x: number) => {
+              const px = Math.round(x);
+              const b = px >= 0 && px < bandLUT.length ? bandLUT[px] : null;
+              if (b) return { topY: b.top, botY: b.bot, thickness: b.bot - b.top };
+              // Fallback to linear interpolation
+              const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
+              const fi = (x - bandData[0].x) / bandXStep;
+              const i = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
+              const t = Math.max(0, Math.min(1, fi - i));
+              return {
+                topY: bandData[i].topY * (1 - t) + bandData[i + 1].topY * t,
+                botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
+                thickness: (bandData[i].thickness * (1 - t) + bandData[i + 1].thickness * t),
+              };
+            } : undefined;
+
             const result = computeDeformedText(
               label, bandData, idx, stackPoints[idx].x,
               fontData.family, measureText,
+              bandBoundsAtX,
             );
 
             // Skip if this label's deformed text overlaps a previous label for the same artist

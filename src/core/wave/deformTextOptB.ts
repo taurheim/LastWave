@@ -352,9 +352,10 @@ export function computeDeformedText(
     const bounds = bandBoundsAtX
       ? bandBoundsAtX(midPt.x)
       : bandAtX(bandData, bandX0, bandXStep, midPt.x);
-    // Tighter margin than Pass 2's BAND_MARGIN (0.92) to account for Bezier curve
-    // discrepancy: bandAtX uses linear interpolation but actual band is curveMonotoneX.
-    const availHalfH = (bounds.thickness * 0.70) / 2;
+    // When using Bezier-accurate bandBoundsAtX, BAND_MARGIN suffices;
+    // with linear-interpolation fallback, use tighter margin.
+    const shrinkMargin = bandBoundsAtX ? BAND_MARGIN : 0.70;
+    const availHalfH = (bounds.thickness * shrinkMargin) / 2;
     if (availHalfH > 0) {
       const rad = Math.abs(angle * Math.PI / 180);
       const cosA = Math.cos(rad); const sinA = Math.sin(rad);
