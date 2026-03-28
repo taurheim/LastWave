@@ -348,12 +348,18 @@ export function computeDeformedText(
     const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
 
     // Shrink character to fit within band if actual rotation causes overflow
-    // (Pass 2 estimates angle from band data; the real spline angle can be steeper)
     const bounds = bandBoundsAtX
       ? bandBoundsAtX(midPt.x)
       : bandAtX(bandData, bandX0, bandXStep, midPt.x);
-    // When using Bezier-accurate bandBoundsAtX, BAND_MARGIN suffices;
-    // with linear-interpolation fallback, use tighter margin.
+
+    // When Bezier-accurate bounds are available, snap the character's y-position
+    // to the actual band center. The Hermite spline centerline can drift from the
+    // real Bezier band center between data points, causing text to overflow upward.
+    if (bandBoundsAtX && bounds.thickness > 0) {
+      const actualCenter = (bounds.topY + bounds.botY) / 2;
+      midPt.y = actualCenter;
+    }
+
     const shrinkMargin = bandBoundsAtX ? BAND_MARGIN : 0.70;
     const availHalfH = (bounds.thickness * shrinkMargin) / 2;
     if (availHalfH > 0) {
