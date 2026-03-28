@@ -223,19 +223,43 @@ export function computeDeformedText(
   const approxCharWidth = renderFontSize * 0.55;
   const approxTotalWidth = text.length * approxCharWidth;
 
-  // Thickness-weighted centroid for centering
-  const searchRadius = approxTotalWidth * 0.8;
+  // Find the viable region where band is thick enough for readable text.
+  // Search outward from the peak to find where thickness drops below threshold.
+  const VIABLE_FRAC = 0.20;
+  let viableLeftIdx = 0;
+  let viableRightIdx = bandData.length - 1;
+  for (let i = peakIdx; i >= 0; i--) {
+    if (bandData[i].thickness / (peakThickness || 1) < VIABLE_FRAC) {
+      viableLeftIdx = Math.min(i + 1, bandData.length - 1);
+      break;
+    }
+  }
+  for (let i = peakIdx; i < bandData.length; i++) {
+    if (bandData[i].thickness / (peakThickness || 1) < VIABLE_FRAC) {
+      viableRightIdx = Math.max(i - 1, 0);
+      break;
+    }
+  }
+  const viableLeft = bandData[viableLeftIdx].x;
+  const viableRight = bandData[viableRightIdx].x;
+
+  // Thickness-weighted centroid within the viable region
   let weightedXSum = 0, weightSum = 0;
-  for (const bd of bandData) {
-    if (Math.abs(bd.x - peakX) > searchRadius) continue;
+  for (let i = viableLeftIdx; i <= viableRightIdx; i++) {
+    const bd = bandData[i];
     const thickFrac = bd.thickness / (peakThickness || 1);
-    if (thickFrac >= 0.35) {
+    if (thickFrac >= VIABLE_FRAC) {
       const w = thickFrac * thickFrac;
       weightedXSum += bd.x * w;
       weightSum += w;
     }
   }
-  const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : peakX;
+  // Blend thickness-weighted centroid with viable region midpoint
+  // so text centers in the available space, not just at the thickest point
+  const viableMidX = (viableLeft + viableRight) / 2;
+  const thickCenterX = weightSum > 0
+    ? 0.5 * (weightedXSum / weightSum) + 0.5 * viableMidX
+    : viableMidX;
 
   // Pass 1: compute deformed total width for centering
   const tentativeStart = thickCenterX - approxTotalWidth / 2;
@@ -247,13 +271,19 @@ export function computeDeformedText(
       const thickRatio = peakThickness > 0 ? band.thickness / peakThickness : 1;
       const charFontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
       const charW = measureText(text[c], fontFamily, charFontSize).width;
-      deformedTotalWidth += charW + charFontSize * 0.04;
-      walkX += charW + charFontSize * 0.04;
+      // Tighter tracking for smaller chars (larger sidebearing ratio); normal for large chars
+      const tracking = 0.90 + Math.min(charFontSize, 20) * 0.005;
+      deformedTotalWidth += charW * tracking;
+      walkX += charW * tracking;
     }
   }
 
   const idealStart = thickCenterX - deformedTotalWidth / 2;
-  const textStartX = Math.max(firstBandX, Math.min(lastBandX - deformedTotalWidth * 0.05, idealStart));
+  // Clamp: keep text primarily within the viable region
+  const textStartX = Math.max(
+    firstBandX,
+    Math.min(viableRight - deformedTotalWidth * 0.7, idealStart),
+  );
   const startLen = lengthAtX(textStartX);
 
   // Pass 2: compute per-character sizing
@@ -292,7 +322,7 @@ export function computeDeformedText(
     const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
     const charW = measureText(text[c], fontFamily, fontSize).width;
     charSizing.push({ ch: text[c], fontSize, scaleY, opacity, width: charW });
-    estLen += charW + fontSize * 0.04;
+    estLen += charW * (0.90 + Math.min(fontSize, 20) * 0.005);
   }
 
   // Pass 3: placement (position + angle from spline)
@@ -303,8 +333,10 @@ export function computeDeformedText(
 
   let curLen = startLen;
   for (let c = 0; c < text.length; c++) {
-    const { ch, fontSize, scaleY, opacity, width: charW } = charSizing[c];
-    const advance = charW + fontSize * 0.04;
+    const { ch, opacity, width: charW } = charSizing[c];
+    let placeFontSize = charSizing[c].fontSize;
+    let placeScaleY = charSizing[c].scaleY;
+    const advance = charW * (0.90 + Math.min(charSizing[c].fontSize, 20) * 0.005);
 
     const midLen = Math.min(curLen + charW / 2, totalLen);
     const midPt = getPointAtLength(midLen);
@@ -314,13 +346,35 @@ export function computeDeformedText(
     const rawAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
     const angle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
 
-    placements.push({ ch, x: midPt.x, y: midPt.y, fontSize, scaleY, angle, opacity, width: charW });
-
-    // Overflow detection
+    // Shrink character to fit within band if actual rotation causes overflow
+    // (Pass 2 estimates angle from band data; the real spline angle can be steeper)
     const bounds = bandBoundsAtX
       ? bandBoundsAtX(midPt.x)
       : bandAtX(bandData, bandX0, bandXStep, midPt.x);
-    const charHalfH = (fontSize * scaleY * 1.2) / 2;
+    // Tighter margin than Pass 2's BAND_MARGIN (0.92) to account for Bezier curve
+    // discrepancy: bandAtX uses linear interpolation but actual band is curveMonotoneX.
+    const availHalfH = (bounds.thickness * 0.70) / 2;
+    if (availHalfH > 0) {
+      const rad = Math.abs(angle * Math.PI / 180);
+      const cosA = Math.cos(rad); const sinA = Math.sin(rad);
+      const halfW = charW / 2;
+      const halfH = (placeFontSize * placeScaleY * 1.2) / 2;
+      const rotatedHalfH = halfW * sinA + halfH * cosA;
+      if (rotatedHalfH > availHalfH) {
+        const s = availHalfH / rotatedHalfH;
+        placeFontSize *= s;
+        placeScaleY *= s;
+      }
+    }
+
+    // Hide characters past the spline endpoint (they pile up at chart edges)
+    const finalOpacity = curLen >= totalLen ? 0 : opacity;
+
+    placements.push({ ch, x: midPt.x, y: midPt.y, fontSize: placeFontSize, scaleY: placeScaleY, angle,
+      opacity: finalOpacity, width: charW });
+
+    // Overflow detection (for reporting, uses original sizing)
+    const charHalfH = (charSizing[c].fontSize * charSizing[c].scaleY * 1.2) / 2;
     const charTop = midPt.y - charHalfH;
     const charBot = midPt.y + charHalfH;
     if (charTop < bounds.topY - 1 || charBot > bounds.botY + 1) {
@@ -328,7 +382,7 @@ export function computeDeformedText(
     }
 
     if (bounds.thickness > 0) {
-      fontSizeRatioSum += fontSize / bounds.thickness;
+      fontSizeRatioSum += charSizing[c].fontSize / bounds.thickness;
       measuredChars++;
     }
 

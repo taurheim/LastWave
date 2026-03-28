@@ -378,6 +378,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
         // Track unique artists for progress display
         const uniqueArtists = [...new Set(jobs.map(j => j.label.text))];
         const artistsDone = new Set<string>();
+        // Track rendered x-ranges per artist to prevent visual overlap
+        const artistRanges = new Map<string, Array<[number, number]>>();
 
         function processBatch() {
           if (abortId !== deformAbortRef.current) return; // effect re-ran, abort
@@ -400,8 +402,22 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               fontData.family, measureText,
             );
 
+            // Skip if this label's deformed text overlaps a previous label for the same artist
+            const visiblePlacements = result.placements.filter(p => p.fontSize >= 4 && p.opacity > 0);
+            if (visiblePlacements.length > 0) {
+              const minX = visiblePlacements[0].x;
+              const maxX = visiblePlacements[visiblePlacements.length - 1].x;
+              const prevRanges = artistRanges.get(label.text);
+              if (prevRanges) {
+                const overlaps = prevRanges.some(([lo, hi]) => minX <= hi && maxX >= lo);
+                if (overlaps) continue;
+              }
+              if (!artistRanges.has(label.text)) artistRanges.set(label.text, []);
+              artistRanges.get(label.text)!.push([minX, maxX]);
+            }
+
             for (const p of result.placements) {
-              if (p.fontSize < 4) continue;
+              if (p.fontSize < 4 || p.opacity <= 0) continue;
               const tx = `translate(${p.x}, ${p.y}) rotate(${p.angle}) scale(1, ${p.scaleY.toFixed(3)})`;
               svg.append('text')
                 .attr('font-size', `${p.fontSize}px`)

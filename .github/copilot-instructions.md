@@ -71,6 +71,11 @@ When spawning a validation subagent, use the agent at `.github/agents/validate-f
 - Run e2e tests: `npm run test:e2e`
 - Typecheck: `npm run typecheck` (has pre-existing errors — non-blocking)
 
+### Wave algorithm changes
+When modifying any wave text placement or deformed text code (`src/core/wave/`), always compare `npm run test:accuracy` stats **before** and **after** the change. Record the before/after numbers (Labels, Overflow, Deform Coverage, Straight Coverage, Font Fill) to confirm the change doesn't regress accuracy.
+
+**Note:** The accuracy test currently only covers the non-deformed label placement pipeline (bezierFit, waveW/X/Y/Z). It does NOT test the deformed text computation (`deformTextOptB.ts`). For deformed text changes, visual verification with Playwright CLI is essential.
+
 ## Import conventions
 
 - Import the Zustand store as `@/store/index` (not `@/store`) — a legacy `src/store.ts` file shadows the directory import.
