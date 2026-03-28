@@ -194,11 +194,12 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
       if (straightVisible) {
         const textH = label.fontSize * 1.2;
         const numPts = stackPoints.length;
-        const edgeMargin = Math.max(1, Math.ceil(numPts * 0.05));
-        const li = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
+        const edgeMargin = Math.max(2, Math.ceil(numPts * 0.1));
+        const li = Math.max(0, Math.ceil(label.xPosition * (numPts - 1) / width));
         const ri = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
         for (let i = li; i <= ri; i++) {
-          if ((i < edgeMargin || i >= numPts - edgeMargin) && stackPoints[i].y < textH) {
+          const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
+          if (atEdge && stackPoints[i].y < textH) {
             straightVisible = false;
             break;
           }

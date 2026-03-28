@@ -466,19 +466,20 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
                 return;
               }
 
-              // Edge check: hide labels that span a data point near the
-              // wave edges where the band is thin. In mid-wave, a thin
-              // band is just a gap in one artist's plays and the surrounding
-              // wave provides visual context. At the edges, the whole wave
-              // is tapering and thin bands cause visible text overflow.
+              // Edge check: hide labels that cover an edge data point
+              // where the band is thin. Use ceil() for leftIdx to avoid
+              // including interior data points far from the text start
+              // (which falsely caught labels like Daft Punk at x=140 via
+              // floor(0.86)=0). ceil() includes the next outward point.
               const textH = label.fontSize * 1.2;
               const numPts = stackPoints.length;
-              const edgeMargin = Math.max(1, Math.ceil(numPts * 0.05));
-              const leftIdx = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
+              const edgeMargin = Math.max(2, Math.ceil(numPts * 0.1));
+              const leftIdx = Math.max(0, Math.ceil(label.xPosition * (numPts - 1) / width));
               const rightIdx = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
               let tooThin = false;
               for (let i = leftIdx; i <= rightIdx; i++) {
-                if ((i < edgeMargin || i >= numPts - edgeMargin) && stackPoints[i].y < textH) {
+                const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
+                if (atEdge && stackPoints[i].y < textH) {
                   tooThin = true;
                   break;
                 }
