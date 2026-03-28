@@ -35,26 +35,31 @@ async function mockGalleryApi(page: import('@playwright/test').Page) {
 }
 
 test.describe('Visual Regression', () => {
-  test('about page matches baseline', async ({ page }) => {
+  test('about page matches baseline', async ({ page }, testInfo) => {
     await page.goto('/about');
-    await expect(page).toHaveScreenshot('about-page.png', {
+    const vp = testInfo.project.name.replace('visual-', '');
+    await expect(page).toHaveScreenshot(`about-${vp}.png`, {
       maxDiffPixelRatio: 0.01,
     });
   });
 
-  test('gallery page matches baseline', async ({ page }) => {
+  test('gallery page matches baseline', async ({ page }, testInfo) => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
-    await page.waitForTimeout(1000);
-    await expect(page).toHaveScreenshot('gallery-page.png', {
+    await page.getByRole('button', { name: 'Next →' }).waitFor({ timeout: 15000 });
+    await page.waitForLoadState('networkidle');
+    const vp = testInfo.project.name.replace('visual-', '');
+    await expect(page).toHaveScreenshot(`gallery-${vp}.png`, {
       maxDiffPixelRatio: 0.01,
     });
   });
 
-  test('home page options form matches baseline', async ({ page }) => {
+  test('home page options form matches baseline', async ({ page }, testInfo) => {
     await page.goto('/');
-    await page.waitForTimeout(1000);
-    await expect(page).toHaveScreenshot('home-options.png', {
+    await page.getByRole('button', { name: 'Generate' }).waitFor({ timeout: 15000 });
+    await page.waitForTimeout(500);
+    const vp = testInfo.project.name.replace('visual-', '');
+    await expect(page).toHaveScreenshot(`home-options-${vp}.png`, {
       maxDiffPixelRatio: 0.01,
     });
   });

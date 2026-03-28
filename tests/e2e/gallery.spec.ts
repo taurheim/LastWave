@@ -34,14 +34,14 @@ test.describe('Gallery Page', () => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
     await expect(page.getByRole('heading', { name: 'LastWave' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '← Previous' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '← Previous' })).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Next →' })).toBeVisible();
   });
 
   test('paginates between pages', async ({ page }) => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
-    await expect(page.getByText('Page 1 / 2')).toBeVisible();
+    await expect(page.getByText('Page 1 / 2')).toBeVisible({ timeout: 15000 });
     await page.getByRole('button', { name: 'Next →' }).click();
     await expect(page.getByText('Page 2 / 2')).toBeVisible();
   });
