@@ -426,15 +426,19 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               jitterText,
             );
 
-            // Skip if this label's deformed text overlaps a previous label for the same artist
+            // Skip if this label's deformed text is too close to a previous label for the same artist
+            // (require at least 1 segment width gap between same-artist labels)
             const visiblePlacements = result.placements.filter(p => p.fontSize >= 4 && p.opacity > 0);
             if (visiblePlacements.length > 0) {
               const minX = visiblePlacements[0].x;
               const maxX = visiblePlacements[visiblePlacements.length - 1].x;
+              const segWidth = numSegments > 1 ? width / (numSegments - 1) : width;
               const prevRanges = artistRanges.get(label.text);
               if (prevRanges) {
-                const overlaps = prevRanges.some(([lo, hi]) => minX <= hi && maxX >= lo);
-                if (overlaps) continue;
+                // Check if any previous label for this artist is within 1 segment width
+                const tooClose = prevRanges.some(([lo, hi]) =>
+                  minX <= hi + segWidth && maxX >= lo - segWidth);
+                if (tooClose) continue;
               }
               if (!artistRanges.has(label.text)) artistRanges.set(label.text, []);
               artistRanges.get(label.text)!.push([minX, maxX]);
