@@ -38,10 +38,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const colorScheme = rendererOptions.color_scheme ?? 'lastwave';
 
   // Data source advanced defaults
-  const timeStart = dataSourceOptions.time_start instanceof Date
+  const timeStart = dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
     ? dataSourceOptions.time_start.toISOString().slice(0, 10)
     : '';
-  const timeEnd = dataSourceOptions.time_end instanceof Date
+  const timeEnd = dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
     ? dataSourceOptions.time_end.toISOString().slice(0, 10)
     : '';
   const groupBy = dataSourceOptions.group_by ?? 'week';
@@ -148,7 +148,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 <input
                   type="date"
                   value={timeStart}
-                  onChange={(e) => setDataSourceOption('time_start', new Date(e.target.value))}
+                  onChange={(e) => {
+                    const d = new Date(e.target.value);
+                    setDataSourceOption('time_start', isNaN(d.getTime()) ? undefined : d);
+                  }}
                   className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
                 />
               </div>
@@ -157,7 +160,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 <input
                   type="date"
                   value={timeEnd}
-                  onChange={(e) => setDataSourceOption('time_end', new Date(e.target.value))}
+                  onChange={(e) => {
+                    const d = new Date(e.target.value);
+                    setDataSourceOption('time_end', isNaN(d.getTime()) ? undefined : d);
+                  }}
                   className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
                 />
               </div>
