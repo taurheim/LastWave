@@ -135,6 +135,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
     const deformText = rendererOptions.deform_text ?? true;
+    const jitterText = rendererOptions.jitter_text ?? true;
 
     // Determine dimensions
     const numSegments = seriesData[0]?.counts.length ?? 0;
@@ -422,6 +423,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               label, bandData, idx, stackPoints[idx].x,
               fontData.family, measureText,
               bandBoundsAtX,
+              jitterText,
             );
 
             // Skip if this label's deformed text overlaps a previous label for the same artist
@@ -546,7 +548,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
   }, [seriesData, rendererOptions.color_scheme, rendererOptions.font, rendererOptions.offset,
       rendererOptions.width, rendererOptions.height, rendererOptions.add_labels,
-      rendererOptions.deform_text, suppressLabels]);
+      rendererOptions.deform_text, rendererOptions.jitter_text, suppressLabels]);
 
   // ── Overlay effect: cheap decorations that can toggle without re-rendering waves+labels ──
   useEffect(() => {

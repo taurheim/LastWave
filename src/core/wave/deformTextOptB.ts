@@ -202,6 +202,7 @@ export function computeDeformedText(
   fontFamily: string,
   measureText: MeasureTextFn,
   bandBoundsAtX?: (x: number) => { topY: number; botY: number; thickness: number },
+  jitter: boolean = true,
 ): DeformResult {
   if (bandData.length < 2) {
     return { placements: [], overflowFraction: 0, avgFontSizeRatio: 0 };
@@ -276,13 +277,22 @@ export function computeDeformedText(
     }
   }
 
-  const idealStart = thickCenterX - deformedTotalWidth / 2;
-  // Allow text to extend past the viable region — characters in thin areas
-  // are handled by the shrink-to-fit and center-snap in Pass 3.
-  const textStartX = Math.max(
-    firstBandX,
-    Math.min(viableRight - deformedTotalWidth * 0.3, idealStart),
-  );
+  // Deterministic jitter: shift text slightly left/right based on artist name hash
+  // so labels from different artists at the same peak don't stack vertically.
+  let jitterOffset = 0;
+  if (jitter) {
+    let jitterHash = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++) {
+      jitterHash ^= text.charCodeAt(i);
+      jitterHash = Math.imul(jitterHash, 0x01000193);
+    }
+    const jitterFrac = ((jitterHash >>> 0) / 0xffffffff) * 2 - 1; // -1..1
+    jitterOffset = jitterFrac * 15; // ±15px deterministic offset
+  }
+
+  const idealStart = (thickCenterX + jitterOffset) - deformedTotalWidth / 2;
+  // Characters in thin areas are handled by the shrink-to-fit and center-snap in Pass 3.
+  const textStartX = Math.max(firstBandX, idealStart);
   const startLen = lengthAtX(textStartX);
 
   // Pass 2: compute per-character sizing

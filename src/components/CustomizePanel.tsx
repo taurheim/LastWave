@@ -45,6 +45,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
   const showUsername = rendererOptions.show_username ?? false;
   const showWatermark = rendererOptions.show_watermark ?? true;
   const deformText = rendererOptions.deform_text ?? true;
+  const jitterText = rendererOptions.jitter_text ?? true;
 
   const { fonts: fontList, fetchFonts, fetched: fontsLoaded } = useLazyFontList();
   const displayFonts = fontList.includes(font) ? fontList : [font, ...fontList];
@@ -109,6 +110,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             <div className="space-y-3 sm:space-y-1.5 lg:space-y-3">
               {[
                 { label: 'Deform text', checked: deformText, key: 'deform_text' },
+                { label: 'Jitter text', checked: jitterText, key: 'jitter_text' },
                 { label: 'Username', checked: showUsername, key: 'show_username' },
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
                 { label: 'Year names', checked: addYears, key: 'add_years' },
