@@ -21,6 +21,20 @@ function devOnlyPages() {
 export default defineConfig({
   integrations: [react(), tailwind(), devOnlyPages()],
   vite: {
+    server: {
+      proxy: {
+        '/api/wikidata': {
+          target: 'https://www.wikidata.org',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/wikidata/, ''),
+        },
+        '/api/sparql': {
+          target: 'https://query.wikidata.org',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/sparql/, ''),
+        },
+      },
+    },
     ssr: {
       noExternal: ['d3', 'd3-*'],
     },

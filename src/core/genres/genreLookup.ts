@@ -10,6 +10,14 @@
 const CACHE_PREFIX = 'genre:v1:';
 const WIKIDATA_UA = 'LastWave/4.0 (https://github.com/lastwave)';
 
+// In dev, proxy through Vite to avoid CORS. In prod, hit APIs directly with origin=*.
+const WIKIDATA_API = import.meta.env.DEV
+  ? '/api/wikidata/w/api.php'
+  : 'https://www.wikidata.org/w/api.php';
+const SPARQL_ENDPOINT = import.meta.env.DEV
+  ? '/api/sparql/sparql'
+  : 'https://query.wikidata.org/sparql';
+
 // ─── Name handling ────────────────────────────────────────
 
 const MUSIC_TYPE_KEYWORDS = [
@@ -130,7 +138,7 @@ async function fetchJson(url: string, headers: Record<string, string> = {}): Pro
 }
 
 async function sparqlQuery(query: string): Promise<any> {
-  const res = await fetch('https://query.wikidata.org/sparql', {
+  const res = await fetch(SPARQL_ENDPOINT, {
     method: 'POST',
     headers: {
       'User-Agent': WIKIDATA_UA,
@@ -144,7 +152,7 @@ async function sparqlQuery(query: string): Promise<any> {
 }
 
 async function searchWikidata(query: string): Promise<Array<{ id: string }>> {
-  const url = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(query)}&language=en&limit=10&format=json`;
+  const url = `${WIKIDATA_API}?action=wbsearchentities&search=${encodeURIComponent(query)}&language=en&limit=10&format=json&origin=*`;
   const data = await fetchJson(url);
   return data.search || [];
 }

@@ -279,10 +279,11 @@ export function computeDeformedText(
   }
 
   const idealStart = thickCenterX - deformedTotalWidth / 2;
-  // Clamp: keep text primarily within the viable region
+  // Clamp: keep text fully within the viable region so it doesn't walk
+  // into thin areas where characters get compressed (e.g. Snail Mail near Chassol)
   const textStartX = Math.max(
     firstBandX,
-    Math.min(viableRight - deformedTotalWidth * 0.7, idealStart),
+    Math.min(viableRight - deformedTotalWidth, idealStart),
   );
   const startLen = lengthAtX(textStartX);
 

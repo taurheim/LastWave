@@ -244,7 +244,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="text-center">
         <button
           type="submit"
-          className="relative bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg font-semibold rounded-lg px-12 py-3 text-sm tracking-wider uppercase transition-all hover:shadow-[0_0_24px_rgba(39,170,225,0.3)] hover:scale-[1.02] active:scale-[0.98]"
+          className="relative bg-lw-accent text-lw-bg font-semibold rounded-lg px-12 py-3 text-sm tracking-wider uppercase transition-all hover:bg-lw-accent-dim hover:scale-[1.02] active:scale-[0.98]"
         >
           Generate
         </button>
