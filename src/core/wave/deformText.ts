@@ -450,5 +450,3 @@ export function computeDeformedText(
     avgFontSizeRatio: measuredChars > 0 ? fontSizeRatioSum / measuredChars : 0,
   };
 }
-
-export type { BandPoint, CharPlacement, DeformResult } from './types';

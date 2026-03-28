@@ -10,7 +10,6 @@ import {
 import TimeSpan from '@/core/lastfm/models/TimeSpan';
 import SegmentData from '@/core/models/SegmentData';
 import type SeriesData from '@/core/models/SeriesData';
-import ArtistTags from '@/core/lastfm/models/ArtistTags';
 
 describe('DateStringToUnix', () => {
   it('converts a date string to unix timestamp in seconds', () => {
@@ -176,9 +175,7 @@ describe('combineArtistTags', () => {
     const artistData: SeriesData[] = [
       { title: 'ArtistA', counts: [10, 20] },
     ];
-    const tagA = new ArtistTags('ArtistA');
-    tagA.setTags(['rock', 'indie']);
-    const tagData = { ArtistA: tagA };
+    const tagData = { ArtistA: { tags: ['rock', 'indie'] } };
 
     const result = combineArtistTags(artistData, tagData);
     expect(result).toHaveLength(2);
@@ -192,11 +189,10 @@ describe('combineArtistTags', () => {
       { title: 'ArtistA', counts: [10, 20] },
       { title: 'ArtistB', counts: [5, 15] },
     ];
-    const tagA = new ArtistTags('ArtistA');
-    tagA.setTags(['rock']);
-    const tagB = new ArtistTags('ArtistB');
-    tagB.setTags(['rock', 'pop']);
-    const tagData = { ArtistA: tagA, ArtistB: tagB };
+    const tagData = {
+      ArtistA: { tags: ['rock'] },
+      ArtistB: { tags: ['rock', 'pop'] },
+    };
 
     const result = combineArtistTags(artistData, tagData);
     const rock = result.find((r) => r.title === 'rock');

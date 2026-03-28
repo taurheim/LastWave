@@ -6,17 +6,11 @@ import LastWaveApp from '@/components/LastWaveApp';
 vi.mock('@/components/WaveOptions', () => ({
   default: () => <div data-testid="wave-options">WaveOptions</div>,
 }));
-vi.mock('@/components/StageLoadingBar', () => ({
-  default: () => <div data-testid="stage-loading-bar">StageLoadingBar</div>,
-}));
 vi.mock('@/components/WaveVisualization', () => ({
   default: () => <div data-testid="wave-visualization">WaveVisualization</div>,
 }));
 vi.mock('@/components/ImageActions', () => ({
   default: () => <div data-testid="image-actions">ImageActions</div>,
-}));
-vi.mock('@/components/OptionActions', () => ({
-  default: () => <div data-testid="option-actions">OptionActions</div>,
 }));
 
 describe('LastWaveApp', () => {

@@ -1,7 +1,6 @@
 import Point from '@/core/models/Point';
 import LineBase from '@/core/models/LineBase';
 import LineSegment from '@/core/models/LineSegment';
-import InfiniteLine from '@/core/models/InfiniteLine';
 import Peak, { type StackPoint } from '@/core/models/Peak';
 
 describe('Point', () => {
@@ -142,23 +141,7 @@ describe('LineSegment', () => {
   });
 });
 
-describe('InfiniteLine', () => {
-  it('extends LineBase and inherits behavior', () => {
-    const line = new InfiniteLine(2, new Point(1, 5));
-    expect(line.slope).toBe(2);
-    expect(line.intercept).toBe(3); // 5 - 2*1
-    expect(line.isXWithinBounds(999)).toBe(true);
-  });
 
-  it('getIntersect works between InfiniteLine instances', () => {
-    const line1 = new InfiniteLine(1, new Point(0, 0));
-    const line2 = new InfiniteLine(-1, new Point(0, 10));
-    const intersect = line1.getIntersect(line2);
-    expect(intersect).not.toBeNull();
-    expect(intersect!.x).toBe(5);
-    expect(intersect!.y).toBe(5);
-  });
-});
 
 describe('Peak', () => {
   const makeStack = (...points: [number, number, number][]): StackPoint[] =>

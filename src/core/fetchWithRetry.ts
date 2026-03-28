@@ -10,7 +10,7 @@ function isRetryable(status: number): boolean {
   return status >= 500 && status < 600;
 }
 
-export class FetchError extends Error {
+class FetchError extends Error {
   public status?: number;
   constructor(message: string, status?: number) {
     super(message);

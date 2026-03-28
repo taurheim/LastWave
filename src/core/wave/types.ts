@@ -1,10 +1,6 @@
 /**
  * Shared types for wave text deformation.
  */
-import Label from '../models/Label';
-import type { MeasureTextFn } from './util';
-
-export type { MeasureTextFn } from './util';
 
 export interface BandPoint {
   x: number;
@@ -30,5 +26,3 @@ export interface DeformResult {
   overflowFraction: number;
   avgFontSizeRatio: number;
 }
-
-export type { Label };
