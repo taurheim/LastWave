@@ -1,6 +1,6 @@
 import type { MeasureTextFn } from '@/core/wave/util';
 import { findLabelIndices } from '@/core/wave/util';
-import { classifyPeak, getLabel } from '@/core/wave/classifier';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import Peak, { type StackPoint } from '@/core/models/Peak';
 
 // Deterministic mock: width proportional to text length and font size
@@ -61,195 +61,9 @@ describe('findLabelIndices', () => {
 });
 
 // -------------------------------------------------------------------
-// isWType
+// findOptimalLabel - W type
 // -------------------------------------------------------------------
-describe('classifyPeak - W type', () => {
-  it('detects W1 pattern (valley: A<=0, B>=0, C<0, D>0)', () => {
-    // Valley shape: left and right higher than center
-    const stack = makeStack(
-      [0, 40, 60],  // topLeft=(0,100), bottomLeft=(0,60)
-      [1, 10, 50],  // top=(1,60), bottom=(1,50)
-      [2, 40, 60],  // topRight=(2,100), bottomRight=(2,60)
-    );
-    const peak = new Peak(1, stack);
-    // A: slope=(60-100)/1 = -40, B: slope=(100-60)/1 = 40
-    // C: slope=(50-60)/1 = -10, D: slope=(60-50)/1 = 10
-    expect(classifyPeak(peak)).toBe('W');
-  });
-
-  it('detects W2 pattern (mountain: A>0, B<0, C>0, D<0)', () => {
-    const stack = makeStack(
-      [0, 10, 40],  // topLeft=(0,50), bottomLeft=(0,40)
-      [1, 100, 50], // top=(1,150), bottom=(1,50)
-      [2, 10, 40],  // topRight=(2,50), bottomRight=(2,40)
-    );
-    const peak = new Peak(1, stack);
-    // A: slope=(150-50)/1 = 100, B: slope=(50-150)/1 = -100
-    // C: slope=(50-40)/1 = 10, D: slope=(40-50)/1 = -10
-    expect(classifyPeak(peak)).toBe('W');
-  });
-
-  it('returns false for non-W patterns', () => {
-    // All slopes positive (X2 type)
-    const stack = makeStack(
-      [0, 60, 20],  // topLeft=(0,80), bottomLeft=(0,20)
-      [1, 80, 50],  // top=(1,130), bottom=(1,50)
-      [2, 100, 80], // topRight=(2,180), bottomRight=(2,80)
-    );
-    const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).not.toBe('W');
-  });
-});
-
-// -------------------------------------------------------------------
-// isXType
-// -------------------------------------------------------------------
-describe('classifyPeak - X type', () => {
-  it('detects X1 pattern (all slopes <= 0, descending)', () => {
-    const stack = makeStack(
-      [0, 100, 80], // topLeft=(0,180), bottomLeft=(0,80)
-      [1, 80, 50],  // top=(1,130), bottom=(1,50)
-      [2, 60, 20],  // topRight=(2,80), bottomRight=(2,20)
-    );
-    const peak = new Peak(1, stack);
-    // A: (130-180)/1=-50, B: (80-130)/1=-50, C: (50-80)/1=-30, D: (20-50)/1=-30
-    expect(classifyPeak(peak)).toBe('X');
-  });
-
-  it('detects X2 pattern (all slopes >= 0, ascending)', () => {
-    const stack = makeStack(
-      [0, 60, 20],  // topLeft=(0,80), bottomLeft=(0,20)
-      [1, 80, 50],  // top=(1,130), bottom=(1,50)
-      [2, 100, 80], // topRight=(2,180), bottomRight=(2,80)
-    );
-    const peak = new Peak(1, stack);
-    // A: (130-80)/1=50, B: (180-130)/1=50, C: (50-20)/1=30, D: (80-50)/1=30
-    expect(classifyPeak(peak)).toBe('X');
-  });
-
-  it('returns false for non-X patterns', () => {
-    // W1 pattern should not be X
-    const stack = makeStack(
-      [0, 40, 60],
-      [1, 10, 50],
-      [2, 40, 60],
-    );
-    const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).not.toBe('X');
-  });
-});
-
-// -------------------------------------------------------------------
-// isYType
-// -------------------------------------------------------------------
-describe('classifyPeak - Y type', () => {
-  it('detects Y1 pattern (A>0, B<0, C>0, D>=0)', () => {
-    const stack = makeStack(
-      [0, 10, 40],  // topLeft=(0,50), bottomLeft=(0,40)
-      [1, 100, 50], // top=(1,150), bottom=(1,50)
-      [2, 10, 60],  // topRight=(2,70), bottomRight=(2,60)
-    );
-    const peak = new Peak(1, stack);
-    // A: (150-50)/1=100, B: (70-150)/1=-80, C: (50-40)/1=10, D: (60-50)/1=10
-    expect(peak.A.slope).toBeGreaterThan(0);
-    expect(peak.B.slope).toBeLessThan(0);
-    expect(peak.C.slope).toBeGreaterThan(0);
-    expect(peak.D.slope).toBeGreaterThanOrEqual(0);
-    expect(classifyPeak(peak)).toBe('Y');
-  });
-
-  it('detects Y2 pattern (A>0, B<0, C<=0, D<0)', () => {
-    const stack = makeStack(
-      [0, 10, 60],  // topLeft=(0,70), bottomLeft=(0,60)
-      [1, 100, 50], // top=(1,150), bottom=(1,50)
-      [2, 10, 40],  // topRight=(2,50), bottomRight=(2,40)
-    );
-    const peak = new Peak(1, stack);
-    // A: (150-70)/1=80, B: (50-150)/1=-100, C: (50-60)/1=-10, D: (40-50)/1=-10
-    expect(peak.A.slope).toBeGreaterThan(0);
-    expect(peak.B.slope).toBeLessThan(0);
-    expect(peak.C.slope).toBeLessThanOrEqual(0);
-    expect(peak.D.slope).toBeLessThan(0);
-    expect(classifyPeak(peak)).toBe('Y');
-  });
-
-  it('detects Y3 pattern (A<0, B<=0, C<0, D>0)', () => {
-    const stack = makeStack(
-      [0, 100, 60], // topLeft=(0,160), bottomLeft=(0,60)
-      [1, 80, 50],  // top=(1,130), bottom=(1,50)
-      [2, 60, 60],  // topRight=(2,120), bottomRight=(2,60)
-    );
-    const peak = new Peak(1, stack);
-    // A: (130-160)/1=-30, B: (120-130)/1=-10, C: (50-60)/1=-10, D: (60-50)/1=10
-    expect(peak.A.slope).toBeLessThan(0);
-    expect(peak.B.slope).toBeLessThanOrEqual(0);
-    expect(peak.C.slope).toBeLessThan(0);
-    expect(peak.D.slope).toBeGreaterThan(0);
-    expect(classifyPeak(peak)).toBe('Y');
-  });
-
-  it('detects Y4 pattern (A>=0, B>0, C<0, D>0)', () => {
-    const stack = makeStack(
-      [0, 60, 60],  // topLeft=(0,120), bottomLeft=(0,60)
-      [1, 80, 50],  // top=(1,130), bottom=(1,50)
-      [2, 100, 60], // topRight=(2,160), bottomRight=(2,60)
-    );
-    const peak = new Peak(1, stack);
-    // A: (130-120)/1=10, B: (160-130)/1=30, C: (50-60)/1=-10, D: (60-50)/1=10
-    expect(peak.A.slope).toBeGreaterThanOrEqual(0);
-    expect(peak.B.slope).toBeGreaterThan(0);
-    expect(peak.C.slope).toBeLessThan(0);
-    expect(peak.D.slope).toBeGreaterThan(0);
-    expect(classifyPeak(peak)).toBe('Y');
-  });
-
-  it('returns false for non-Y patterns', () => {
-    // Z-type diamond should not be Y
-    const stack = makeStack(
-      [0, 20, 80],
-      [1, 100, 50],
-      [2, 20, 80],
-    );
-    const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).not.toBe('Y');
-  });
-});
-
-// -------------------------------------------------------------------
-// isZType
-// -------------------------------------------------------------------
-describe('classifyPeak - Z type', () => {
-  it('detects Z pattern (diamond: A>=0, B<=0, C<=0, D>=0)', () => {
-    const stack = makeStack(
-      [0, 20, 80],  // topLeft=(0,100), bottomLeft=(0,80)
-      [1, 100, 50], // top=(1,150), bottom=(1,50)
-      [2, 20, 80],  // topRight=(2,100), bottomRight=(2,80)
-    );
-    const peak = new Peak(1, stack);
-    // A: (150-100)/1=50, B: (100-150)/1=-50, C: (50-80)/1=-30, D: (80-50)/1=30
-    expect(peak.A.slope).toBeGreaterThanOrEqual(0);
-    expect(peak.B.slope).toBeLessThanOrEqual(0);
-    expect(peak.C.slope).toBeLessThanOrEqual(0);
-    expect(peak.D.slope).toBeGreaterThanOrEqual(0);
-    expect(classifyPeak(peak)).toBe('Z');
-  });
-
-  it('returns false for non-Z patterns', () => {
-    // X2 ascending
-    const stack = makeStack(
-      [0, 60, 20],
-      [1, 80, 50],
-      [2, 100, 80],
-    );
-    const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).not.toBe('Z');
-  });
-});
-
-// -------------------------------------------------------------------
-// getWLabel
-// -------------------------------------------------------------------
-describe('getLabel - W type', () => {
+describe('findOptimalLabel - W type', () => {
   it('returns a non-null Label with fontSize > 0 for a valid W2 peak', () => {
     // Large W2 mountain: both top AND bottom rise in the center
     const stack = makeStack(
@@ -258,9 +72,8 @@ describe('getLabel - W type', () => {
       [200, 10, 40],    // topRight=(200,50), bottomRight=(200,40)
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('W');
 
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
     expect(label!.text).toBe('Test');
@@ -274,9 +87,8 @@ describe('getLabel - W type', () => {
       [200, 400, 100], // topRight=(200,500), bottomRight=(200,100)
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('W');
 
-    const label = getLabel(peak, 'Hi', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Hi', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
   });
@@ -289,15 +101,15 @@ describe('getLabel - W type', () => {
       [2, 1, 100],
     );
     const peak = new Peak(1, stack);
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).toBeNull();
   });
 });
 
 // -------------------------------------------------------------------
-// getXLabel
+// findOptimalLabel - X type
 // -------------------------------------------------------------------
-describe('getLabel - X type', () => {
+describe('findOptimalLabel - X type', () => {
   it('returns a non-null Label with fontSize > 0 for a valid X1 peak', () => {
     // Large descending X1 peak
     const stack = makeStack(
@@ -306,9 +118,8 @@ describe('getLabel - X type', () => {
       [200, 200, 0],   // topRight=(200,200), bottomRight=(200,0)
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('X');
 
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
     expect(label!.text).toBe('Test');
@@ -322,9 +133,8 @@ describe('getLabel - X type', () => {
       [200, 200, 200], // topRight=(200,400), bottomRight=(200,200)
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('X');
 
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
   });
@@ -337,15 +147,15 @@ describe('getLabel - X type', () => {
       [2, 1, 100],
     );
     const peak = new Peak(1, stack);
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).toBeNull();
   });
 });
 
 // -------------------------------------------------------------------
-// getYLabel
+// findOptimalLabel - Y type
 // -------------------------------------------------------------------
-describe('getLabel - Y type', () => {
+describe('findOptimalLabel - Y type', () => {
   it('returns a non-null Label for a Y1 peak', () => {
     const stack = makeStack(
       [0, 10, 40],
@@ -353,9 +163,8 @@ describe('getLabel - Y type', () => {
       [200, 10, 60],
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Y');
 
-    const label = getLabel(peak, 'Hi', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Hi', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
     expect(label!.text).toBe('Hi');
@@ -368,9 +177,8 @@ describe('getLabel - Y type', () => {
       [200, 10, 40],
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Y');
 
-    const label = getLabel(peak, 'Hi', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Hi', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
   });
@@ -382,9 +190,8 @@ describe('getLabel - Y type', () => {
       [200, 150, 60],
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Y');
 
-    const label = getLabel(peak, 'Hi', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Hi', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
   });
@@ -396,18 +203,17 @@ describe('getLabel - Y type', () => {
       [200, 300, 60],
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Y');
 
-    const label = getLabel(peak, 'Hi', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Hi', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
   });
 });
 
 // -------------------------------------------------------------------
-// getZLabel
+// findOptimalLabel - Z type
 // -------------------------------------------------------------------
-describe('getLabel - Z type', () => {
+describe('findOptimalLabel - Z type', () => {
   it('returns a non-null Label with fontSize > 0 for a valid Z peak', () => {
     // Large diamond Z peak
     const stack = makeStack(
@@ -416,9 +222,8 @@ describe('getLabel - Z type', () => {
       [200, 100, 200], // topRight=(200,300), bottomRight=(200,200)
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Z');
 
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
     expect(label!.text).toBe('Test');
@@ -427,17 +232,14 @@ describe('getLabel - Z type', () => {
 
   it('falls back to clamped sizing when intersections escape segment bounds', () => {
     // Use a realistically-sized peak so the fallback produces a viable label.
-    // Slopes must be unambiguously Z (A>0, B<0) to avoid overlap with W pattern.
     const stack = makeStack(
       [0, 50, 450],
       [500, 120, 400],
       [1000, 50, 450],
     );
     const peak = new Peak(1, stack);
-    expect(classifyPeak(peak)).toBe('Z');
 
-    // Z now uses the peak's horizontal extent as a fallback instead of returning null
-    const label = getLabel(peak, 'Test', 'Arial', mockMeasureText);
+    const label = findOptimalLabel(peak, 'Test', 'Arial', mockMeasureText);
     expect(label).not.toBeNull();
     expect(label!.fontSize).toBeGreaterThan(0);
     expect(isFinite(label!.xPosition)).toBe(true);

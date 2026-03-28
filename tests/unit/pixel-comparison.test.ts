@@ -5,7 +5,7 @@ import { simpleSeriesData, largeSeriesData } from '../fixtures/series-data';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices } from '@/core/wave/util';
 import type { MeasureTextFn } from '@/core/wave/util';
-import { classifyPeak, getLabel } from '@/core/wave/classifier';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 
@@ -125,7 +125,7 @@ describe('Pixel-Proxy Structural Regression', () => {
           const peak = new Peak(idx, stackPoints);
           let label = null;
 
-          label = getLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
+          label = findOptimalLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
 
           if (label && label.fontSize >= 4) {
             labels.push({
@@ -161,7 +161,7 @@ describe('Pixel-Proxy Structural Regression', () => {
           const peak = new Peak(idx, stackPoints);
           let label = null;
 
-          label = getLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
+          label = findOptimalLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
 
           if (label && label.fontSize >= 4) {
             labels.push({

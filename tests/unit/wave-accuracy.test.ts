@@ -27,7 +27,7 @@ import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import type { MeasureTextFn } from '@/core/wave/util';
 import { findLabelIndices } from '@/core/wave/util';
-import { classifyPeak, getLabel } from '@/core/wave/classifier';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
 import { computeDeformedText } from '@/core/wave/deformText';
 import type Label from '@/core/models/Label';
@@ -63,7 +63,7 @@ function getActualBounds(text: string, fontSize: number) {
 // ── Algorithm classification ────────────────────────────────────────
 function getLabelForTest(peak: Peak, text: string, stackPoints?: StackPoint[], peakIndex?: number): Label | null {
   try {
-    return getLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
+    return findOptimalLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
   } catch {
     return null;
   }
@@ -78,9 +78,22 @@ interface CachedData {
 
 const FIXTURE_DIR = path.resolve(__dirname, '../fixtures/wave-accuracy');
 
+// Curated subset: users with the most overflow issues (≥2 critical across all offsets).
+// Keeps accuracy tests fast (~20s) while covering the most problematic cases.
+const ACCURACY_USERS = [
+  'arope23', 'AlterMann', 'grimmless', 'AlphaTeam',
+  'Ganelon13', 'oscarbuelna', 'oliviawoof', 'babydwake',
+  'kauaaniceto', 'snyeoz', 'aoaaoa', 'crewsackan',
+  'NestingKoala', 'w0rldprincess', 'captmilox', 'Faust_1808',
+  'txtmepls', 'meatyclownman', 'MixtapesHappen', 'digicait',
+  'Taurheim',
+];
+
 function loadCachedUsers(): CachedData[] {
-  const files = fs.readdirSync(FIXTURE_DIR).filter(f => f.endsWith('.json'));
-  return files.map(f => JSON.parse(fs.readFileSync(path.join(FIXTURE_DIR, f), 'utf8')));
+  return ACCURACY_USERS
+    .map(name => path.join(FIXTURE_DIR, `${name}.json`))
+    .filter(f => fs.existsSync(f))
+    .map(f => JSON.parse(fs.readFileSync(f, 'utf8')));
 }
 
 // ── Offset modes (match WaveVisualization.tsx) ──────────────────────

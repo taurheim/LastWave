@@ -4,7 +4,7 @@ import type SeriesData from '@/core/models/SeriesData';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices, createCanvasMeasurer } from '@/core/wave/util';
-import { getLabel } from '@/core/wave/classifier';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import { computeDeformedText } from '@/core/wave/deformText';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
@@ -353,7 +353,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            label = getLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx, pathD });
             }
@@ -476,7 +476,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            label = getLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
 
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               const dims = measureText(label.text, fontData.family, label.fontSize);

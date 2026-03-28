@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import type SeriesData from '@/core/models/SeriesData';
 import { findLabelIndices } from '@/core/wave/util';
 import type { MeasureTextFn } from '@/core/wave/util';
-import { classifyPeak, getLabel } from '@/core/wave/classifier';
+import { findOptimalLabel } from '@/core/wave/bezierFit';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import schemes from '@/core/config/schemes.json';
@@ -131,7 +131,7 @@ function renderWaveSvg(
         const peak = new Peak(idx, stackPoints);
         let label: Label | null = null;
 
-        label = getLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
+        label = findOptimalLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
 
         if (label && label.fontSize >= 8) {
           svg.append('text')
