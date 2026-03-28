@@ -9,17 +9,17 @@ import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SegmentData from '@/core/models/SegmentData';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
+import LastFmApi from '@/core/lastfm/LastFmApi';
+import TimeSpan from '@/core/lastfm/models/TimeSpan';
+import URLParameter from '@/core/lastfm/models/URLParameter';
 import {
-  LastFmApi,
-  TimeSpan,
-  URLParameter,
   splitTimeSpan,
   joinSegments,
   cleanByMinPlays,
   combineArtistTags,
   findOptimalMinPlays,
   getAnimationSteps,
-} from '@/core/lastfm';
+} from '@/core/lastfm/util';
 
 const LAST_FM_API_KEY= '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;

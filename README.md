@@ -21,56 +21,50 @@ LastWave is a web app that takes data from your [last.fm](https://last.fm) profi
 
 ## How does it work?
 
-The wave graph is rendered entirely in the browser as SVG using D3.js. Text placement on the wave peaks uses custom algorithms (W/X/Y/Z wave types) detailed in [this blog post](http://savas.ca/blog/lastwave-1-text-placement/). LastWave supports exporting as SVG, PNG, or sharing via Cloudinary.
+The wave graph is rendered entirely in the browser as SVG using D3.js. Key algorithms include:
+
+- **Bezier curve fitting** — smooth curves fitted to wave shapes for text placement
+- **Deformed text** — text is bent along wave contours using spline-based character placement
+
+LastWave supports grouping by artist, album, or tag, with genre lookup via Wikidata, MusicBrainz, and Last.fm. Finished graphs can be exported as SVG or PNG, or shared to a public gallery via Cloudinary.
 
 ## Getting Started
 
 ```bash
-# Clone the repo
 git clone https://github.com/taurheim/LastWave.git
 cd LastWave
-
-# Install dependencies
 npm install
-
-# Start dev server
 npm run dev
-
-# Open in browser
-open http://localhost:4321
+# Open http://localhost:4321
 ```
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm test` | Run unit & component tests |
-| `npm run test:watch` | Run tests in watch mode |
-| `npm run test:e2e` | Run Playwright E2E tests |
 
 ## Project Structure
 
 ```
 src/
-├── core/           # Framework-agnostic business logic
-│   ├── models/     # Data models (Point, Peak, Label, SeriesData, etc.)
-│   ├── lastfm/     # Last.fm API client & data processing
-│   ├── wave/       # Text placement algorithms (W/X/Y/Z types)
-│   ├── config/     # Color schemes, date presets
-│   └── cloudinary/ # Image upload API
-├── components/     # React components
-├── layouts/        # Astro layouts
-├── pages/          # Astro pages (/, /about, /gallery)
-└── store/          # Zustand state management
+├── core/               # Framework-agnostic business logic
+│   ├── models/         # Data models (Point, Peak, Label, SeriesData, etc.)
+│   ├── lastfm/         # Last.fm API client & data processing
+│   ├── wave/           # Label placement & deformed text algorithms
+│   ├── genres/         # Genre lookup (Wikidata → MusicBrainz → Last.fm)
+│   ├── config/         # Color schemes, date presets
+│   └── cloudinary/     # Image upload API
+├── components/         # React components (visualization, options, gallery, etc.)
+│   └── lab/            # Dev-only slice lab for testing label placement
+├── layouts/            # Astro layouts
+├── pages/              # Routes: /, /about, /gallery
+├── pages-dev/          # Dev-only routes (/lab)
+└── store/              # Zustand state management
 tests/
-├── unit/           # Unit tests for core logic
-├── component/      # React component tests
-├── e2e/            # Playwright E2E tests
-└── fixtures/       # Test data fixtures
+├── unit/               # Core logic tests (wave accuracy, models, API, SVG snapshots)
+├── component/          # React component tests
+├── e2e/                # Playwright E2E tests
+└── fixtures/           # Test data & accuracy baselines
 ```
+
+## Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for the full development workflow, commands, spec-driven process, and validation details.
 
 ## How to Contribute
 
