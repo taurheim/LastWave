@@ -473,7 +473,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               // is tapering and thin bands cause visible text overflow.
               const textH = label.fontSize * 1.2;
               const numPts = stackPoints.length;
-              const edgeMargin = Math.max(3, Math.ceil(numPts * 0.1));
+              const edgeMargin = Math.max(1, Math.ceil(numPts * 0.05));
               const leftIdx = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
               const rightIdx = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
               let tooThin = false;
