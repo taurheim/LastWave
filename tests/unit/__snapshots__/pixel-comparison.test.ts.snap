@@ -15,6 +15,12 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "y": 503.67,
   },
   {
+    "fontSize": 37,
+    "text": "Radiohead",
+    "x": 500,
+    "y": 505.14,
+  },
+  {
     "fontSize": 33,
     "text": "Pink Floyd",
     "x": 468,
@@ -37,6 +43,12 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "text": "Tame Impala",
     "x": 670,
     "y": 320.41,
+  },
+  {
+    "fontSize": 45,
+    "text": "Tame Impala",
+    "x": 1000,
+    "y": 366.37,
   },
   {
     "fontSize": 43,
@@ -99,6 +111,12 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "y": 111.37,
   },
   {
+    "fontSize": 18,
+    "text": "Burial",
+    "x": 1101,
+    "y": 114.15,
+  },
+  {
     "fontSize": 61,
     "text": "Four Tet",
     "x": 873,
@@ -132,6 +150,12 @@ exports[`Pixel-Proxy Structural Regression > Label placement > places labels at 
     "text": "Pink Floyd",
     "x": 382,
     "y": 229.33,
+  },
+  {
+    "fontSize": 40,
+    "text": "Tame Impala",
+    "x": 111,
+    "y": 160.97,
   },
 ]
 `;

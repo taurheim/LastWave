@@ -4,12 +4,9 @@ import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import type Label from '@/core/models/Label';
 import { createCanvasMeasurer } from '@/core/wave/util';
-import { isWType, getWLabel } from '@/core/wave/waveW';
-import { isXType, getXLabel } from '@/core/wave/waveX';
-import { isYType, getYLabel } from '@/core/wave/waveY';
-import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { classifyPeak, getLabel } from '@/core/wave/classifier';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
-import { computeDeformedText } from '@/core/wave/deformTextOptB';
+import { computeDeformedText } from '@/core/wave/deformText';
 import type { SliceDefinition } from './sliceData';
 
 const CARD_W = 400;
@@ -21,21 +18,8 @@ const BEZIER_STROKE = 'rgba(39, 170, 225, 0.6)';
 const LINE_COLORS = { A: '#ef4444', B: '#f59e0b', C: '#22c55e', D: '#8b5cf6' };
 
 function getAlgorithmType(peak: Peak): string {
-  if (isWType(peak)) return 'W';
-  if (isZType(peak)) return 'Z';
-  if (isYType(peak)) return 'Y';
-  if (isXType(peak)) return 'X';
-  return '?';
+  return classifyPeak(peak) ?? '?';
 }
-
-function getLabel(peak: Peak, text: string, measureText: ReturnType<typeof createCanvasMeasurer>, points: StackPoint[], peakIndex: number): Label | null {
-  if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
-  if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
-  if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
-  if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText, points, peakIndex);
-  return null;
-}
-
 
 interface SliceCardProps {
   slice: SliceDefinition;
@@ -169,7 +153,7 @@ export default function SliceCard({ slice, showStraightLines, showBezier, showDe
     }
 
     // 3. Position and draw text label, detect overflow
-    const label = getLabel(peak, slice.label, measureText, points, slice.peakIndex);
+    const label = getLabel(peak, slice.label, FONT_FAMILY, measureText, points, slice.peakIndex);
     if (label) {
       const hasInvalid = !isFinite(label.xPosition) || !isFinite(label.yPosition) || !isFinite(label.fontSize);
 

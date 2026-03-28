@@ -27,12 +27,9 @@ import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import type { MeasureTextFn } from '@/core/wave/util';
 import { findLabelIndices } from '@/core/wave/util';
-import { isWType, getWLabel } from '@/core/wave/waveW';
-import { isXType, getXLabel } from '@/core/wave/waveX';
-import { isYType, getYLabel } from '@/core/wave/waveY';
-import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { classifyPeak, getLabel } from '@/core/wave/classifier';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
-import { computeDeformedText } from '@/core/wave/deformTextOptB';
+import { computeDeformedText } from '@/core/wave/deformText';
 import type Label from '@/core/models/Label';
 
 // ── Constants (match WaveVisualization.tsx) ──────────────────────────
@@ -64,16 +61,12 @@ function getActualBounds(text: string, fontSize: number) {
 }
 
 // ── Algorithm classification ────────────────────────────────────────
-function getLabel(peak: Peak, text: string, stackPoints?: StackPoint[], peakIndex?: number): Label | null {
+function getLabelForTest(peak: Peak, text: string, stackPoints?: StackPoint[], peakIndex?: number): Label | null {
   try {
-    if (isWType(peak)) return getWLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
-    if (isZType(peak)) return getZLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
-    if (isYType(peak)) return getYLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
-    if (isXType(peak)) return getXLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
+    return getLabel(peak, text, FONT_FAMILY, measureText, stackPoints, peakIndex);
   } catch {
     return null;
   }
-  return null;
 }
 
 // ── Cached data loader ──────────────────────────────────────────────
@@ -192,7 +185,7 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
 
       const peak = new Peak(idx, stackPoints);
       const t0 = performance.now();
-      const label = getLabel(peak, title, stackPoints, idx);
+      const label = getLabelForTest(peak, title, stackPoints, idx);
       placementTimeMs += performance.now() - t0;
       if (!label || !isFinite(label.fontSize) || label.fontSize < MIN_FONT_SIZE) return;
 

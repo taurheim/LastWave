@@ -4,13 +4,9 @@ import type SeriesData from '@/core/models/SeriesData';
 import { useLastWaveStore } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices, createCanvasMeasurer } from '@/core/wave/util';
-import { isWType, getWLabel } from '@/core/wave/waveW';
-import { isXType, getXLabel } from '@/core/wave/waveX';
-import { isYType, getYLabel } from '@/core/wave/waveY';
-import { isZType, getZLabel } from '@/core/wave/waveZ';
-import { findOptimalLabel } from '@/core/wave/bezierFit';
-import { computeDeformedText } from '@/core/wave/deformTextOptB';
-import { buildBandLUT, checkLabelOverflow } from '@/core/wave/overflowDetection';
+import { getLabel } from '@/core/wave/classifier';
+import { computeDeformedText } from '@/core/wave/deformText';
+import { buildBandLUT } from '@/core/wave/overflowDetection';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
@@ -357,18 +353,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            if (isWType(peak)) {
-              label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isZType(peak)) {
-              label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isYType(peak)) {
-              label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isXType(peak)) {
-              label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else {
-              // Unclassified peak — try direct bezier fitting
-              label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            }
+            label = getLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx, pathD });
             }
@@ -491,17 +476,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            if (isWType(peak)) {
-              label = getWLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isZType(peak)) {
-              label = getZLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isYType(peak)) {
-              label = getYLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else if (isXType(peak)) {
-              label = getXLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            } else {
-              label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
-            }
+            label = getLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
 
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               const dims = measureText(label.text, fontData.family, label.fontSize);

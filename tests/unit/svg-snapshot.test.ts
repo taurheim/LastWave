@@ -3,10 +3,7 @@ import * as d3 from 'd3';
 import type SeriesData from '@/core/models/SeriesData';
 import { findLabelIndices } from '@/core/wave/util';
 import type { MeasureTextFn } from '@/core/wave/util';
-import { isWType, getWLabel } from '@/core/wave/waveW';
-import { isXType, getXLabel } from '@/core/wave/waveX';
-import { isYType, getYLabel } from '@/core/wave/waveY';
-import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { classifyPeak, getLabel } from '@/core/wave/classifier';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import schemes from '@/core/config/schemes.json';
@@ -134,10 +131,7 @@ function renderWaveSvg(
         const peak = new Peak(idx, stackPoints);
         let label: Label | null = null;
 
-        if (isWType(peak)) label = getWLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
-        else if (isZType(peak)) label = getZLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
-        else if (isYType(peak)) label = getYLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
-        else if (isXType(peak)) label = getXLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
+        label = getLabel(peak, seriesTitle, 'Roboto', mockMeasureText);
 
         if (label && label.fontSize >= 8) {
           svg.append('text')

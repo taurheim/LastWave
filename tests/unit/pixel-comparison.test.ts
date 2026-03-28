@@ -5,10 +5,7 @@ import { simpleSeriesData, largeSeriesData } from '../fixtures/series-data';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices } from '@/core/wave/util';
 import type { MeasureTextFn } from '@/core/wave/util';
-import { isWType, getWLabel } from '@/core/wave/waveW';
-import { isXType, getXLabel } from '@/core/wave/waveX';
-import { isYType, getYLabel } from '@/core/wave/waveY';
-import { isZType, getZLabel } from '@/core/wave/waveZ';
+import { classifyPeak, getLabel } from '@/core/wave/classifier';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 
@@ -128,10 +125,7 @@ describe('Pixel-Proxy Structural Regression', () => {
           const peak = new Peak(idx, stackPoints);
           let label = null;
 
-          if (isWType(peak)) label = getWLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isZType(peak)) label = getZLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isYType(peak)) label = getYLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isXType(peak)) label = getXLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
+          label = getLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
 
           if (label && label.fontSize >= 4) {
             labels.push({
@@ -167,10 +161,7 @@ describe('Pixel-Proxy Structural Regression', () => {
           const peak = new Peak(idx, stackPoints);
           let label = null;
 
-          if (isWType(peak)) label = getWLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isZType(peak)) label = getZLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isYType(peak)) label = getYLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
-          else if (isXType(peak)) label = getXLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
+          label = getLabel(peak, keys[layerIndex], 'Roboto', mockMeasureText);
 
           if (label && label.fontSize >= 4) {
             labels.push({
@@ -216,3 +207,4 @@ describe('Pixel-Proxy Structural Regression', () => {
     });
   });
 });
+
