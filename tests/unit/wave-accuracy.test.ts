@@ -148,16 +148,6 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
   let seriesWithDeformLabel = 0;
   let seriesWithStraightLabel = 0;
 
-  // Pre-compute total wave envelope height at each data point (for edge-taper detection)
-  const lastLayerIdx = stackedData.length - 1;
-  const waveEnvelopeH: number[] = [];
-  let maxEnvelopeH = 0;
-  for (let i = 0; i < numSegs; i++) {
-    const h = yScale(stackedData[0][i][0]) - yScale(stackedData[lastLayerIdx][i][1]);
-    waveEnvelopeH.push(h);
-    if (h > maxEnvelopeH) maxEnvelopeH = h;
-  }
-
   stackedData.forEach((layer, layerIdx) => {
     const title = keys[layerIdx];
     const counts = data.artists[layerIdx].counts;
@@ -200,34 +190,17 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
         straightVisible = false;
       }
 
+      // Edge check (matches WaveVisualization.tsx non-deform path)
       if (straightVisible) {
         const textH = label.fontSize * 1.2;
         const numPts = stackPoints.length;
-
-        const interpBandH = (px: number): number => {
-          const frac = px * (numPts - 1) / width;
-          const ii = Math.min(Math.max(0, Math.floor(frac)), numPts - 2);
-          const t = Math.min(1, Math.max(0, frac - ii));
-          return stackPoints[ii].y * (1 - t) + stackPoints[ii + 1].y * t;
-        };
-
-        const sampleXs = [label.xPosition, label.xPosition + textW * 0.5, label.xPosition + textW];
-        for (const px of sampleXs) {
-          if (interpBandH(px) < textH) { straightVisible = false; break; }
-        }
-
-        // Edge-taper check
-        if (straightVisible) {
-          const edgeMargin = Math.ceil(numPts * 0.2);
-          const li = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
-          const ri = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
-          for (let i = li; i <= ri; i++) {
-            const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
-            const waveTapered = waveEnvelopeH[i] < maxEnvelopeH * 0.5;
-            if (stackPoints[i].y < textH && (atEdge || waveTapered)) {
-              straightVisible = false;
-              break;
-            }
+        const edgeMargin = Math.max(3, Math.ceil(numPts * 0.1));
+        const li = Math.max(0, Math.floor(label.xPosition * (numPts - 1) / width));
+        const ri = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
+        for (let i = li; i <= ri; i++) {
+          if ((i < edgeMargin || i >= numPts - edgeMargin) && stackPoints[i].y < textH) {
+            straightVisible = false;
+            break;
           }
         }
       }
