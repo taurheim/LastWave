@@ -249,17 +249,15 @@ export function computeDeformedText(
     const bd = bandData[i];
     const thickFrac = bd.thickness / (peakThickness || 1);
     if (thickFrac >= VIABLE_FRAC) {
-      const w = thickFrac * thickFrac;
+      const w = thickFrac * thickFrac * thickFrac;
       weightedXSum += bd.x * w;
       weightSum += w;
     }
   }
-  // Blend thickness-weighted centroid with viable region midpoint
-  // so text centers in the available space, not just at the thickest point
+  // Center text on the thickness-weighted centroid (thickest point of band).
+  // The viable region search provides accurate centroid across the full band.
   const viableMidX = (viableLeft + viableRight) / 2;
-  const thickCenterX = weightSum > 0
-    ? 0.5 * (weightedXSum / weightSum) + 0.5 * viableMidX
-    : viableMidX;
+  const thickCenterX = weightSum > 0 ? weightedXSum / weightSum : viableMidX;
 
   // Pass 1: compute deformed total width for centering
   const tentativeStart = thickCenterX - approxTotalWidth / 2;
@@ -279,11 +277,11 @@ export function computeDeformedText(
   }
 
   const idealStart = thickCenterX - deformedTotalWidth / 2;
-  // Clamp: keep text fully within the viable region so it doesn't walk
-  // into thin areas where characters get compressed (e.g. Snail Mail near Chassol)
+  // Allow text to extend past the viable region — characters in thin areas
+  // are handled by the shrink-to-fit and center-snap in Pass 3.
   const textStartX = Math.max(
     firstBandX,
-    Math.min(viableRight - deformedTotalWidth, idealStart),
+    Math.min(viableRight - deformedTotalWidth * 0.3, idealStart),
   );
   const startLen = lengthAtX(textStartX);
 
