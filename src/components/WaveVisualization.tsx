@@ -183,7 +183,10 @@ export default memo(function WaveVisualization({
     // During animation (suppressLabels), use jitter=1 so ordering is purely
     // hash-based and completely stable — no data-dependent reordering that
     // would cause bands to visually jump between frames.
+    // Also use zero-baseline offset during animation so existing bands stay
+    // anchored when new artists appear (silhouette recentering causes jumps).
     const balancedJitter = suppressLabels ? 1.0 : stackJitter;
+    const animOffsetFn = suppressLabels ? d3.stackOffsetNone : offsetFn;
     const orderFn =
       offsetName === 'balanced'
         ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, balancedJitter)
@@ -193,7 +196,7 @@ export default memo(function WaveVisualization({
     const stack = d3
       .stack<Record<string, number>>()
       .keys(keys)
-      .offset(offsetFn)
+      .offset(animOffsetFn)
       .order(orderFn);
 
     const stackedData = stack(tableData);
@@ -225,11 +228,18 @@ export default memo(function WaveVisualization({
       .y1((d) => yScale(d[1]))
       .curve(d3.curveMonotoneX);
 
-    // During animation (suppressLabels), do a fast render: paths + static text, no artist labels
+    // During animation (suppressLabels), do a fast render: paths + static text, no artist labels.
+    // Uses incremental updates instead of full teardown so D3 can smoothly morph paths.
     if (suppressLabels) {
-      svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
-      svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
+
+      // Background rect — create once, update on subsequent frames
+      const bg = svg.selectAll<SVGRectElement, null>('rect.bg').data([null]);
+      bg.join('rect')
+        .attr('class', 'bg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('fill', bgColor);
 
       const fontColor: string =
         !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
@@ -238,7 +248,8 @@ export default memo(function WaveVisualization({
       const addYears = rendererOptions.add_years ?? isYearRange;
       const showWatermark = rendererOptions.show_watermark ?? true;
 
-      // Year separator lines (behind wave paths)
+      // Year separator lines — remove and redraw (cheap, static)
+      svg.selectAll('line.year-sep').remove();
       if (addYears && timeStart && timeEnd) {
         const startMs =
           timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
@@ -252,6 +263,7 @@ export default memo(function WaveVisualization({
             if (lastYear !== -1) {
               svg
                 .append('line')
+                .attr('class', 'year-sep')
                 .attr('x1', xScale(i))
                 .attr('y1', 0)
                 .attr('x2', xScale(i))
@@ -265,15 +277,27 @@ export default memo(function WaveVisualization({
         }
       }
 
+      // Wave paths — use keyed join so D3 morphs existing paths with transitions
       svg
         .selectAll<SVGPathElement, d3.Series<Record<string, number>, string>>('path.wave')
         .data(stackedData, (d) => d.key)
-        .join('path')
-        .attr('class', 'wave')
-        .attr('d', (d) => area(d as [number, number][]) ?? '')
-        .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
-        .attr('stroke', 'none')
-        .attr('stroke-width', 0);
+        .join(
+          (enter) =>
+            enter
+              .append('path')
+              .attr('class', 'wave')
+              .attr('d', (d) => area(d as [number, number][]) ?? '')
+              .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
+              .attr('stroke', 'none'),
+          (update) =>
+            update
+              .attr('d', (d) => area(d as [number, number][]) ?? '')
+              .attr('fill', (d) => colorMap.get(d.key) ?? colors[0]),
+          (exit) => exit.remove(),
+        );
+
+      // Overlays (months, years, watermark) — remove old, redraw fresh
+      svg.selectAll('.anim-overlay').remove();
 
       if (addMonths && timeStart && timeEnd) {
         const startMs =
@@ -302,6 +326,7 @@ export default memo(function WaveVisualization({
             lastMonth = month;
             svg
               .append('text')
+              .attr('class', 'anim-overlay')
               .attr('x', xScale(i))
               .attr('y', height - 5)
               .attr('font-size', '10px')
@@ -325,6 +350,7 @@ export default memo(function WaveVisualization({
             lastYear = year;
             svg
               .append('text')
+              .attr('class', 'anim-overlay')
               .attr('x', xScale(i) + (i > 0 ? 4 : 0))
               .attr('y', 15)
               .attr('font-size', '12px')
@@ -339,6 +365,7 @@ export default memo(function WaveVisualization({
       if (showWatermark) {
         svg
           .append('text')
+          .attr('class', 'anim-overlay')
           .attr('x', width - 5)
           .attr('y', height - 5)
           .attr('text-anchor', 'end')
