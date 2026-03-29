@@ -158,18 +158,6 @@ const { title = 'LastWave' } = Astro.props;
         <a href="/gallery" class="nav-link hover:text-lw-accent">Gallery</a>
         <span class="inline-block h-3 w-px bg-lw-border"></span>
         <a href="/about" class="nav-link hover:text-lw-accent">About</a>
-        <span class="inline-block h-3 w-px bg-lw-border"></span>
-        {
-          /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
-          import.meta.env.DEV && (
-            <a href="/lab" class="nav-link hover:text-lw-accent">
-              Lab
-              <sub class="ml-0.5 animate-pulse font-mono text-[9px] tracking-widest text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]">
-                DEV
-              </sub>
-            </a>
-          )
-        }
       </div>
     </nav>
 

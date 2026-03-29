@@ -30,6 +30,7 @@ import { findLabelIndices } from '@/core/wave/util';
 import { findOptimalLabel } from '@/core/wave/bezierFit';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
 import { computeDeformedText } from '@/core/wave/deformText';
+import { stackOrderSlopeBalanced } from '@/core/wave/stackOrder';
 import type Label from '@/core/models/Label';
 
 // ── Constants (match WaveVisualization.tsx) ──────────────────────────
@@ -98,6 +99,7 @@ function loadCachedUsers(): CachedData[] {
 
 // ── Offset modes (match WaveVisualization.tsx) ──────────────────────
 const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
+  balanced: d3.stackOffsetSilhouette,
   silhouette: d3.stackOffsetSilhouette,
   wiggle: d3.stackOffsetWiggle,
   expand: d3.stackOffsetExpand,
@@ -105,7 +107,7 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
 };
 
 type OffsetMode = keyof typeof OFFSET_MAP;
-const ALL_OFFSETS: OffsetMode[] = ['silhouette', 'wiggle', 'expand', 'zero'];
+const ALL_OFFSETS: OffsetMode[] = ['balanced', 'silhouette', 'wiggle', 'expand', 'zero'];
 
 // ── Overflow computation ────────────────────────────────────────────
 interface LabelResult {
@@ -137,10 +139,16 @@ function runPipeline(data: CachedData, offsetMode: OffsetMode = 'silhouette'): {
     tableData.push(row);
   }
 
+  const orderFn =
+    offsetMode === 'balanced'
+      ? stackOrderSlopeBalanced
+      : offsetMode === 'silhouette'
+        ? d3.stackOrderInsideOut
+        : d3.stackOrderNone;
   const stack = d3.stack<Record<string, number>>()
     .keys(keys)
     .offset(OFFSET_MAP[offsetMode])
-    .order(d3.stackOrderNone);
+    .order(orderFn);
   const stackedData = stack(tableData);
 
   const xScale = d3.scaleLinear().domain([0, numSegs - 1]).range([0, width]);

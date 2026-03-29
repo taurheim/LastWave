@@ -8,6 +8,7 @@ import { findOptimalLabel } from '@/core/wave/bezierFit';
 import { computeDeformedText } from '@/core/wave/deformText';
 import { buildBandLUT } from '@/core/wave/overflowDetection';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
+import { stackOrderSlopeBalanced } from '@/core/wave/stackOrder';
 import Peak from '@/core/models/Peak';
 import type { StackPoint } from '@/core/models/Peak';
 import FontData from '@/core/models/FontData';
@@ -25,6 +26,7 @@ const OFFSET_MAP: Record<
   string,
   (series: d3.Series<Record<string, number>, string>, order: number[]) => void
 > = {
+  balanced: d3.stackOffsetSilhouette,
   silhouette: d3.stackOffsetSilhouette,
   wiggle: d3.stackOffsetWiggle,
   expand: d3.stackOffsetExpand,
@@ -152,11 +154,12 @@ export default memo(function WaveVisualization({
     const fontColor: string =
       !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
     const fontFamily = rendererOptions.font ?? 'DM Sans';
-    const offsetName = rendererOptions.offset ?? 'silhouette';
+    const offsetName = rendererOptions.offset ?? 'balanced';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
     const deformText = rendererOptions.deform_text ?? true;
     const jitterText = rendererOptions.jitter_text ?? true;
+    const stackJitter = parseFloat(rendererOptions.stack_jitter as string) || 0.15;
 
     // Determine dimensions
     const numSegments = seriesData[0]?.counts.length ?? 0;
@@ -174,19 +177,31 @@ export default memo(function WaveVisualization({
       tableData.push(row);
     }
 
-    // D3 stack — insideOut distributes bands to both top and bottom of the
-    // baseline so new artists don't all pile on one side.
+    // D3 stack — "balanced" mode uses custom slope-balanced ordering;
+    // "silhouette" uses insideOut so new artists appear on both sides;
+    // all other modes use the default input order.
+    const orderFn =
+      offsetName === 'balanced'
+        ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, stackJitter)
+        : offsetName === 'silhouette'
+          ? d3.stackOrderInsideOut
+          : d3.stackOrderNone;
     const stack = d3
       .stack<Record<string, number>>()
       .keys(keys)
       .offset(offsetFn)
-      .order(d3.stackOrderInsideOut);
+      .order(orderFn);
 
     const stackedData = stack(tableData);
 
-    // Color adjacency must use the visual stacking order, not the input order
-    const stackedKeys = stackedData.map((layer) => layer.key);
-    const colorMap = assignStackColors(stackedKeys, colors, !suppressLabels);
+    // When using slope-balanced order, color adjacency must use the visual
+    // stacking order (which differs from input order). Standard order preserves it.
+    // In balanced mode, skip adjacency fixing entirely — the hash-based assignment
+    // is stable across animation frames, but adjacency fixing would shift colors
+    // as new artists appear at the edges during progressive loading.
+    const colorKeys = offsetName === 'balanced' ? stackedData.map((layer) => layer.key) : keys;
+    const fixAdj = offsetName !== 'balanced' && !suppressLabels;
+    const colorMap = assignStackColors(colorKeys, colors, fixAdj);
 
     // Scales
     const xScale = d3
@@ -654,6 +669,7 @@ export default memo(function WaveVisualization({
     rendererOptions.add_labels,
     rendererOptions.deform_text,
     rendererOptions.jitter_text,
+    rendererOptions.stack_jitter,
     suppressLabels,
   ]);
 
