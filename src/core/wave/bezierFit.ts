@@ -185,7 +185,6 @@ export function findOptimalLabel(
   measureText: MeasureTextFn,
   stack?: StackPoint[],
   peakIndex?: number,
-  deformText?: boolean,
 ): Label | null {
   const MIN_FONT = 2;
   // Safety margin based on center band height, applied uniformly.
@@ -293,25 +292,6 @@ export function findOptimalLabel(
   const widthPerPx = refDims.width / REF_SIZE; // width = fontSize * widthPerPx
   const heightPerPx = refDims.height / REF_SIZE; // height = fontSize * heightPerPx
 
-  // For deform text: compute the height-check window fraction once.
-  // When text at the height-limited font would be wider than the span,
-  // reduce the window so the font isn't penalized by thin edges.
-  let deformWindowFrac = 1.0;
-  if (deformText && span > 0 && maxAvailH > 0) {
-    // Measure what fraction of the span maintains substantial height.
-    // Narrow peaks (like NIN: sharp spike) have a small thick fraction
-    // and need a boost. Broad peaks keep their height across the span.
-    let thickColumns = 0;
-    const halfMax = maxAvailH * 0.5;
-    for (let i = 0; i <= span; i++) {
-      if (topVals[i] - botVals[i] >= halfMax) thickColumns++;
-    }
-    const thickFraction = thickColumns / (span + 1);
-    if (thickFraction < 0.6) {
-      deformWindowFrac = Math.max(0.16, thickFraction * 0.52);
-    }
-  }
-
   // Binary search on font size
   const maxFont = Math.floor(maxAvailH / heightPerPx) + 1;
   let lo = MIN_FONT;
@@ -332,15 +312,12 @@ export function findOptimalLabel(
     const textH = mid * heightPerPx;
     const wPx = Math.ceil(textW);
 
-    if (wPx > span && (!deformText || deformWindowFrac >= 1.0)) {
+    if (wPx > span) {
       hi = mid - 1;
       continue;
     }
 
-    const rawWindowSize = Math.min(wPx + 1, n);
-    const windowSize = deformText
-      ? Math.min(rawWindowSize, Math.max(1, Math.ceil(span * deformWindowFrac)))
-      : rawWindowSize;
+    const windowSize = Math.min(wPx + 1, n);
     const numWindows = n - windowSize + 1;
 
     // Sliding window minimum of topVals

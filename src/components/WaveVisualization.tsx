@@ -180,9 +180,13 @@ export default memo(function WaveVisualization({
     // D3 stack — "balanced" mode uses custom slope-balanced ordering;
     // "silhouette" uses insideOut so new artists appear on both sides;
     // all other modes use the default input order.
+    // During animation (suppressLabels), use jitter=1 so ordering is purely
+    // hash-based and completely stable — no data-dependent reordering that
+    // would cause bands to visually jump between frames.
+    const balancedJitter = suppressLabels ? 1.0 : stackJitter;
     const orderFn =
       offsetName === 'balanced'
-        ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, stackJitter)
+        ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, balancedJitter)
         : offsetName === 'silhouette'
           ? d3.stackOrderInsideOut
           : d3.stackOrderNone;
@@ -448,7 +452,6 @@ export default memo(function WaveVisualization({
               measureText,
               stackPoints,
               idx,
-              true,
             );
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               jobs.push({
