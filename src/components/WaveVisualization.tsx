@@ -183,10 +183,7 @@ export default memo(function WaveVisualization({
     // During animation (suppressLabels), use jitter=1 so ordering is purely
     // hash-based and completely stable — no data-dependent reordering that
     // would cause bands to visually jump between frames.
-    // Also use zero-baseline offset during animation so existing bands stay
-    // anchored when new artists appear (silhouette recentering causes jumps).
     const balancedJitter = suppressLabels ? 1.0 : stackJitter;
-    const animOffsetFn = suppressLabels ? d3.stackOffsetNone : offsetFn;
     const orderFn =
       offsetName === 'balanced'
         ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, balancedJitter)
@@ -196,7 +193,7 @@ export default memo(function WaveVisualization({
     const stack = d3
       .stack<Record<string, number>>()
       .keys(keys)
-      .offset(animOffsetFn)
+      .offset(offsetFn)
       .order(orderFn);
 
     const stackedData = stack(tableData);

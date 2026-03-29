@@ -334,25 +334,20 @@ export default function LastWaveApp() {
       }),
     }));
 
-    // Compute minPlays on full arrived data for stable prediction
-    const totalSegments = allSegments.length;
-    const arrivedCount = allSegments.filter((s) => s !== undefined).length;
-    const partialMinPlays = findOptimalMinPlays(joined, 30);
-    const predictedMinPlays = Math.max(
-      5,
-      Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)),
-    );
+    // During sweep, hold the threshold at its initial value so only the biggest
+    // artists are shown. New artists are added during the buildup phase instead,
+    // which prevents the silhouette centering from jumping as the sweep advances.
+    if (streamMinPlaysRef.current === Infinity) {
+      const totalSegments = allSegments.length;
+      const arrivedCount = allSegments.filter((s) => s !== undefined).length;
+      const partialMinPlays = findOptimalMinPlays(joined, 30);
+      const predictedMinPlays = Math.max(
+        5,
+        Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)),
+      );
+      streamMinPlaysRef.current = predictedMinPlays * 3;
+    }
 
-    // Scale threshold based on sweep progress: start high (big artists first),
-    // taper to predicted value as frontier completes
-    const sweepProgress = Math.min(1, frontier / (totalSegments + RAMP_WIDTH));
-    const startThreshold = predictedMinPlays * 3;
-    const sweepThreshold = Math.round(
-      startThreshold + (predictedMinPlays - startThreshold) * sweepProgress,
-    );
-    const effectiveMinPlays = Math.max(sweepThreshold, predictedMinPlays);
-
-    streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, effectiveMinPlays);
     const cleaned = cleanByMinPlays(masked, streamMinPlaysRef.current);
     setSeriesData(cleaned);
   }
