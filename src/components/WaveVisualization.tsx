@@ -1,7 +1,7 @@
 import { useRef, useEffect, memo } from 'react';
 import * as d3 from 'd3';
 import type SeriesData from '@/core/models/SeriesData';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore, type ColorScheme } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices, createCanvasMeasurer } from '@/core/wave/util';
 import { findOptimalLabel } from '@/core/wave/bezierFit';
@@ -17,8 +17,14 @@ const DEFAULT_WIDTH_PER_PEAK = 150;
 const DEFAULT_HEIGHT = 550;
 const MINIMUM_SEGMENTS_BETWEEN_LABELS = 3;
 const MINIMUM_FONT_SIZE_PIXELS = 8;
+// Toggle for text placement debug markers (red dots at each label's center point).
+// Enable when tuning deformed text sizing or centering. See .github/skills/wave-text-tuning/
+const DEBUG_CENTER_DOTS = false;
 
-const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) => void> = {
+const OFFSET_MAP: Record<
+  string,
+  (series: d3.Series<Record<string, number>, string>, order: number[]) => void
+> = {
   silhouette: d3.stackOffsetSilhouette,
   wiggle: d3.stackOffsetWiggle,
   expand: d3.stackOffsetExpand,
@@ -39,7 +45,11 @@ function hashString(s: string): number {
 // Each artist gets a stable color from a hash of its name (survives animation).
 // When `fixAdjacency` is true (final render), a post-pass shifts any adjacent
 // bands that ended up with the same color.
-function assignStackColors(keys: string[], colors: string[], fixAdjacency = false): Map<string, string> {
+function assignStackColors(
+  keys: string[],
+  colors: string[],
+  fixAdjacency = false,
+): Map<string, string> {
   const n = colors.length;
   const stride = Math.max(1, Math.round(n * 0.618));
   const map = new Map<string, string>();
@@ -79,7 +89,13 @@ interface WaveVisualizationProps {
   suppressLabels?: boolean;
 }
 
-export default memo(function WaveVisualization({ seriesData, onOverflowsDetected, onRenderComplete, onDrawingProgress, suppressLabels }: WaveVisualizationProps) {
+export default memo(function WaveVisualization({
+  seriesData,
+  onOverflowsDetected,
+  onRenderComplete,
+  onDrawingProgress,
+  suppressLabels,
+}: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const deformAbortRef = useRef(0);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -90,10 +106,12 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
   // Auto-enable year labels when time range >= 1 year
   const isYearRange = (() => {
     if (!timeStart || !timeEnd) return false;
-    const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
-    const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
+    const startMs =
+      timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
+    const endMs =
+      timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
     if (isNaN(startMs) || isNaN(endMs)) return false;
-    return (endMs - startMs) >= 365 * 24 * 60 * 60 * 1000;
+    return endMs - startMs >= 365 * 24 * 60 * 60 * 1000;
   })();
 
   useEffect(() => {
@@ -103,14 +121,14 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     const svg = d3.select(svgRef.current);
 
     const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-    const scheme = (schemes as Record<string, any>)[schemeName] ?? schemes.lastwave;
+    const scheme: ColorScheme =
+      (schemes as Record<string, ColorScheme>)[schemeName] ?? schemes.lastwave;
     const colors = scheme.schemeColors;
     const isDark = document.documentElement.classList.contains('dark');
 
     // Themes with backgroundColorLight adapt to system dark/light mode
-    const bgColor = (!isDark && scheme.backgroundColorLight)
-      ? scheme.backgroundColorLight
-      : scheme.backgroundColor;
+    const bgColor: string =
+      !isDark && scheme.backgroundColorLight ? scheme.backgroundColorLight : scheme.backgroundColor;
 
     const height = rendererOptions.height ? parseInt(rendererOptions.height, 10) : DEFAULT_HEIGHT;
 
@@ -119,14 +137,20 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
       svg.selectAll('*').remove();
       const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
       const placeholderWidth = userWidth > 0 ? userWidth : 13 * DEFAULT_WIDTH_PER_PEAK;
-      svg.attr('width', placeholderWidth).attr('height', height).attr('viewBox', `0 0 ${placeholderWidth} ${height}`);
-      svg.append('rect').attr('width', placeholderWidth).attr('height', height).attr('fill', bgColor);
+      svg
+        .attr('width', placeholderWidth)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${placeholderWidth} ${height}`);
+      svg
+        .append('rect')
+        .attr('width', placeholderWidth)
+        .attr('height', height)
+        .attr('fill', bgColor);
       return;
     }
 
-    const fontColor = (!isDark && scheme.fontColorLight)
-      ? scheme.fontColorLight
-      : scheme.fontColor;
+    const fontColor: string =
+      !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
     const fontFamily = rendererOptions.font ?? 'DM Sans';
     const offsetName = rendererOptions.offset ?? 'silhouette';
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
@@ -141,7 +165,6 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
     // Pivot data: from SeriesData[] to tabular format for d3.stack
     const keys = seriesData.map((s) => s.title);
-    const colorMap = assignStackColors(keys, colors, !suppressLabels);
     const tableData: Record<string, number>[] = [];
     for (let i = 0; i < numSegments; i++) {
       const row: Record<string, number> = { index: i };
@@ -151,27 +174,33 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
       tableData.push(row);
     }
 
-    // D3 stack
-    const stack = d3.stack<Record<string, number>>()
+    // D3 stack — insideOut distributes bands to both top and bottom of the
+    // baseline so new artists don't all pile on one side.
+    const stack = d3
+      .stack<Record<string, number>>()
       .keys(keys)
       .offset(offsetFn)
-      .order(d3.stackOrderNone);
+      .order(d3.stackOrderInsideOut);
 
     const stackedData = stack(tableData);
 
+    // Color adjacency must use the visual stacking order, not the input order
+    const stackedKeys = stackedData.map((layer) => layer.key);
+    const colorMap = assignStackColors(stackedKeys, colors, !suppressLabels);
+
     // Scales
-    const xScale = d3.scaleLinear()
+    const xScale = d3
+      .scaleLinear()
       .domain([0, numSegments - 1])
       .range([0, width]);
 
     const yMin = d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
     const yMax = d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
-    const yScale = d3.scaleLinear()
-      .domain([yMin, yMax])
-      .range([height, 0]);
+    const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
 
     // Area generator
-    const area = d3.area<[number, number]>()
+    const area = d3
+      .area<[number, number]>()
       .x((_, i) => xScale(i))
       .y0((d) => yScale(d[0]))
       .y1((d) => yScale(d[1]))
@@ -183,7 +212,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
       svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
 
-      const fontColor = (!isDark && scheme.fontColorLight) ? scheme.fontColorLight : scheme.fontColor;
+      const fontColor: string =
+        !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
       const fontFamily = rendererOptions.font ?? 'DM Sans';
       const addMonths = rendererOptions.add_months ?? true;
       const addYears = rendererOptions.add_years ?? isYearRange;
@@ -191,7 +221,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
       // Year separator lines (behind wave paths)
       if (addYears && timeStart && timeEnd) {
-        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const startMs =
+          timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
         const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
         const timePerSegment = (endMs - startMs) / numSegments;
         let lastYear = -1;
@@ -200,43 +231,71 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const year = segDate.getFullYear();
           if (year !== lastYear) {
             if (lastYear !== -1) {
-              svg.append('line').attr('x1', xScale(i)).attr('y1', 0).attr('x2', xScale(i)).attr('y2', height)
-                .attr('stroke', fontColor).attr('stroke-opacity', 0.12).attr('stroke-width', 2);
+              svg
+                .append('line')
+                .attr('x1', xScale(i))
+                .attr('y1', 0)
+                .attr('x2', xScale(i))
+                .attr('y2', height)
+                .attr('stroke', fontColor)
+                .attr('stroke-opacity', 0.12)
+                .attr('stroke-width', 2);
             }
             lastYear = year;
           }
         }
       }
 
-      svg.selectAll('path.wave')
-        .data(stackedData, (d: any) => d.key)
+      svg
+        .selectAll<SVGPathElement, d3.Series<Record<string, number>, string>>('path.wave')
+        .data(stackedData, (d) => d.key)
         .join('path')
         .attr('class', 'wave')
-        .attr('d', (d) => area(d as any) ?? '')
-        .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
+        .attr('d', (d) => area(d as [number, number][]) ?? '')
+        .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
         .attr('stroke', 'none')
         .attr('stroke-width', 0);
 
       if (addMonths && timeStart && timeEnd) {
-        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const startMs =
+          timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
         const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
         const timePerSegment = (endMs - startMs) / numSegments;
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
         let lastMonth = -1;
         for (let i = 0; i < numSegments; i++) {
           const segDate = new Date(startMs + i * timePerSegment);
           const month = segDate.getMonth();
           if (month !== lastMonth) {
             lastMonth = month;
-            svg.append('text').attr('x', xScale(i)).attr('y', height - 5)
-              .attr('font-size', '10px').attr('font-family', fontFamily).attr('fill', fontColor)
+            svg
+              .append('text')
+              .attr('x', xScale(i))
+              .attr('y', height - 5)
+              .attr('font-size', '10px')
+              .attr('font-family', fontFamily)
+              .attr('fill', fontColor)
               .text(monthNames[month]);
           }
         }
       }
 
       if (addYears && timeStart && timeEnd) {
-        const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+        const startMs =
+          timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
         const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
         const timePerSegment = (endMs - startMs) / numSegments;
         let lastYear = -1;
@@ -245,16 +304,29 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const year = segDate.getFullYear();
           if (year !== lastYear) {
             lastYear = year;
-            svg.append('text').attr('x', xScale(i) + (i > 0 ? 4 : 0)).attr('y', 15)
-              .attr('font-size', '12px').attr('font-family', fontFamily).attr('fill', fontColor).attr('font-weight', 'bold')
+            svg
+              .append('text')
+              .attr('x', xScale(i) + (i > 0 ? 4 : 0))
+              .attr('y', 15)
+              .attr('font-size', '12px')
+              .attr('font-family', fontFamily)
+              .attr('fill', fontColor)
+              .attr('font-weight', 'bold')
               .text(String(year));
           }
         }
       }
 
       if (showWatermark) {
-        svg.append('text').attr('x', width - 5).attr('y', height - 5).attr('text-anchor', 'end')
-          .attr('font-size', '14px').attr('font-family', fontFamily).attr('fill', fontColor).attr('opacity', 0.5)
+        svg
+          .append('text')
+          .attr('x', width - 5)
+          .attr('y', height - 5)
+          .attr('text-anchor', 'end')
+          .attr('font-size', '14px')
+          .attr('font-family', fontFamily)
+          .attr('fill', fontColor)
+          .attr('opacity', 0.5)
           .text('lastwave');
       }
 
@@ -265,21 +337,17 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     svg.selectAll('*').remove();
 
     // Set SVG attributes
-    svg
-      .attr('width', width)
-      .attr('height', height)
-      .attr('viewBox', `0 0 ${width} ${height}`);
+    svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
 
     // Background
-    svg.append('rect')
-      .attr('width', width)
-      .attr('height', height)
-      .attr('fill', bgColor);
+    svg.append('rect').attr('width', width).attr('height', height).attr('fill', bgColor);
 
     // Year separator lines (behind wave paths)
     if ((rendererOptions.add_years ?? isYearRange) && timeStart && timeEnd) {
-      const startMs = timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
-      const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
+      const startMs =
+        timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart as string).getTime();
+      const endMs =
+        timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd as string).getTime();
       const timePerSegment = (endMs - startMs) / numSegments;
       let lastYear = -1;
       for (let i = 0; i < numSegments; i++) {
@@ -287,10 +355,15 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           if (lastYear !== -1) {
-            svg.append('line')
-              .attr('x1', xScale(i)).attr('y1', 0)
-              .attr('x2', xScale(i)).attr('y2', height)
-              .attr('stroke', fontColor).attr('stroke-opacity', 0.12).attr('stroke-width', 2);
+            svg
+              .append('line')
+              .attr('x1', xScale(i))
+              .attr('y1', 0)
+              .attr('x2', xScale(i))
+              .attr('y2', height)
+              .attr('stroke', fontColor)
+              .attr('stroke-opacity', 0.12)
+              .attr('stroke-width', 2);
           }
           lastYear = year;
         }
@@ -300,22 +373,22 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     // Embed font in SVG so text renders when downloaded/viewed standalone
     const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
     const defs = svg.append('defs');
-    defs.append('style')
-      .text(`@import url('${fontUrl}');`);
+    defs.append('style').text(`@import url('${fontUrl}');`);
 
     // Draw paths — capture path strings for overflow detection (keyed by series
     // title so lookup is immune to any DOM vs data ordering differences).
     const pathByKey: Record<string, string> = {};
-    svg.selectAll('path.wave')
-      .data(stackedData, (d: any) => d.key)
+    svg
+      .selectAll<SVGPathElement, d3.Series<Record<string, number>, string>>('path.wave')
+      .data(stackedData, (d) => d.key)
       .join('path')
       .attr('class', 'wave')
-      .attr('d', (d: any) => {
-        const pathD = area(d as any) ?? '';
+      .attr('d', (d) => {
+        const pathD = area(d as [number, number][]) ?? '';
         pathByKey[d.key] = pathD;
         return pathD;
       })
-      .attr('fill', (d: any) => colorMap.get(d.key) ?? colors[0])
+      .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
       .attr('stroke', 'none')
       .attr('stroke-width', 0);
 
@@ -344,7 +417,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const counts = seriesData[layerIndex].counts;
           const stackPoints: StackPoint[] = layer.map((d, i) => ({
             x: xScale(i),
-            y: (height - yScale(d[1])) - (height - yScale(d[0])),
+            y: height - yScale(d[1]) - (height - yScale(d[0])),
             y0: height - yScale(d[0]),
           }));
 
@@ -353,19 +426,33 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            label = findOptimalLabel(
+              peak,
+              seriesTitle,
+              fontData.family,
+              measureText,
+              stackPoints,
+              idx,
+              true,
+            );
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
-              jobs.push({ label, layer: layer as any, layerIndex, stackPoints, idx, pathD });
+              jobs.push({
+                label,
+                layer: layer as (readonly [number, number])[],
+                layerIndex,
+                stackPoints,
+                idx,
+                pathD,
+              });
             }
           });
         });
-
 
         // Process deform jobs in batches, yielding between batches
         const BATCH_SIZE = 8;
         let jobIndex = 0;
         // Track unique artists for progress display
-        const uniqueArtists = [...new Set(jobs.map(j => j.label.text))];
+        const uniqueArtists = [...new Set(jobs.map((j) => j.label.text))];
         const artistsDone = new Set<string>();
         // Track rendered x-ranges per artist to prevent visual overlap
         const artistRanges = new Map<string, Array<[number, number]>>();
@@ -375,7 +462,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const end = Math.min(jobIndex + BATCH_SIZE, jobs.length);
 
           for (; jobIndex < end; jobIndex++) {
-            const { label, layer, layerIndex, stackPoints, idx, pathD } = jobs[jobIndex];
+            const { label, layer, stackPoints, idx, pathD } = jobs[jobIndex];
             artistsDone.add(label.text);
 
             const bandData = layer.map((d: readonly [number, number], i: number) => ({
@@ -389,32 +476,40 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
             // Build Bezier-accurate band bounds from the actual SVG path
             // (bandAtX uses linear interpolation which overestimates thickness)
             const bandLUT = pathD ? buildBandLUT(pathD, width) : null;
-            const bandBoundsAtX = bandLUT ? (x: number) => {
-              const px = Math.round(x);
-              const b = px >= 0 && px < bandLUT.length ? bandLUT[px] : null;
-              if (b) return { topY: b.top, botY: b.bot, thickness: b.bot - b.top };
-              // Fallback to linear interpolation
-              const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
-              const fi = (x - bandData[0].x) / bandXStep;
-              const i = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
-              const t = Math.max(0, Math.min(1, fi - i));
-              return {
-                topY: bandData[i].topY * (1 - t) + bandData[i + 1].topY * t,
-                botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
-                thickness: (bandData[i].thickness * (1 - t) + bandData[i + 1].thickness * t),
-              };
-            } : undefined;
+            const bandBoundsAtX = bandLUT
+              ? (x: number) => {
+                  const px = Math.round(x);
+                  const b = px >= 0 && px < bandLUT.length ? bandLUT[px] : null;
+                  if (b) return { topY: b.top, botY: b.bot, thickness: b.bot - b.top };
+                  // Fallback to linear interpolation
+                  const bandXStep = bandData.length > 1 ? bandData[1].x - bandData[0].x : 1;
+                  const fi = (x - bandData[0].x) / bandXStep;
+                  const i = Math.max(0, Math.min(bandData.length - 2, Math.floor(fi)));
+                  const t = Math.max(0, Math.min(1, fi - i));
+                  return {
+                    topY: bandData[i].topY * (1 - t) + bandData[i + 1].topY * t,
+                    botY: bandData[i].botY * (1 - t) + bandData[i + 1].botY * t,
+                    thickness: bandData[i].thickness * (1 - t) + bandData[i + 1].thickness * t,
+                  };
+                }
+              : undefined;
 
             const result = computeDeformedText(
-              label, bandData, idx, stackPoints[idx].x,
-              fontData.family, measureText,
+              label,
+              bandData,
+              idx,
+              stackPoints[idx].x,
+              fontData.family,
+              measureText,
               bandBoundsAtX,
               jitterText,
             );
 
             // Skip if this label's deformed text is too close to a previous label for the same artist
             // (require at least 1 segment width gap between same-artist labels)
-            const visiblePlacements = result.placements.filter(p => p.fontSize >= 4 && p.opacity > 0);
+            const visiblePlacements = result.placements.filter(
+              (p) => p.fontSize >= 4 && p.opacity > 0,
+            );
             if (visiblePlacements.length > 0) {
               const minX = visiblePlacements[0].x;
               const maxX = visiblePlacements[visiblePlacements.length - 1].x;
@@ -422,8 +517,9 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               const prevRanges = artistRanges.get(label.text);
               if (prevRanges) {
                 // Check if any previous label for this artist is within 1 segment width
-                const tooClose = prevRanges.some(([lo, hi]) =>
-                  minX <= hi + segWidth && maxX >= lo - segWidth);
+                const tooClose = prevRanges.some(
+                  ([lo, hi]) => minX <= hi + segWidth && maxX >= lo - segWidth,
+                );
                 if (tooClose) continue;
               }
               if (!artistRanges.has(label.text)) artistRanges.set(label.text, []);
@@ -433,7 +529,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
             for (const p of result.placements) {
               if (p.fontSize < 4 || p.opacity <= 0) continue;
               const tx = `translate(${p.x}, ${p.y}) rotate(${p.angle}) scale(1, ${p.scaleY.toFixed(3)})`;
-              svg.append('text')
+              svg
+                .append('text')
                 .attr('font-size', `${p.fontSize}px`)
                 .attr('font-family', fontData.family)
                 .attr('font-weight', 400)
@@ -443,6 +540,17 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
                 .attr('transform', tx)
                 .attr('opacity', p.opacity)
                 .text(p.ch);
+            }
+
+            // DEBUG: draw center marker when DEBUG_CENTER_DOTS is enabled
+            if (DEBUG_CENTER_DOTS && result.debugCenterX != null && result.debugCenterY != null) {
+              svg
+                .append('circle')
+                .attr('cx', result.debugCenterX)
+                .attr('cy', result.debugCenterY)
+                .attr('r', 5)
+                .attr('fill', 'red')
+                .attr('opacity', 0.9);
             }
           }
 
@@ -468,7 +576,7 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           const counts = seriesData[layerIndex].counts;
           const stackPoints: StackPoint[] = layer.map((d, i) => ({
             x: xScale(i),
-            y: (height - yScale(d[1])) - (height - yScale(d[0])),
+            y: height - yScale(d[1]) - (height - yScale(d[0])),
             y0: height - yScale(d[0]),
           }));
 
@@ -476,7 +584,14 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
           labelIndices.forEach((idx) => {
             const peak = new Peak(idx, stackPoints);
             let label: Label | null = null;
-            label = findOptimalLabel(peak, seriesTitle, fontData.family, measureText, stackPoints, idx);
+            label = findOptimalLabel(
+              peak,
+              seriesTitle,
+              fontData.family,
+              measureText,
+              stackPoints,
+              idx,
+            );
 
             if (label && label.fontSize >= MINIMUM_FONT_SIZE_PIXELS) {
               const dims = measureText(label.text, fontData.family, label.fontSize);
@@ -494,8 +609,11 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               const textH = label.fontSize * 1.2;
               const numPts = stackPoints.length;
               const edgeMargin = Math.max(2, Math.ceil(numPts * 0.1));
-              const leftIdx = Math.max(0, Math.ceil(label.xPosition * (numPts - 1) / width));
-              const rightIdx = Math.min(numPts - 1, Math.ceil((label.xPosition + textW) * (numPts - 1) / width));
+              const leftIdx = Math.max(0, Math.ceil((label.xPosition * (numPts - 1)) / width));
+              const rightIdx = Math.min(
+                numPts - 1,
+                Math.ceil(((label.xPosition + textW) * (numPts - 1)) / width),
+              );
               let tooThin = false;
               for (let i = leftIdx; i <= rightIdx; i++) {
                 const atEdge = i < edgeMargin || i >= numPts - edgeMargin;
@@ -506,7 +624,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
               }
               if (tooThin) return;
 
-              svg.append('text')
+              svg
+                .append('text')
                 .attr('x', label.xPosition)
                 .attr('y', height - label.yPosition)
                 .attr('font-size', `${label.fontSize}px`)
@@ -525,10 +644,18 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     }
 
     onOverflowsDetected?.(detectedOverflows);
-
-  }, [seriesData, rendererOptions.color_scheme, rendererOptions.font, rendererOptions.offset,
-      rendererOptions.width, rendererOptions.height, rendererOptions.add_labels,
-      rendererOptions.deform_text, rendererOptions.jitter_text, suppressLabels]);
+  }, [
+    seriesData,
+    rendererOptions.color_scheme,
+    rendererOptions.font,
+    rendererOptions.offset,
+    rendererOptions.width,
+    rendererOptions.height,
+    rendererOptions.add_labels,
+    rendererOptions.deform_text,
+    rendererOptions.jitter_text,
+    suppressLabels,
+  ]);
 
   // ── Overlay effect: cheap decorations that can toggle without re-rendering waves+labels ──
   useEffect(() => {
@@ -541,14 +668,13 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
     // Recompute shared layout values
     const schemeName = (rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-    const scheme = (schemes as Record<string, any>)[schemeName] ?? schemes.lastwave;
+    const scheme: ColorScheme =
+      (schemes as Record<string, ColorScheme>)[schemeName] ?? schemes.lastwave;
     const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = (!isDark && scheme.backgroundColorLight)
-      ? scheme.backgroundColorLight
-      : scheme.backgroundColor;
-    const fontColor = (!isDark && scheme.fontColorLight)
-      ? scheme.fontColorLight
-      : scheme.fontColor;
+    const bgColor: string =
+      !isDark && scheme.backgroundColorLight ? scheme.backgroundColorLight : scheme.backgroundColor;
+    const fontColor: string =
+      !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
     const axisLabelColor = (() => {
       const hex = bgColor.replace('#', '');
       const r = parseInt(hex.substring(0, 2), 16) / 255;
@@ -563,7 +689,10 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
     if (numSegments === 0) return;
     const userWidth = rendererOptions.width ? parseInt(rendererOptions.width, 10) : 0;
     const width = userWidth > 0 ? userWidth : numSegments * DEFAULT_WIDTH_PER_PEAK;
-    const xScale = d3.scaleLinear().domain([0, numSegments - 1]).range([0, width]);
+    const xScale = d3
+      .scaleLinear()
+      .domain([0, numSegments - 1])
+      .range([0, width]);
 
     const addMonths = rendererOptions.add_months ?? true;
     const addYears = rendererOptions.add_years ?? isYearRange;
@@ -572,14 +701,24 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
     // Month labels along the bottom
     if (addMonths && timeStart && timeEnd) {
-      const startMs = timeStart instanceof Date
-        ? timeStart.getTime()
-        : new Date(timeStart).getTime();
-      const endMs = timeEnd instanceof Date
-        ? timeEnd.getTime()
-        : new Date(timeEnd).getTime();
+      const startMs =
+        timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+      const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
       const timePerSegment = (endMs - startMs) / numSegments;
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const monthNames = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       let lastMonth = -1;
 
       for (let i = 0; i < numSegments; i++) {
@@ -587,7 +726,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
         const month = segDate.getMonth();
         if (month !== lastMonth) {
           lastMonth = month;
-          overlayG.append('text')
+          overlayG
+            .append('text')
             .attr('x', xScale(i))
             .attr('y', height - 5)
             .attr('font-size', '10px')
@@ -600,12 +740,9 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
     // Year labels (separator lines are rendered behind waves in the core effect)
     if (addYears && timeStart && timeEnd) {
-      const startMs = timeStart instanceof Date
-        ? timeStart.getTime()
-        : new Date(timeStart).getTime();
-      const endMs = timeEnd instanceof Date
-        ? timeEnd.getTime()
-        : new Date(timeEnd).getTime();
+      const startMs =
+        timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
+      const endMs = timeEnd instanceof Date ? timeEnd.getTime() : new Date(timeEnd).getTime();
       const timePerSegment = (endMs - startMs) / numSegments;
       let lastYear = -1;
 
@@ -614,7 +751,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
         const year = segDate.getFullYear();
         if (year !== lastYear) {
           lastYear = year;
-          overlayG.append('text')
+          overlayG
+            .append('text')
             .attr('x', xScale(i) + (i > 0 ? 4 : 0))
             .attr('y', 15)
             .attr('font-size', '12px')
@@ -628,7 +766,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
 
     // Watermark
     if (showWatermark) {
-      overlayG.append('text')
+      overlayG
+        .append('text')
         .attr('x', width - 5)
         .attr('y', height - 5)
         .attr('text-anchor', 'end')
@@ -652,11 +791,14 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
       }
       fontSize = Math.max(10, fontSize);
 
-      const usernameColor = scheme.backgroundColorLight
-        ? (isDark ? '#ffffff' : '#000000')
+      const usernameColor: string = scheme.backgroundColorLight
+        ? isDark
+          ? '#ffffff'
+          : '#000000'
         : fontColor;
 
-      overlayG.append('text')
+      overlayG
+        .append('text')
         .attr('x', 5)
         .attr('y', fontSize + 2)
         .attr('font-size', `${fontSize}px`)
@@ -669,8 +811,8 @@ export default memo(function WaveVisualization({ seriesData, onOverflowsDetected
   }, [seriesData, rendererOptions, username, timeStart, timeEnd, suppressLabels]);
 
   return (
-    <div id="svg-wrapper" className="overflow-x-auto flex justify-center">
+    <div id="svg-wrapper" className="flex justify-center overflow-x-auto">
       <svg ref={svgRef} style={{ display: 'block' }} />
     </div>
   );
-})
+});
