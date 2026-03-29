@@ -1,7 +1,8 @@
 export default class Point {
-  constructor(public x: number, public y: number) {
-
-  }
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
 
   /*
     Scale the point by certain values
@@ -12,6 +13,6 @@ export default class Point {
   }
 
   public equals(otherPoint: Point): boolean {
-    return (this.x === otherPoint.x && this.y === otherPoint.y);
+    return this.x === otherPoint.x && this.y === otherPoint.y;
   }
 }

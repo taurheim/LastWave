@@ -12,7 +12,7 @@ export default class LineBase {
     this.intercept = point.y - slope * point.x;
   }
 
-  public isXWithinBounds(x: number): boolean {
+  public isXWithinBounds(_x: number): boolean {
     return true;
   }
 

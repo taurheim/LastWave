@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore, type DataSourceOptions, type RendererOptions } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
 interface WaveOptionsProps {
-  onSubmit: (opts: { dataSourceOptions: Record<string, any>; rendererOptions: Record<string, any> }) => void;
+  onSubmit: (opts: {
+    dataSourceOptions: DataSourceOptions;
+    rendererOptions: RendererOptions;
+  }) => void;
 }
 
 const schemeNames = Object.keys(schemes);
@@ -26,7 +29,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   useEffect(() => {
     if (rendererOptions.loading_animation !== undefined) return;
     const cores = navigator.hardwareConcurrency ?? 4;
-    const memoryGB = (navigator as any).deviceMemory ?? 4; // Chrome/Edge only, defaults to 4
+    const memoryGB = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 4; // Chrome/Edge only, defaults to 4
     if (cores <= 2 || memoryGB <= 2) {
       setRendererOption('loading_animation', false);
     }
@@ -38,12 +41,14 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const colorScheme = rendererOptions.color_scheme ?? 'lastwave';
 
   // Data source advanced defaults
-  const timeStart = dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
-    ? dataSourceOptions.time_start.toISOString().slice(0, 10)
-    : '';
-  const timeEnd = dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
-    ? dataSourceOptions.time_end.toISOString().slice(0, 10)
-    : '';
+  const timeStart =
+    dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
+      ? dataSourceOptions.time_start.toISOString().slice(0, 10)
+      : '';
+  const timeEnd =
+    dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
+      ? dataSourceOptions.time_end.toISOString().slice(0, 10)
+      : '';
   const groupBy = dataSourceOptions.group_by ?? 'week';
   const method = dataSourceOptions.method ?? 'artist';
   const isCustomDate = datePreset === 'Custom';
@@ -92,12 +97,14 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-6 py-3 lg:py-6">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl px-6 py-3 lg:py-6">
       {/* Main Options */}
-      <div className="space-y-4 lg:space-y-5 mb-6">
+      <div className="mb-6 space-y-4 lg:space-y-5">
         {/* Username */}
         <div>
-          <label className="block text-xs tracking-widest uppercase text-lw-muted mb-2">last.fm username</label>
+          <label className="mb-2 block text-xs uppercase tracking-widest text-lw-muted">
+            last.fm username
+          </label>
           <input
             type="search"
             value={username}
@@ -106,53 +113,78 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
             data-1p-ignore
             data-lpignore="true"
             data-bwignore
-            className="w-full bg-lw-surface border border-lw-border rounded-lg px-4 py-3 text-lg text-center text-lw-text placeholder-lw-muted/50 focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all [&::-webkit-search-cancel-button]:hidden"
+            className="w-full rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
             placeholder="Enter your username"
           />
         </div>
 
         {/* Date Range + Data Set — sentence style */}
         <div>
-          <div className="flex items-baseline justify-center gap-2 flex-wrap">
-            <span className="text-lw-muted text-lg lg:text-xl">Graph my</span>
+          <div className="flex flex-wrap items-baseline justify-center gap-2">
+            <span className="text-lg text-lw-muted lg:text-xl">Graph my</span>
             <span className="relative inline-block">
               <select
                 value={datePreset}
                 onChange={(e) => handleDatePresetChange(e.target.value)}
-                className="appearance-none bg-transparent border-b-2 border-lw-accent/40 text-lw-accent font-medium text-lg lg:text-xl pl-0.5 pr-6 py-0.5 cursor-pointer focus:outline-none focus:border-lw-accent hover:border-lw-accent transition-colors"
+                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-6 text-lg font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none lg:text-xl"
               >
                 {easyDateEntries.map(([name]) => (
-                  <option key={name} value={name} className="bg-lw-bg text-lw-text">{name}</option>
+                  <option key={name} value={name} className="bg-lw-bg text-lw-text">
+                    {name}
+                  </option>
                 ))}
-                <option value="Custom" className="bg-lw-bg text-lw-text">Custom range</option>
+                <option value="Custom" className="bg-lw-bg text-lw-text">
+                  Custom range
+                </option>
               </select>
-              <svg className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-lw-accent/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
-            <span className="text-lw-muted text-lg lg:text-xl">of</span>
+            <span className="text-lg text-lw-muted lg:text-xl">of</span>
             <span className="relative inline-block">
               <select
                 value={method}
                 onChange={(e) => setDataSourceOption('method', e.target.value)}
-                className="appearance-none bg-transparent border-b-2 border-lw-accent/40 text-lw-accent font-medium text-lg lg:text-xl pl-0.5 pr-6 py-0.5 cursor-pointer focus:outline-none focus:border-lw-accent hover:border-lw-accent transition-colors"
+                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-6 text-lg font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none lg:text-xl"
               >
-                <option value="artist" className="bg-lw-bg text-lw-text">Artists</option>
-                <option value="album" className="bg-lw-bg text-lw-text">Albums</option>
-                <option value="tag" className="bg-lw-bg text-lw-text">Genres</option>
+                <option value="artist" className="bg-lw-bg text-lw-text">
+                  Artists
+                </option>
+                <option value="album" className="bg-lw-bg text-lw-text">
+                  Albums
+                </option>
+                <option value="tag" className="bg-lw-bg text-lw-text">
+                  Genres
+                </option>
               </select>
-              <svg className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-lw-accent/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
           </div>
           {method === 'tag' && (
-            <p className="text-amber-500 text-sm mt-2 text-center">⚠️ Fetching genres is currently very slow due to rate limits. Be prepared to wait a few minutes!</p>
+            <p className="mt-2 text-center text-sm text-amber-500">
+              ⚠️ Fetching genres is currently very slow due to rate limits. Be prepared to wait a
+              few minutes!
+            </p>
           )}
           {isCustomDate && (
-            <div className="grid grid-cols-2 gap-3 mt-4 max-w-xs mx-auto">
+            <div className="mx-auto mt-4 grid max-w-xs grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-lw-muted mb-1">Start</label>
+                <label className="mb-1 block text-xs text-lw-muted">Start</label>
                 <input
                   type="date"
                   value={timeStart}
@@ -160,11 +192,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                     const d = new Date(e.target.value);
                     setDataSourceOption('time_start', isNaN(d.getTime()) ? undefined : d);
                   }}
-                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                  className="w-full rounded-lg border border-lw-border bg-lw-surface px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30"
                 />
               </div>
               <div>
-                <label className="block text-xs text-lw-muted mb-1">End</label>
+                <label className="mb-1 block text-xs text-lw-muted">End</label>
                 <input
                   type="date"
                   value={timeEnd}
@@ -172,7 +204,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                     const d = new Date(e.target.value);
                     setDataSourceOption('time_end', isNaN(d.getTime()) ? undefined : d);
                   }}
-                  className="w-full bg-lw-surface border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent focus:ring-1 focus:ring-lw-accent/30 transition-all"
+                  className="w-full rounded-lg border border-lw-border bg-lw-surface px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30"
                 />
               </div>
             </div>
@@ -181,23 +213,24 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
         {/* Color Scheme */}
         <div>
-          <label className="block text-xs tracking-widest uppercase text-lw-muted mb-3">Theme</label>
+          <label className="mb-3 block text-xs uppercase tracking-widest text-lw-muted">
+            Theme
+          </label>
           <div className="flex flex-wrap justify-center gap-3">
             {schemeNames.map((name) => {
-              const scheme = (schemes as Record<string, any>)[name];
               const isSelected = colorScheme === name;
               return (
                 <button
                   key={name}
                   type="button"
                   onClick={() => setRendererOption('color_scheme', name)}
-                  className={`group flex flex-col items-center p-2.5 rounded-lg border transition-all duration-200 ${
+                  className={`group flex flex-col items-center rounded-lg border p-2.5 transition-all duration-200 ${
                     isSelected
                       ? 'border-lw-accent bg-lw-accent/10 shadow-[0_0_12px_rgba(39,170,225,0.15)]'
-                      : 'border-lw-border hover:border-lw-muted/50 bg-lw-surface'
+                      : 'border-lw-border bg-lw-surface hover:border-lw-muted/50'
                   }`}
                 >
-                  <div className="rounded overflow-hidden mb-1.5">
+                  <div className="mb-1.5 overflow-hidden rounded">
                     <img
                       src={`/scheme-previews/${name}.png`}
                       alt={`${name} theme preview`}
@@ -206,7 +239,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                       className="block"
                     />
                   </div>
-                  <span className={`text-xs ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}>{name === 'lastwave' ? 'LastWave' : name.charAt(0).toUpperCase() + name.slice(1)}</span>
+                  <span
+                    className={`text-xs ${isSelected ? 'text-lw-accent' : 'text-lw-muted group-hover:text-lw-text'}`}
+                  >
+                    {name === 'lastwave'
+                      ? 'LastWave'
+                      : name.charAt(0).toUpperCase() + name.slice(1)}
+                  </span>
                 </button>
               );
             })}
@@ -215,11 +254,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       </div>
 
       {/* Advanced Options Toggle */}
-      <div className="text-center mb-6">
+      <div className="mb-6 text-center">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-lw-muted hover:text-lw-accent text-xs tracking-widest uppercase transition-colors"
+          className="text-xs uppercase tracking-widest text-lw-muted transition-colors hover:text-lw-accent"
         >
           Advanced Options {showAdvanced ? '−' : '+'}
         </button>
@@ -227,28 +266,32 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
       {/* Advanced Options */}
       {showAdvanced && (
-        <div className="mb-8 bg-lw-surface/50 border border-lw-border rounded-xl p-6 max-w-sm mx-auto">
+        <div className="mx-auto mb-8 max-w-sm rounded-xl border border-lw-border bg-lw-surface/50 p-6">
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-lw-muted mb-1">Group by</label>
+              <label className="mb-1 block text-xs text-lw-muted">Group by</label>
               <select
                 value={groupBy}
                 onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                className="w-full bg-lw-bg border border-lw-border rounded-lg px-3 py-2 text-sm text-lw-text focus:outline-none focus:border-lw-accent transition-all"
+                className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none"
               >
                 {['week', 'month', 'day', 'year'].map((v) => (
-                  <option key={v} value={v} className="bg-lw-bg text-lw-text">{v}</option>
+                  <option key={v} value={v} className="bg-lw-bg text-lw-text">
+                    {v}
+                  </option>
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2.5 cursor-pointer group pt-1">
+            <label className="group flex cursor-pointer items-center gap-2.5 pt-1">
               <input
                 type="checkbox"
                 checked={rendererOptions.loading_animation ?? true}
                 onChange={(e) => setRendererOption('loading_animation', e.target.checked)}
                 className="rounded border-lw-border bg-lw-bg accent-lw-accent"
               />
-              <span className="text-xs text-lw-muted group-hover:text-lw-text transition-colors">Loading animation</span>
+              <span className="text-xs text-lw-muted transition-colors group-hover:text-lw-text">
+                Loading animation
+              </span>
             </label>
           </div>
         </div>
@@ -258,7 +301,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="text-center">
         <button
           type="submit"
-          className="relative bg-lw-accent text-lw-bg font-semibold rounded-lg px-12 py-3 text-sm tracking-wider uppercase transition-all hover:bg-lw-accent-dim hover:scale-[1.02] active:scale-[0.98]"
+          className="relative rounded-lg bg-lw-accent px-12 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:scale-[1.02] hover:bg-lw-accent-dim active:scale-[0.98]"
         >
           Generate
         </button>

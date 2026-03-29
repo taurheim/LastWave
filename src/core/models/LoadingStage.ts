@@ -10,6 +10,5 @@ export default class LoadingStage {
     public currentSegment: number = 0,
     // Optional sub-step text for detailed progress (e.g., "fetching albums 3/20")
     public subText: string = '',
-  ) {
-  }
+  ) {}
 }

@@ -15,11 +15,10 @@ export default function GalleryBrowser() {
 
   useEffect(() => {
     fetchWithRetry(GALLERY_API_URL)
-      .then((res) => res.json())
+      .then((res) => res.json() as Promise<{ resources?: Array<{ public_id: string }> }>)
       .then((data) => {
         const images = (data.resources ?? []).map(
-          (r: { public_id: string }) =>
-            `https://res.cloudinary.com/lastwave/image/upload/${r.public_id}.png`,
+          (r) => `https://res.cloudinary.com/lastwave/image/upload/${r.public_id}.png`,
         );
         setAllImages(images);
       })
@@ -37,72 +36,88 @@ export default function GalleryBrowser() {
   const thisPageImages = allImages.slice(firstImage, firstImage + IMAGES_PER_PAGE);
 
   return (
-    <div className="text-center py-6 px-4">
+    <div className="px-4 py-6 text-center">
       {/* Loading state */}
       {isLoading && (
-        <div className="py-16 flex justify-center" data-testid="gallery-spinner">
-          <div className="w-11 h-11 border-[3px] border-lw-border border-t-lw-accent rounded-full animate-spin" />
+        <div className="flex justify-center py-16" data-testid="gallery-spinner">
+          <div className="h-11 w-11 animate-spin rounded-full border-[3px] border-lw-border border-t-lw-accent" />
         </div>
       )}
 
       {/* Error state */}
       {!isLoading && loadError && (
         <div className="py-12">
-          <p className="text-lw-muted text-sm mb-2">Could not load gallery images.</p>
-          <p className="text-lw-muted/60 text-xs">
+          <p className="mb-2 text-sm text-lw-muted">Could not load gallery images.</p>
+          <p className="text-xs text-lw-muted/60">
             Please try refreshing, or report this at{' '}
-            <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">niko@savas.ca</a>
+            <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">
+              niko@savas.ca
+            </a>
             {' / '}
-            <a href="https://github.com/nikosavas/LastWave/issues/new" target="_blank" rel="noopener noreferrer" className="text-lw-accent hover:underline">GitHub Issues</a>.
+            <a
+              href="https://github.com/nikosavas/LastWave/issues/new"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lw-accent hover:underline"
+            >
+              GitHub Issues
+            </a>
+            .
           </p>
         </div>
       )}
 
       {/* Navigation */}
-      {!isLoading && !loadError && <div className="flex justify-center gap-3 mb-6">
-        <button
-          disabled={currentPage === 0}
-          onClick={() => setCurrentPage((p) => p - 1)}
-          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent disabled:border-lw-border/30 disabled:text-lw-muted/30 disabled:cursor-not-allowed rounded-lg px-5 py-2 text-xs tracking-wider uppercase transition-all"
-        >
-          ← Previous
-        </button>
-        <button
-          disabled={currentPage >= pageCount - 1}
-          onClick={() => setCurrentPage((p) => p + 1)}
-          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent disabled:border-lw-border/30 disabled:text-lw-muted/30 disabled:cursor-not-allowed rounded-lg px-5 py-2 text-xs tracking-wider uppercase transition-all"
-        >
-          Next →
-        </button>
-      </div>}
+      {!isLoading && !loadError && (
+        <div className="mb-6 flex justify-center gap-3">
+          <button
+            disabled={currentPage === 0}
+            onClick={() => setCurrentPage((p) => p - 1)}
+            className="rounded-lg border border-lw-border px-5 py-2 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent disabled:cursor-not-allowed disabled:border-lw-border/30 disabled:text-lw-muted/30"
+          >
+            ← Previous
+          </button>
+          <button
+            disabled={currentPage >= pageCount - 1}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="rounded-lg border border-lw-border px-5 py-2 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent disabled:cursor-not-allowed disabled:border-lw-border/30 disabled:text-lw-muted/30"
+          >
+            Next →
+          </button>
+        </div>
+      )}
 
       {/* Image Grid */}
-      {!isLoading && !loadError && <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-        {thisPageImages.map((url, i) => (
-          <div
-            key={`${currentPage}-${i}`}
-            onClick={() => setLightboxUrl(url)}
-            className="w-[220px] h-[160px] bg-cover bg-center bg-no-repeat rounded-lg border border-lw-border cursor-pointer hover:border-lw-accent hover:shadow-[0_0_16px_rgba(39,170,225,0.15)] transition-all duration-200"
-            style={{ backgroundImage: `url(${url})` }}
-          />
-        ))}
-      </div>}
+      {!isLoading && !loadError && (
+        <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-3">
+          {thisPageImages.map((url, i) => (
+            <div
+              key={`${currentPage}-${i}`}
+              onClick={() => setLightboxUrl(url)}
+              className="h-[160px] w-[220px] cursor-pointer rounded-lg border border-lw-border bg-cover bg-center bg-no-repeat transition-all duration-200 hover:border-lw-accent hover:shadow-[0_0_16px_rgba(39,170,225,0.15)]"
+              style={{ backgroundImage: `url(${url})` }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Footer */}
-      {!isLoading && !loadError && <p className="mt-6 text-xs tracking-widest uppercase text-lw-muted">
-        Page {currentPage + 1} / {pageCount}
-      </p>}
+      {!isLoading && !loadError && (
+        <p className="mt-6 text-xs uppercase tracking-widest text-lw-muted">
+          Page {currentPage + 1} / {pageCount}
+        </p>
+      )}
 
       {/* Lightbox */}
       {lightboxUrl && (
         <div
-          className="fixed inset-0 bg-black/85 backdrop-blur-sm flex items-center justify-center z-50 cursor-pointer"
+          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/85 backdrop-blur-sm"
           onClick={() => setLightboxUrl(null)}
         >
           <img
             src={lightboxUrl}
             alt="Gallery image"
-            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
           />
         </div>
       )}

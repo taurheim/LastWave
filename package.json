@@ -13,6 +13,9 @@
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
     "test:e2e": "playwright test",
     "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,astro,css,json}\"",
     "typecheck": "tsc --noEmit --project tsconfig.check.json",
     "verify": "npm run test && npm run build"
   },
@@ -26,6 +29,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@fontsource/dm-sans": "^5.2.8",
     "@napi-rs/canvas": "^0.1.95",
     "@playwright/cli": "^0.1.1",
@@ -37,11 +41,19 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-astro": "^1.6.0",
+    "eslint-plugin-react": "^7.37.5",
     "jsdom": "^25.0.0",
     "pixelmatch": "^6.0.0",
     "pngjs": "^7.0.0",
+    "prettier": "^3.8.1",
+    "prettier-plugin-astro": "^0.14.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.57.2",
     "vitest": "^3.0.0"
   }
 }

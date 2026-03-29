@@ -9,7 +9,7 @@ import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SegmentData from '@/core/models/SegmentData';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
-import LastFmApi from '@/core/lastfm/LastFmApi';
+import LastFmApi, { type LastFmResponse } from '@/core/lastfm/LastFmApi';
 import TimeSpan from '@/core/lastfm/models/TimeSpan';
 import URLParameter from '@/core/lastfm/models/URLParameter';
 import {
@@ -21,13 +21,13 @@ import {
   getAnimationSteps,
 } from '@/core/lastfm/util';
 
-const LAST_FM_API_KEY= '27ca6b1a0750cf3fb3e1f0ec5b432b72';
+const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
 
 /** Minimum ms between renders while streaming segments during fetch */
 const STREAM_RENDER_INTERVAL_MS = 600;
 /** D3 transition duration for path morphing during animation (ms) */
-const TRANSITION_DURATION_MS = 550;
+const _TRANSITION_DURATION_MS = 550;
 /** Minimum total animation duration (ms) before showing final render */
 const MIN_ANIMATION_DURATION_MS = 2500;
 /** Minimum number of animation frames to show during streaming */
@@ -40,7 +40,7 @@ async function pooled<T>(
   onProgress?: () => void,
   onResult?: (index: number, result: T) => void,
 ): Promise<T[]> {
-  const results: T[] = new Array(tasks.length);
+  const results = new Array<T>(tasks.length);
   let next = 0;
 
   async function worker() {
@@ -57,7 +57,13 @@ async function pooled<T>(
   return results;
 }
 
-function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, minChartHeight, children }: {
+function ImageScaler({
+  showFullSvg,
+  setShowFullSvg: _setShowFullSvg,
+  onOverflowChange,
+  minChartHeight,
+  children,
+}: {
   showFullSvg: boolean;
   setShowFullSvg: (v: boolean) => void;
   onOverflowChange?: (overflowing: boolean) => void;
@@ -123,8 +129,12 @@ function ImageScaler({ showFullSvg, setShowFullSvg, onOverflowChange, minChartHe
         }
       >
         <div
-          className={scaleDown ? '[&_svg]:w-full [&_svg]:h-auto' : ''}
-          style={needsZoom ? { transform: `scale(${zoomScale})`, transformOrigin: 'top left' } : undefined}
+          className={scaleDown ? '[&_svg]:h-auto [&_svg]:w-full' : ''}
+          style={
+            needsZoom
+              ? { transform: `scale(${zoomScale})`, transformOrigin: 'top left' }
+              : undefined
+          }
         >
           {children}
         </div>
@@ -154,7 +164,7 @@ export default function LastWaveApp() {
   const [imageOverflows, setImageOverflows] = useState(false);
   const [suppressLabels, setSuppressLabels] = useState(false);
   const [drawingStatus, setDrawingStatus] = useState('');
-  const prevCoreRef = useRef<{ sd: any; key: string }>({ sd: null, key: '' });
+  const prevCoreRef = useRef<{ sd: SeriesData[] | null; key: string }>({ sd: null, key: '' });
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
   const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const isAnimatingRef = useRef(false);
@@ -168,7 +178,7 @@ export default function LastWaveApp() {
   const animDoneResolveRef = useRef<(() => void) | null>(null);
   const animBuildupStepsRef = useRef<number[]>([]);
 
-  const showFullSizeBtn= showFullSvg || imageOverflows;
+  const showFullSizeBtn = showFullSvg || imageOverflows;
 
   // Close customize panel when clicking outside (desktop only, ≥ 1024px)
   useEffect(() => {
@@ -178,7 +188,8 @@ export default function LastWaveApp() {
       if (
         customizePanelRef.current?.contains(e.target as Node) ||
         customizeToggleRef.current?.contains(e.target as Node)
-      ) return;
+      )
+        return;
       setShowCustomize(false);
     };
     document.addEventListener('mousedown', handleMouseDown);
@@ -206,13 +217,16 @@ export default function LastWaveApp() {
   // Track the same deps as WaveVisualization's core useEffect so the indicator
   // appears on the same render — before any useEffect or paint.
   const coreKey = `${rOpts.color_scheme}|${rOpts.font}|${rOpts.offset}|${rOpts.width}|${rOpts.height}|${rOpts.add_labels}|${deformText}|${suppressLabels}`;
-  if (seriesData.length > 0 && deformText &&
-      (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key)) {
+  if (
+    seriesData.length > 0 &&
+    deformText &&
+    (seriesData !== prevCoreRef.current.sd || coreKey !== prevCoreRef.current.key)
+  ) {
     setDrawingStatus('Drawing…');
   }
   prevCoreRef.current = { sd: seriesData, key: coreKey };
 
-  const loadingAnimEnabled = rOpts.loading_animation ?? true;
+  const _loadingAnimEnabled = rOpts.loading_animation ?? true;
   const loadingStages = useLastWaveStore((s) => s.stages);
   const loadingStageIndex = useLastWaveStore((s) => s.currentStage);
 
@@ -226,10 +240,13 @@ export default function LastWaveApp() {
   })();
 
   // Clean up animation timer on unmount
-  useEffect(() => () => {
-    clearTimeout(streamTimerRef.current);
-    clearTimeout(animFrameTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      clearTimeout(streamTimerRef.current);
+      clearTimeout(animFrameTimerRef.current);
+    },
+    [],
+  );
 
   // Reset to input page if we lost chart data (e.g. navigated away and back)
   useEffect(() => {
@@ -275,7 +292,10 @@ export default function LastWaveApp() {
     if (!link) return;
     if (showActions) {
       link.textContent = '← New graph';
-      const handler = (e: Event) => { e.preventDefault(); resetToOptions(); };
+      const handler = (e: Event) => {
+        e.preventDefault();
+        resetToOptions();
+      };
       link.addEventListener('click', handler);
       return () => {
         link.textContent = 'Home';
@@ -291,7 +311,9 @@ export default function LastWaveApp() {
     const footer = document.getElementById('site-footer');
     if (!footer) return;
     footer.style.display = showActions ? 'none' : '';
-    return () => { footer.style.display = ''; };
+    return () => {
+      footer.style.display = '';
+    };
   }, [showActions]);
 
   function renderStreamFrame() {
@@ -304,7 +326,7 @@ export default function LastWaveApp() {
     if (joined.length === 0) return;
 
     // Apply progressive mask: full left of frontier, fading at frontier edge, zero right of it
-    const masked = joined.map(series => ({
+    const masked = joined.map((series) => ({
       ...series,
       counts: series.counts.map((count, i) => {
         const scale = Math.max(0, Math.min(1, (frontier - i) / RAMP_WIDTH));
@@ -314,15 +336,20 @@ export default function LastWaveApp() {
 
     // Compute minPlays on full arrived data for stable prediction
     const totalSegments = allSegments.length;
-    const arrivedCount = allSegments.filter(s => s !== undefined).length;
+    const arrivedCount = allSegments.filter((s) => s !== undefined).length;
     const partialMinPlays = findOptimalMinPlays(joined, 30);
-    const predictedMinPlays = Math.max(5, Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)));
+    const predictedMinPlays = Math.max(
+      5,
+      Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)),
+    );
 
     // Scale threshold based on sweep progress: start high (big artists first),
     // taper to predicted value as frontier completes
     const sweepProgress = Math.min(1, frontier / (totalSegments + RAMP_WIDTH));
     const startThreshold = predictedMinPlays * 3;
-    const sweepThreshold = Math.round(startThreshold + (predictedMinPlays - startThreshold) * sweepProgress);
+    const sweepThreshold = Math.round(
+      startThreshold + (predictedMinPlays - startThreshold) * sweepProgress,
+    );
     const effectiveMinPlays = Math.max(sweepThreshold, predictedMinPlays);
 
     streamMinPlaysRef.current = Math.min(streamMinPlaysRef.current, effectiveMinPlays);
@@ -354,12 +381,17 @@ export default function LastWaveApp() {
     const method = dsOpts.method ?? 'artist';
     const isTagMode = method === 'tag';
     const groupBy = dsOpts.group_by ?? 'week';
-    const groupLabel = groupBy === 'day' ? 'days' : groupBy === 'month' ? 'months' : groupBy === 'year' ? 'years' : 'weeks';
+    const groupLabel =
+      groupBy === 'day'
+        ? 'days'
+        : groupBy === 'month'
+          ? 'months'
+          : groupBy === 'year'
+            ? 'years'
+            : 'weeks';
 
     // Set up loading stages
-    const stages = [
-      new LoadingStage(`Loading ${groupLabel}`, isTagMode ? 40 : 80),
-    ];
+    const stages = [new LoadingStage(`Loading ${groupLabel}`, isTagMode ? 40 : 80)];
     if (isTagMode) {
       stages.push(new LoadingStage('Loading genres', 40));
     }
@@ -370,7 +402,8 @@ export default function LastWaveApp() {
       const api = new LastFmApi(LAST_FM_API_KEY);
 
       // Build time span
-      const startDate = dsOpts.time_start instanceof Date ? dsOpts.time_start : new Date(dsOpts.time_start);
+      const startDate =
+        dsOpts.time_start instanceof Date ? dsOpts.time_start : new Date(dsOpts.time_start);
       const endDate = dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end);
       const startUnix = Math.floor(startDate.getTime() / 1000);
       const endUnix = Math.floor(endDate.getTime() / 1000);
@@ -393,7 +426,9 @@ export default function LastWaveApp() {
       // Initialize streaming state
       clearTimeout(animFrameTimerRef.current);
       animFrameTimerRef.current = undefined;
-      streamSegmentsRef.current = new Array(segments.length).fill(undefined);
+      streamSegmentsRef.current = new Array<SegmentData[] | undefined>(segments.length).fill(
+        undefined,
+      );
       streamMinPlaysRef.current = Infinity;
       revealFrontierRef.current = 0;
       animFrameCountRef.current = 0;
@@ -426,7 +461,7 @@ export default function LastWaveApp() {
 
           if (!sweepDone) {
             // Phase 1: advance frontier — pace it so sweep uses half the remaining frames
-            const hasData = streamSegmentsRef.current.some(s => s !== undefined);
+            const hasData = streamSegmentsRef.current.some((s) => s !== undefined);
             if (hasData) {
               const framesLeft = Math.max(MIN_ANIM_FRAMES - animFrameCountRef.current, 1);
               const revealFrames = Math.max(Math.ceil(framesLeft / 2), 1);
@@ -435,7 +470,8 @@ export default function LastWaveApp() {
 
               // Don't sweep past what's arrived (for slow connections)
               const lastArrived = streamSegmentsRef.current.reduce(
-                (max, seg, i) => seg !== undefined ? i : max, -1
+                (max, seg, i) => (seg !== undefined ? i : max),
+                -1,
               );
               const maxFrontier = lastArrived + 1 + RAMP_WIDTH;
               revealFrontierRef.current = Math.min(frontier + advance, maxFrontier, frontierEnd);
@@ -469,7 +505,8 @@ export default function LastWaveApp() {
           }
 
           // Done when sweep finished, buildup exhausted, and all data arrived
-          const nothingLeftToRender = sweepDone && animBuildupStepsRef.current.length === 0 && allArrived;
+          const nothingLeftToRender =
+            sweepDone && animBuildupStepsRef.current.length === 0 && allArrived;
           if (nothingLeftToRender) {
             animFrameTimerRef.current = undefined;
             animDoneResolveRef.current?.();
@@ -479,19 +516,19 @@ export default function LastWaveApp() {
           // Wait for the browser to paint, THEN schedule the next tick
           if (rendered) {
             requestAnimationFrame(() => {
-              animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
+              animFrameTimerRef.current = setTimeout(tick, frameInterval);
             });
           } else {
             // Nothing to render yet (waiting for data) — just wait and retry
-            animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
+            animFrameTimerRef.current = setTimeout(tick, frameInterval);
           }
         };
 
         // Start first tick
-        animFrameTimerRef.current = setTimeout(tick, frameInterval) as any;
+        animFrameTimerRef.current = setTimeout(tick, frameInterval);
       }
 
-      const fetchMethod= isTagMode ? 'artist' : method;
+      const fetchMethod = isTagMode ? 'artist' : method;
 
       const segmentTasks = segments.map((seg) => async () => {
         const params = [
@@ -501,7 +538,7 @@ export default function LastWaveApp() {
         ];
         const url = api.getAPIRequestURL(fetchMethod, params);
         const response = await fetchWithRetry(url);
-        const json = await response.json();
+        const json = (await response.json()) as LastFmResponse;
         return api.parseResponseJSON(json);
       });
 
@@ -509,9 +546,11 @@ export default function LastWaveApp() {
         segmentTasks,
         MAX_CONCURRENT,
         () => store.progressCurrentStage(),
-        loadingAnim ? (index, result) => {
-          streamSegmentsRef.current[index] = result;
-        } : undefined,
+        loadingAnim
+          ? (index, result) => {
+              streamSegmentsRef.current[index] = result;
+            }
+          : undefined,
       );
 
       // Join and clean data
@@ -525,7 +564,7 @@ export default function LastWaveApp() {
       if (isTagMode) {
         store.startNextStage(data.length);
         const { lookupGenres } = await import('@/core/genres/genreLookup');
-        const artistNames = data.map(s => s.title);
+        const artistNames = data.map((s) => s.title);
 
         // Reset streaming state for genre phase
         streamMinPlaysRef.current = Infinity;
@@ -575,7 +614,9 @@ export default function LastWaveApp() {
         }
 
         if (result.missing.length > 0) {
-          store.log?.(`Genre lookup: ${result.cachedCount} cached, ${result.wikidataCount} Wikidata, ${result.musicbrainzCount} MusicBrainz, ${result.missing.length} not found`);
+          store.log?.(
+            `Genre lookup: ${result.cachedCount} cached, ${result.wikidataCount} Wikidata, ${result.musicbrainzCount} MusicBrainz, ${result.missing.length} not found`,
+          );
         }
 
         data = combineArtistTags(data, tagData);
@@ -629,9 +670,9 @@ export default function LastWaveApp() {
       });
 
       store.setShowLoadingBar(false);
-    } catch (e: any) {
+    } catch (e: unknown) {
       store.log(String(e));
-      setError(String(e?.message ?? e));
+      setError(e instanceof Error ? e.message : String(e));
       store.setShowLoadingBar(false);
       store.setShowOptions(true);
     }
@@ -646,19 +687,29 @@ export default function LastWaveApp() {
     <div className="text-center">
       {/* Error Dialog */}
       {error && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-lw-surface border border-lw-border rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <h3 className="font-display text-xl text-red-400 mb-3">Something went wrong</h3>
-            <p className="text-sm text-lw-muted font-mono mb-4 break-words">{error}</p>
-            <p className="text-xs text-lw-muted/60 mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-lw-border bg-lw-surface p-8 shadow-2xl">
+            <h3 className="mb-3 font-display text-xl text-red-400">Something went wrong</h3>
+            <p className="mb-4 break-words font-mono text-sm text-lw-muted">{error}</p>
+            <p className="mb-6 text-xs text-lw-muted/60">
               If this is unexpected, please{' '}
-              <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">email niko@savas.ca</a>
-              {' '}or{' '}
-              <a href="https://github.com/nikosavas/LastWave/issues/new" target="_blank" rel="noopener noreferrer" className="text-lw-accent hover:underline">open a GitHub issue</a>.
+              <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">
+                email niko@savas.ca
+              </a>{' '}
+              or{' '}
+              <a
+                href="https://github.com/nikosavas/LastWave/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lw-accent hover:underline"
+              >
+                open a GitHub issue
+              </a>
+              .
             </p>
             <button
               onClick={handleErrorDismiss}
-              className="bg-lw-accent hover:bg-lw-accent-dim text-lw-bg rounded-lg px-6 py-2 text-sm font-medium transition-all"
+              className="rounded-lg bg-lw-accent px-6 py-2 text-sm font-medium text-lw-bg transition-all hover:bg-lw-accent-dim"
             >
               Ok
             </button>
@@ -667,43 +718,55 @@ export default function LastWaveApp() {
       )}
 
       {/* Options */}
-      {showOptions && <WaveOptions onSubmit={handleSubmit} />}
+      {showOptions && <WaveOptions onSubmit={() => void handleSubmit()} />}
 
       {/* Desktop layout */}
       <div className="hidden lg:block">
         {showVisualization && (
           <div className="relative">
-            <div className={`relative ${!imageOverflows && !showFullSvg ? 'w-fit mx-auto max-w-full' : ''}`}>
+            <div
+              className={`relative ${!imageOverflows && !showFullSvg ? 'mx-auto w-fit max-w-full' : ''}`}
+            >
               {(showLoadingBar || drawingStatus) && (
                 <div className="absolute inset-x-0 top-3 z-20 text-center">
-                  <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
+                  <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
                     {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                   </span>
                 </div>
               )}
-              <ImageScaler showFullSvg={showFullSvg} setShowFullSvg={setShowFullSvg} onOverflowChange={setImageOverflows}>
-                <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingProgress={handleDrawingProgress} suppressLabels={suppressLabels} />
+              <ImageScaler
+                showFullSvg={showFullSvg}
+                setShowFullSvg={setShowFullSvg}
+                onOverflowChange={setImageOverflows}
+              >
+                <WaveVisualization
+                  seriesData={seriesData}
+                  onOverflowsDetected={setOverflows}
+                  onRenderComplete={handleRenderComplete}
+                  onDrawingProgress={handleDrawingProgress}
+                  suppressLabels={suppressLabels}
+                />
               </ImageScaler>
               {showActions && (
                 <>
                   {showFullSizeBtn && (
-                    <div className="absolute top-2 left-6 z-10">
+                    <div className="absolute left-6 top-2 z-10">
                       <button
                         onClick={() => setShowFullSvg(!showFullSvg)}
-                        className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm bg-lw-surface/80 border border-lw-border text-lw-text hover:text-lw-accent hover:border-lw-accent"
+                        className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
                       >
                         {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
                       </button>
                     </div>
                   )}
-                  <div className="absolute top-2 right-6 z-10 flex gap-2">
+                  <div className="absolute right-6 top-2 z-10 flex gap-2">
                     <button
                       ref={customizeToggleRef}
                       onClick={() => setShowCustomize(!showCustomize)}
-                      className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
+                      className={`rounded-lg px-4 py-1.5 text-xs font-medium uppercase tracking-wider backdrop-blur-sm transition-all ${
                         showCustomize
                           ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
-                          : 'bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+                          : 'border border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent'
                       }`}
                     >
                       {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
@@ -713,7 +776,10 @@ export default function LastWaveApp() {
               )}
             </div>
             {showActions && showCustomize && (
-              <div ref={customizePanelRef} className="absolute top-12 right-6 z-30 w-[min(420px,40%)] bg-lw-bg/95 backdrop-blur-sm rounded-xl border border-lw-border shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div
+                ref={customizePanelRef}
+                className="absolute right-6 top-12 z-30 max-h-[calc(100vh-8rem)] w-[min(420px,40%)] overflow-y-auto rounded-xl border border-lw-border bg-lw-bg/95 shadow-lg backdrop-blur-sm"
+              >
                 <CustomizePanel maxPlays={maxPlaysInDataset} />
               </div>
             )}
@@ -722,16 +788,18 @@ export default function LastWaveApp() {
       </div>
 
       {/* Mobile layout — single WaveVisualization instance to avoid remount flash */}
-      <div className={`lg:hidden ${
-        showVisualization
-          ? 'min-h-[calc(100svh-10rem)] max-lg:landscape:min-h-[calc(100svh-8rem)] flex flex-col justify-center'
-          : ''
-      }`}>
+      <div
+        className={`lg:hidden ${
+          showVisualization
+            ? 'flex min-h-[calc(100svh-10rem)] flex-col justify-center max-lg:landscape:min-h-[calc(100svh-8rem)]'
+            : ''
+        }`}
+      >
         {showVisualization && (
           <div className="relative">
             {(showLoadingBar || drawingStatus) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
-                <span className="text-sm font-medium tracking-wider uppercase text-lw-muted animate-pulse">
+                <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
                   {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                 </span>
               </div>
@@ -741,27 +809,33 @@ export default function LastWaveApp() {
               setShowFullSvg={setShowFullSvg}
               minChartHeight={showCustomize ? 150 : undefined}
             >
-              <WaveVisualization seriesData={seriesData} onOverflowsDetected={setOverflows} onRenderComplete={handleRenderComplete} onDrawingProgress={handleDrawingProgress} suppressLabels={suppressLabels} />
+              <WaveVisualization
+                seriesData={seriesData}
+                onOverflowsDetected={setOverflows}
+                onRenderComplete={handleRenderComplete}
+                onDrawingProgress={handleDrawingProgress}
+                suppressLabels={suppressLabels}
+              />
             </ImageScaler>
             {showActions && (
               <>
                 {showFullSizeBtn && (
-                  <div className="absolute top-2 left-6 z-10">
+                  <div className="absolute left-6 top-2 z-10">
                     <button
                       onClick={() => setShowFullSvg(!showFullSvg)}
-                      className="rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm bg-lw-surface/80 border border-lw-border text-lw-text hover:text-lw-accent hover:border-lw-accent"
+                      className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
                     >
                       {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
                     </button>
                   </div>
                 )}
-                <div className="absolute top-2 right-6 z-10">
+                <div className="absolute right-6 top-2 z-10">
                   <button
                     onClick={() => setShowCustomize(!showCustomize)}
-                    className={`rounded-lg px-4 py-1.5 text-xs tracking-wider uppercase font-medium transition-all backdrop-blur-sm ${
+                    className={`rounded-lg px-4 py-1.5 text-xs font-medium uppercase tracking-wider backdrop-blur-sm transition-all ${
                       showCustomize
                         ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
-                        : 'bg-lw-surface/80 border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+                        : 'border border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent'
                     }`}
                   >
                     {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
@@ -791,7 +865,7 @@ export default function LastWaveApp() {
                 `**Last.fm Username:** ${dsOpts.username ?? ''}`,
                 `**Misaligned Labels:** ${labels}`,
                 `**Minimum Plays:** ${dsOpts.min_plays ?? '10'}`,
-                `**Date Range:** ${dsOpts._datePreset ?? 'Custom'} (${dsOpts.time_start ?? ''} – ${dsOpts.time_end ?? ''})`,
+                `**Date Range:** ${dsOpts._datePreset ?? 'Custom'} (${String(dsOpts.time_start ?? '')} – ${String(dsOpts.time_end ?? '')})`,
                 `**Color Scheme:** ${rOpts.color_scheme ?? 'lastwave'}`,
                 `**Graph Type:** ${rOpts.offset ?? 'silhouette'}`,
                 `**Group By:** ${dsOpts.group_by ?? 'week'}`,
@@ -810,7 +884,7 @@ export default function LastWaveApp() {
             rel="noopener noreferrer"
             onMouseEnter={() => setHighlightOverflows(true)}
             onMouseLeave={() => setHighlightOverflows(false)}
-            className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 border border-orange-500/50 hover:border-orange-400 bg-orange-500/10 hover:bg-orange-500/20 rounded-lg px-4 py-2 transition-all"
+            className="flex items-center gap-2 rounded-lg border border-orange-500/50 bg-orange-500/10 px-4 py-2 text-xs text-orange-400 transition-all hover:border-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
           >
             <span>⚠</span>
             <span>
@@ -825,13 +899,17 @@ export default function LastWaveApp() {
 
       {/* Image Actions (download/share) — sticky on mobile */}
       {showActions && (
-        <div className="lg:relative fixed bottom-0 left-0 right-0 z-40 lg:z-auto bg-lw-bg/90 backdrop-blur-sm lg:bg-transparent lg:backdrop-blur-none border-t border-lw-border lg:border-t-0">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-lw-border bg-lw-bg/90 backdrop-blur-sm lg:relative lg:z-auto lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none">
           <ImageActions />
         </div>
       )}
 
       {/* Spacer so fixed mobile bar doesn't cover content */}
-      {showActions && <div className={`lg:hidden ${showCustomize ? 'h-20 max-lg:landscape:h-0' : 'h-20 max-lg:landscape:h-10'}`} />}
+      {showActions && (
+        <div
+          className={`lg:hidden ${showCustomize ? 'h-20 max-lg:landscape:h-0' : 'h-20 max-lg:landscape:h-10'}`}
+        />
+      )}
 
       {/* Highlight overflowing labels when hovering the bug report button */}
       {highlightOverflows && (

@@ -3,49 +3,74 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
 <BaseLayout title="About - LastWave">
-  <div class="max-w-2xl mx-auto px-6">
-    <h1 class="font-display text-4xl text-lw-heading mt-10 mb-6">What is LastWave?</h1>
-    <p class="text-lw-muted leading-relaxed">
-      LastWave is a web-app that takes data from your last.fm profile and creates a beautiful
-      wave graph that represents your music listening trends by artist, album, or tag. The
-      artists that you listen to more at a given time has a larger area on the graph.
+  <div class="mx-auto max-w-2xl px-6">
+    <h1 class="mb-6 mt-10 font-display text-4xl text-lw-heading">What is LastWave?</h1>
+    <p class="leading-relaxed text-lw-muted">
+      LastWave is a web-app that takes data from your last.fm profile and creates a beautiful wave
+      graph that represents your music listening trends by artist, album, or tag. The artists that
+      you listen to more at a given time has a larger area on the graph.
     </p>
 
-    <div class="w-12 h-px bg-lw-border my-10"></div>
+    <div class="my-10 h-px w-12 bg-lw-border"></div>
 
-    <h2 class="font-display text-2xl text-lw-heading mb-4">Who built LastWave?</h2>
-    <p class="text-lw-muted leading-relaxed">
-      LastWave is written and maintained by <a href="https://savas.ca/" class="text-lw-accent hover:text-lw-accent-dim transition-colors">Niko Savas</a>. Swing by my
-      <a href="http://last.fm/user/taurheim" class="text-lw-accent hover:text-lw-accent-dim transition-colors">last.fm</a> profile and say hi!
+    <h2 class="mb-4 font-display text-2xl text-lw-heading">Who built LastWave?</h2>
+    <p class="leading-relaxed text-lw-muted">
+      LastWave is written and maintained by <a
+        href="https://savas.ca/"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">Niko Savas</a
+      >. Swing by my
+      <a
+        href="http://last.fm/user/taurheim"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">last.fm</a
+      > profile and say hi!
     </p>
 
-    <div class="w-12 h-px bg-lw-border my-10"></div>
+    <div class="my-10 h-px w-12 bg-lw-border"></div>
 
-    <h2 class="font-display text-2xl text-lw-heading mb-4">Support LastWave</h2>
-    <p class="text-lw-muted leading-relaxed">
-      Any money donated will go directly to hosting and server costs for LastWave, so that I can keep LastWave
-      completely free!
+    <h2 class="mb-4 font-display text-2xl text-lw-heading">Support LastWave</h2>
+    <p class="leading-relaxed text-lw-muted">
+      Any money donated will go directly to hosting and server costs for LastWave, so that I can
+      keep LastWave completely free!
     </p>
     <p class="mt-4">
-      <a href="https://buymeacoffee.com/nikosavas" class="inline-block border border-lw-accent text-lw-accent hover:bg-lw-accent hover:text-lw-bg rounded-lg px-6 py-2 text-sm tracking-wider uppercase transition-all">Buy me a coffee</a>
+      <a
+        href="https://buymeacoffee.com/nikosavas"
+        class="inline-block rounded-lg border border-lw-accent px-6 py-2 text-sm uppercase tracking-wider text-lw-accent transition-all hover:bg-lw-accent hover:text-lw-bg"
+        >Buy me a coffee</a
+      >
     </p>
 
-    <div class="w-12 h-px bg-lw-border my-10"></div>
+    <div class="my-10 h-px w-12 bg-lw-border"></div>
 
-    <h2 class="font-display text-2xl text-lw-heading mb-4">Contribute</h2>
-    <p class="text-lw-muted leading-relaxed">
-      If you're a developer who wants a feature or wants to help develop this tool, please swing by this project's
-      <a href="https://github.com/taurheim/LastWave" class="text-lw-accent hover:text-lw-accent-dim transition-colors">GitHub repository</a> and submit a pull request!
+    <h2 class="mb-4 font-display text-2xl text-lw-heading">Contribute</h2>
+    <p class="leading-relaxed text-lw-muted">
+      If you're a developer who wants a feature or wants to help develop this tool, please swing by
+      this project's
+      <a
+        href="https://github.com/taurheim/LastWave"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">GitHub repository</a
+      > and submit a pull request!
     </p>
 
-    <div class="w-12 h-px bg-lw-border my-10"></div>
+    <div class="my-10 h-px w-12 bg-lw-border"></div>
 
-    <h2 class="font-display text-2xl text-lw-heading mb-4">Technologies</h2>
-    <p class="text-lw-muted leading-relaxed mb-12">
-      Version 4 of LastWave is built using <a href="https://astro.build/" class="text-lw-accent hover:text-lw-accent-dim transition-colors">Astro</a>,
-      <a href="https://react.dev/" class="text-lw-accent hover:text-lw-accent-dim transition-colors">React</a>, and
-      <a href="https://www.typescriptlang.org" class="text-lw-accent hover:text-lw-accent-dim transition-colors">TypeScript</a>. For a full list of dependencies, visit the project's
-      <a href="https://github.com/taurheim/LastWave" class="text-lw-accent hover:text-lw-accent-dim transition-colors">GitHub</a>.
+    <h2 class="mb-4 font-display text-2xl text-lw-heading">Technologies</h2>
+    <p class="mb-12 leading-relaxed text-lw-muted">
+      Version 4 of LastWave is built using <a
+        href="https://astro.build/"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">Astro</a
+      >,
+      <a href="https://react.dev/" class="text-lw-accent transition-colors hover:text-lw-accent-dim"
+        >React</a
+      >, and
+      <a
+        href="https://www.typescriptlang.org"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">TypeScript</a
+      >. For a full list of dependencies, visit the project's
+      <a
+        href="https://github.com/taurheim/LastWave"
+        class="text-lw-accent transition-colors hover:text-lw-accent-dim">GitHub</a
+      >.
     </p>
   </div>
 </BaseLayout>

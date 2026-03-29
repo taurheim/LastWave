@@ -11,12 +11,7 @@ export default class CloudinaryAPI {
     schemeName: string,
     username: string,
   ): Promise<string> {
-    const UPLOAD_TAGS = [
-      'browser_upload',
-      'v4',
-      `user:${username}`,
-      `scheme:${schemeName}`,
-    ];
+    const UPLOAD_TAGS = ['browser_upload', 'v4', `user:${username}`, `scheme:${schemeName}`];
 
     const formData = new FormData();
     formData.append('upload_preset', this.UPLOAD_PRESET);
@@ -28,7 +23,7 @@ export default class CloudinaryAPI {
       body: formData,
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as { secure_url: string };
     return data.secure_url;
   }
 }

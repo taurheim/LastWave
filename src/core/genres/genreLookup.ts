@@ -11,31 +11,54 @@ const CACHE_PREFIX = 'genre:v1:';
 const WIKIDATA_UA = 'LastWave/4.0 (https://github.com/lastwave)';
 
 // In dev, proxy through Vite to avoid CORS. In prod, hit APIs directly with origin=*.
-const WIKIDATA_API = import.meta.env.DEV
+const META_ENV = import.meta.env as Record<string, unknown>;
+const WIKIDATA_API = META_ENV.DEV
   ? '/api/wikidata/w/api.php'
   : 'https://www.wikidata.org/w/api.php';
-const SPARQL_ENDPOINT = import.meta.env.DEV
-  ? '/api/sparql/sparql'
-  : 'https://query.wikidata.org/sparql';
+const SPARQL_ENDPOINT = META_ENV.DEV ? '/api/sparql/sparql' : 'https://query.wikidata.org/sparql';
 
 // ─── Name handling ────────────────────────────────────────
 
 const MUSIC_TYPE_KEYWORDS = [
-  'band', 'group', 'duo', 'trio', 'quartet', 'ensemble',
-  'musician', 'singer', 'rapper', 'musical', 'dj', 'human',
+  'band',
+  'group',
+  'duo',
+  'trio',
+  'quartet',
+  'ensemble',
+  'musician',
+  'singer',
+  'rapper',
+  'musical',
+  'dj',
+  'human',
 ];
 const MUSIC_OCCUPATION_KEYWORDS = [
-  'singer', 'musician', 'rapper', 'songwriter', 'composer',
-  'producer', 'dj', 'guitarist', 'drummer', 'bassist',
-  'pianist', 'vocalist', 'instrumentalist', 'disc jockey',
-  'record producer', 'music artist',
+  'singer',
+  'musician',
+  'rapper',
+  'songwriter',
+  'composer',
+  'producer',
+  'dj',
+  'guitarist',
+  'drummer',
+  'bassist',
+  'pianist',
+  'vocalist',
+  'instrumentalist',
+  'disc jockey',
+  'record producer',
+  'music artist',
 ];
 
 function isMusicRelated(types: Set<string>, occupations: Set<string>): boolean {
-  const tt = [...types].map(t => t.toLowerCase());
-  const oo = [...occupations].map(o => o.toLowerCase());
-  return tt.some(t => MUSIC_TYPE_KEYWORDS.some(kw => t.includes(kw)))
-      || oo.some(o => MUSIC_OCCUPATION_KEYWORDS.some(kw => o.includes(kw)));
+  const tt = [...types].map((t) => t.toLowerCase());
+  const oo = [...occupations].map((o) => o.toLowerCase());
+  return (
+    tt.some((t) => MUSIC_TYPE_KEYWORDS.some((kw) => t.includes(kw))) ||
+    oo.some((o) => MUSIC_OCCUPATION_KEYWORDS.some((kw) => o.includes(kw)))
+  );
 }
 
 function normalizeForSearch(name: string): string {
@@ -69,24 +92,26 @@ function nameSimilarity(searchName: string, resultName: string): number {
   const aWords = searchName.toLowerCase().split(/\s+/);
   const bWords = resultName.toLowerCase().split(/\s+/);
   if (aWords.length === 1 && bWords.length === 2 && aWords[0].length >= 3) {
-    if (normalizeForComparison(bWords[bWords.length - 1]) === normalizeForComparison(aWords[0])) return 0.85;
+    if (normalizeForComparison(bWords[bWords.length - 1]) === normalizeForComparison(aWords[0]))
+      return 0.85;
   }
 
   const lenRatio = Math.min(a.length, b.length) / Math.max(a.length, b.length);
   if ((b.startsWith(a) || a.startsWith(b)) && lenRatio >= 0.7) return 0.9;
-  if (a.length >= 4 && b.length >= 4 && (b.includes(a) || a.includes(b)) && lenRatio >= 0.5) return 0.7;
+  if (a.length >= 4 && b.length >= 4 && (b.includes(a) || a.includes(b)) && lenRatio >= 0.5)
+    return 0.7;
 
   const searchWords = new Set(searchName.toLowerCase().split(/\s+/));
   const resultWords = new Set(resultName.toLowerCase().split(/\s+/));
-  const overlap = [...searchWords].filter(w => resultWords.has(w) && w.length > 1).length;
+  const overlap = [...searchWords].filter((w) => resultWords.has(w) && w.length > 1).length;
   if (overlap > 0) return 0.3 + (overlap / Math.max(searchWords.size, resultWords.size)) * 0.4;
   return 0;
 }
 
 function albumMatchScore(sourceAlbums: string[], lastfmAlbums: string[]): number {
   if (sourceAlbums.length === 0) return 0;
-  const srcNorm = new Set(sourceAlbums.map(normalizeForComparison).filter(s => s.length >= 3));
-  const lfmNorm = lastfmAlbums.map(normalizeForComparison).filter(s => s.length >= 3);
+  const srcNorm = new Set(sourceAlbums.map(normalizeForComparison).filter((s) => s.length >= 3));
+  const lfmNorm = lastfmAlbums.map(normalizeForComparison).filter((s) => s.length >= 3);
   let matches = 0;
   for (const lfm of lfmNorm) {
     if (srcNorm.has(lfm)) matches++;
@@ -111,25 +136,74 @@ interface RankedCandidate extends WikidataEntity {
   similarity: number;
 }
 
+// ─── API response types ──────────────────────────────────
+
+interface WikidataSearchResponse {
+  search: Array<{ id: string }>;
+}
+
+interface SparqlValue {
+  value: string;
+}
+
+interface EntitySparqlBinding {
+  item: SparqlValue;
+  itemLabel?: SparqlValue;
+  typeLabel?: SparqlValue;
+  occupationLabel?: SparqlValue;
+  genreLabel?: SparqlValue;
+  sitelinks?: SparqlValue;
+}
+
+interface DiscographySparqlBinding {
+  performer: SparqlValue;
+  workLabel?: SparqlValue;
+}
+
+interface SparqlResponse<T> {
+  results: { bindings: T[] };
+}
+
+interface LastfmAlbumsResponse {
+  topalbums?: { album: Array<{ name: string }> };
+}
+
+interface LastfmTagsResponse {
+  toptags?: { tag: Array<{ name: string; count: string }> };
+}
+
+interface MusicBrainzSearchResponse {
+  artists?: Array<{ id: string; name: string; score: number }>;
+}
+
+interface MusicBrainzArtistResponse {
+  genres?: Array<{ name: string }>;
+  'release-groups'?: Array<{ title: string }>;
+}
+
 // ─── Cache ────────────────────────────────────────────────
 
 function getCached(artistName: string): string[] | null {
   try {
     const raw = localStorage.getItem(CACHE_PREFIX + artistName);
-    if (raw) return JSON.parse(raw);
-  } catch { /* ignore */ }
+    if (raw) return JSON.parse(raw) as string[];
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
 function setCache(artistName: string, genres: string[]): void {
   try {
     localStorage.setItem(CACHE_PREFIX + artistName, JSON.stringify(genres));
-  } catch { /* localStorage full or unavailable */ }
+  } catch {
+    /* localStorage full or unavailable */
+  }
 }
 
 // ─── API helpers ──────────────────────────────────────────
 
-async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<any> {
+async function fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
   const res = await fetch(url, {
     headers: { 'User-Agent': WIKIDATA_UA, ...headers },
   });
@@ -137,12 +211,12 @@ async function fetchJson(url: string, headers: Record<string, string> = {}): Pro
   return res.json();
 }
 
-async function sparqlQuery(query: string): Promise<any> {
+async function sparqlQuery(query: string): Promise<unknown> {
   const res = await fetch(SPARQL_ENDPOINT, {
     method: 'POST',
     headers: {
       'User-Agent': WIKIDATA_UA,
-      'Accept': 'application/sparql-results+json',
+      Accept: 'application/sparql-results+json',
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: 'query=' + encodeURIComponent(query),
@@ -153,38 +227,28 @@ async function sparqlQuery(query: string): Promise<any> {
 
 async function searchWikidata(query: string): Promise<Array<{ id: string }>> {
   const url = `${WIKIDATA_API}?action=wbsearchentities&search=${encodeURIComponent(query)}&language=en&limit=10&format=json&origin=*`;
-  const data = await fetchJson(url);
+  const data = (await fetchJson(url)) as WikidataSearchResponse;
   return data.search || [];
 }
 
-async function fetchLastfmAlbums(
-  artistName: string,
-  apiKey: string,
-): Promise<string[]> {
+async function fetchLastfmAlbums(artistName: string, apiKey: string): Promise<string[]> {
   const url = `https://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&artist=${encodeURIComponent(artistName)}&api_key=${apiKey}&format=json&limit=10`;
-  const data = await fetchJson(url);
-  return (data.topalbums?.album || [])
-    .map((a: any) => a.name as string)
-    .filter((n: string) => n && n !== '(null)');
+  const data = (await fetchJson(url)) as LastfmAlbumsResponse;
+  return (data.topalbums?.album || []).map((a) => a.name).filter((n) => n && n !== '(null)');
 }
 
-async function fetchLastfmTags(
-  artistName: string,
-  apiKey: string,
-): Promise<string[]> {
+async function fetchLastfmTags(artistName: string, apiKey: string): Promise<string[]> {
   const url = `https://ws.audioscrobbler.com/2.0/?method=artist.gettoptags&artist=${encodeURIComponent(artistName)}&api_key=${apiKey}&format=json`;
-  const data = await fetchJson(url);
+  const data = (await fetchJson(url)) as LastfmTagsResponse;
   return (data.toptags?.tag || [])
-    .filter((t: any) => parseInt(t.count) >= 25)
+    .filter((t) => parseInt(t.count) >= 25)
     .slice(0, 5)
-    .map((t: any) => t.name as string);
+    .map((t) => t.name);
 }
 
 // ─── Tier 1: Wikidata batch lookup ───────────────────────
 
-async function wikidataBatchLookup(
-  artists: Array<{ name: string; albums: string[] }>,
-): Promise<{
+async function wikidataBatchLookup(artists: Array<{ name: string; albums: string[] }>): Promise<{
   found: Record<string, string[]>;
   needsFallback: Array<{ name: string; albums: string[]; reason: string }>;
 }> {
@@ -192,7 +256,7 @@ async function wikidataBatchLookup(
   const needsFallback: Array<{ name: string; albums: string[]; reason: string }> = [];
 
   // Build search variants per artist
-  const searchVariants = artists.map(a => {
+  const searchVariants = artists.map((a) => {
     const variants = [a.name];
     const normalized = normalizeForSearch(a.name);
     if (normalized !== a.name) variants.push(normalized);
@@ -205,8 +269,8 @@ async function wikidataBatchLookup(
 
   // Parallel wbsearchentities
   const searchResults = await Promise.all(
-    searchVariants.flatMap(sv =>
-      sv.variants.map(async v => {
+    searchVariants.flatMap((sv) =>
+      sv.variants.map(async (v) => {
         const results = await searchWikidata(v);
         return { artistName: sv.name, results };
       }),
@@ -232,7 +296,7 @@ async function wikidataBatchLookup(
   }
 
   // Batch SPARQL for types, occupations, genres, sitelinks
-  const ids = [...allEntityIds].map(id => 'wd:' + id).join(' ');
+  const ids = [...allEntityIds].map((id) => 'wd:' + id).join(' ');
   const sparql = `SELECT ?item ?itemLabel ?typeLabel ?occupationLabel ?genreLabel ?sitelinks WHERE {
     VALUES ?item { ${ids} }
     OPTIONAL { ?item wdt:P31 ?type . }
@@ -241,7 +305,7 @@ async function wikidataBatchLookup(
     OPTIONAL { ?item wikibase:sitelinks ?sitelinks . }
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   }`;
-  const sparqlData = await sparqlQuery(sparql);
+  const sparqlData = (await sparqlQuery(sparql)) as SparqlResponse<EntitySparqlBinding>;
 
   // Parse entities
   const entities: Record<string, WikidataEntity> = {};
@@ -249,8 +313,12 @@ async function wikidataBatchLookup(
     const id = row.item.value.split('/').pop()!;
     if (!entities[id]) {
       entities[id] = {
-        id, label: row.itemLabel?.value || '',
-        types: new Set(), occupations: new Set(), genres: new Set(), sitelinks: 0,
+        id,
+        label: row.itemLabel?.value || '',
+        types: new Set(),
+        occupations: new Set(),
+        genres: new Set(),
+        sitelinks: 0,
       };
     }
     const e = entities[id];
@@ -266,34 +334,36 @@ async function wikidataBatchLookup(
   for (const a of artists) {
     const cIds = candidatesPerArtist[a.name] || new Set();
     const musicWithGenres = [...cIds]
-      .map(id => entities[id])
-      .filter(e => e && e.genres.size > 0 && isMusicRelated(e.types, e.occupations));
+      .map((id) => entities[id])
+      .filter((e) => e && e.genres.size > 0 && isMusicRelated(e.types, e.occupations));
     if (musicWithGenres.length > 1) {
       needsDisambig.push(a.name);
       for (const c of musicWithGenres) disambigEntityIds.add(c.id);
     }
   }
 
-  let discographies: Record<string, string[]> = {};
+  const discographies: Record<string, string[]> = {};
   if (disambigEntityIds.size > 0) {
     const BATCH = 15;
     const eidList = [...disambigEntityIds];
     for (let i = 0; i < eidList.length; i += BATCH) {
       const batch = eidList.slice(i, i + BATCH);
-      const values = batch.map(id => 'wd:' + id).join(' ');
+      const values = batch.map((id) => 'wd:' + id).join(' ');
       const dSparql = `SELECT ?performer ?workLabel WHERE {
         VALUES ?performer { ${values} }
         ?work wdt:P175 ?performer .
         SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
       } LIMIT 200`;
       try {
-        const data = await sparqlQuery(dSparql);
+        const data = (await sparqlQuery(dSparql)) as SparqlResponse<DiscographySparqlBinding>;
         for (const row of data.results.bindings) {
           const id = row.performer.value.split('/').pop()!;
           if (!discographies[id]) discographies[id] = [];
           discographies[id].push(row.workLabel?.value || '');
         }
-      } catch { /* batch error, skip */ }
+      } catch {
+        /* batch error, skip */
+      }
     }
   }
 
@@ -306,9 +376,9 @@ async function wikidataBatchLookup(
     const isAmbiguous = needsDisambig.includes(a.name);
 
     const ranked: RankedCandidate[] = [...cIds]
-      .map(id => entities[id])
+      .map((id) => entities[id])
       .filter((e): e is WikidataEntity => !!e && isMusicRelated(e.types, e.occupations))
-      .map(e => {
+      .map((e) => {
         let score = (e.genres.size > 0 ? 5 : 0) + Math.min(e.sitelinks / 20, 10);
         const similarity = nameSimilarity(a.name, e.label);
         let albumMatches = 0;
@@ -355,29 +425,32 @@ async function musicbrainzFallback(
   for (const artist of artists) {
     let req = 0;
     onProgress?.(artist.name, req);
-    await new Promise(r => setTimeout(r, 1100));
+    await new Promise((r) => setTimeout(r, 1100));
     try {
       const sUrl = `https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artist.name)}&fmt=json&limit=15`;
       const sRes = await fetch(sUrl, { headers: { 'User-Agent': 'LastWave/4.0' } });
-      const sData = await sRes.json();
+      const sData = (await sRes.json()) as MusicBrainzSearchResponse;
       onProgress?.(artist.name, ++req);
 
       let bestMatch: {
-        name: string; genres: string[]; albumHits: number;
-        sim: number; fromLastfm?: boolean;
+        name: string;
+        genres: string[];
+        albumHits: number;
+        sim: number;
+        fromLastfm?: boolean;
       } | null = null;
 
-      for (const mbArtist of (sData.artists || []).filter((a: any) => a.score >= 60)) {
+      for (const mbArtist of (sData.artists || []).filter((a) => a.score >= 60)) {
         const sim = nameSimilarity(artist.name, mbArtist.name);
         if (sim < 0.5) continue;
 
-        await new Promise(r => setTimeout(r, 1100));
+        await new Promise((r) => setTimeout(r, 1100));
         const lUrl = `https://musicbrainz.org/ws/2/artist/${mbArtist.id}?inc=genres+release-groups&fmt=json`;
         const lRes = await fetch(lUrl, { headers: { 'User-Agent': 'LastWave/4.0' } });
-        const lData = await lRes.json();
+        const lData = (await lRes.json()) as MusicBrainzArtistResponse;
         onProgress?.(artist.name, ++req);
-        const genres = (lData.genres || []).map((g: any) => g.name as string);
-        const mbAlbums = (lData['release-groups'] || []).map((rg: any) => rg.title as string);
+        const genres = (lData.genres || []).map((g) => g.name);
+        const mbAlbums = (lData['release-groups'] || []).map((rg) => rg.title);
         const albumHits = albumMatchScore(mbAlbums, artist.albums);
 
         if (genres.length > 0) {
@@ -395,7 +468,9 @@ async function musicbrainzFallback(
               bestMatch = { name: mbArtist.name, genres: tags, albumHits, sim, fromLastfm: true };
               break;
             }
-          } catch { /* skip */ }
+          } catch {
+            /* skip */
+          }
         }
       }
 
@@ -403,7 +478,9 @@ async function musicbrainzFallback(
         found[artist.name] = bestMatch.genres;
         onResolved?.(artist.name, bestMatch.genres);
       }
-    } catch { /* skip artist */ }
+    } catch {
+      /* skip artist */
+    }
 
     onArtistDone?.(artist.name);
   }
@@ -473,7 +550,7 @@ export async function lookupGenres(
 
   // Step 2: Fetch Last.fm albums for all uncached artists (needed for disambiguation)
   const albumResults = await Promise.all(
-    uncached.map(async name => {
+    uncached.map(async (name) => {
       setCurrentArtist(name);
       try {
         const albums = await fetchLastfmAlbums(name, apiKey);
@@ -484,7 +561,7 @@ export async function lookupGenres(
     }),
   );
 
-  const artistsWithAlbums = albumResults.map(r => ({ name: r.name, albums: r.albums }));
+  const artistsWithAlbums = albumResults.map((r) => ({ name: r.name, albums: r.albums }));
 
   // Step 3: Wikidata batch lookup
   const wdResult = await wikidataBatchLookup(artistsWithAlbums);
@@ -511,7 +588,7 @@ export async function lookupGenres(
         currentArtist = reqNum > 0 ? `${name} ${reqNum}` : name;
         onProgress?.(resolved, total, currentArtist);
       },
-      (name) => {
+      (_name) => {
         resolved++;
         onProgress?.(resolved, total, currentArtist);
       },
@@ -524,7 +601,7 @@ export async function lookupGenres(
     }
   }
 
-  const missing = artistNames.filter(n => !genres[n]);
+  const missing = artistNames.filter((n) => !genres[n]);
 
   return { genres, cachedCount, wikidataCount, musicbrainzCount, missing };
 }

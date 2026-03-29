@@ -24,6 +24,6 @@ export default class LineSegment extends LineBase {
     Overriding LineBase's implementation
   */
   public isXWithinBounds(x: number): boolean {
-    return (x >= this.start.x && x <= this.end.x);
+    return x >= this.start.x && x <= this.end.x;
   }
 }

@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useLastWaveStore, type Toast } from '@/store/index';
 
 const AUTO_DISMISS_MS = 8000;
-const SUPPORT_FOOTER = 'If this keeps happening, please email niko@savas.ca or open a GitHub issue.';
+const SUPPORT_FOOTER =
+  'If this keeps happening, please email niko@savas.ca or open a GitHub issue.';
 
 function ToastItem({ toast }: { toast: Toast }) {
   const removeToast = useLastWaveStore((s) => s.removeToast);
@@ -13,33 +14,34 @@ function ToastItem({ toast }: { toast: Toast }) {
   }, [toast.id, removeToast]);
 
   const borderColor =
-    toast.type === 'error' ? 'border-red-500/60' :
-    toast.type === 'warning' ? 'border-orange-500/60' :
-    'border-lw-accent/60';
+    toast.type === 'error'
+      ? 'border-red-500/60'
+      : toast.type === 'warning'
+        ? 'border-orange-500/60'
+        : 'border-lw-accent/60';
 
   const iconColor =
-    toast.type === 'error' ? 'text-red-400' :
-    toast.type === 'warning' ? 'text-orange-400' :
-    'text-lw-accent';
+    toast.type === 'error'
+      ? 'text-red-400'
+      : toast.type === 'warning'
+        ? 'text-orange-400'
+        : 'text-lw-accent';
 
-  const icon =
-    toast.type === 'error' ? '✕' :
-    toast.type === 'warning' ? '⚠' :
-    'ℹ';
+  const icon = toast.type === 'error' ? '✕' : toast.type === 'warning' ? '⚠' : 'ℹ';
 
   return (
     <div
-      className={`bg-lw-surface border ${borderColor} rounded-lg p-4 shadow-2xl max-w-sm w-full animate-[slideIn_0.2s_ease-out]`}
+      className={`border bg-lw-surface ${borderColor} w-full max-w-sm animate-[slideIn_0.2s_ease-out] rounded-lg p-4 shadow-2xl`}
     >
       <div className="flex items-start gap-3">
-        <span className={`${iconColor} text-sm mt-0.5 shrink-0`}>{icon}</span>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-lw-text break-words">{toast.message}</p>
-          <p className="text-[11px] text-lw-muted/60 mt-2 leading-relaxed">{SUPPORT_FOOTER}</p>
+        <span className={`${iconColor} mt-0.5 shrink-0 text-sm`}>{icon}</span>
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-sm text-lw-text">{toast.message}</p>
+          <p className="mt-2 text-[11px] leading-relaxed text-lw-muted/60">{SUPPORT_FOOTER}</p>
         </div>
         <button
           onClick={() => removeToast(toast.id)}
-          className="text-lw-muted hover:text-lw-text text-xs shrink-0 ml-1"
+          className="ml-1 shrink-0 text-xs text-lw-muted hover:text-lw-text"
           aria-label="Dismiss"
         >
           ✕
@@ -62,7 +64,7 @@ export default function ErrorToast() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2">
+      <div className="fixed right-4 top-4 z-[60] flex flex-col gap-2">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} />
         ))}

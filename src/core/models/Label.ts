@@ -9,6 +9,5 @@ export default class Label {
     public yPosition: number,
     public font: string,
     public fontSize: number,
-  ) {
-  }
+  ) {}
 }

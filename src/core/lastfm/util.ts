@@ -6,7 +6,7 @@ import SegmentData from '../models/SegmentData';
  * Convert from date in format YY/MM/DD to unix timestamp
  */
 export function DateStringToUnix(dateString: string) {
-  return (new Date(dateString)).getTime() / 1000;
+  return new Date(dateString).getTime() / 1000;
 }
 
 /*
@@ -28,12 +28,17 @@ export function splitTimeSpan(splitBy: string, timeSpan: TimeSpan, logger?: (msg
     segments.push(new TimeSpan(t, t + interval));
   }
 
-  logger?.(`Time span: ${timeSpan.start} to ${timeSpan.end}, split into ${segments.length} segments`);
+  logger?.(
+    `Time span: ${timeSpan.start} to ${timeSpan.end}, split into ${segments.length} segments`,
+  );
 
   return segments;
 }
 
-export function combineArtistTags(artistData: SeriesData[], tagData: { [key: string]: { tags: string[] } }) {
+export function combineArtistTags(
+  artistData: SeriesData[],
+  tagData: { [key: string]: { tags: string[] } },
+) {
   // Key: tag name
   // Value: {name: <string>, counts: [<int>]}
   const countsByTag: { [key: string]: SeriesData } = {};
@@ -67,9 +72,11 @@ export function combineArtistTags(artistData: SeriesData[], tagData: { [key: str
   });
 
   // Turn our map into an array
-  return Array.from(Object.keys(countsByTag).map((key) => {
-    return countsByTag[key];
-  }));
+  return Array.from(
+    Object.keys(countsByTag).map((key) => {
+      return countsByTag[key];
+    }),
+  );
 }
 
 /*
@@ -85,12 +92,15 @@ export function combineArtistTags(artistData: SeriesData[], tagData: { [key: str
     counts: [<int>]
   }
 */
-export function joinSegments(segmentData: (SegmentData[] | undefined)[], logger?: (msg: string) => void): SeriesData[] {
+export function joinSegments(
+  segmentData: (SegmentData[] | undefined)[],
+  logger?: (msg: string) => void,
+): SeriesData[] {
   // Use a map to join the data
   const countsByName: { [key: string]: SeriesData } = {};
 
   segmentData.forEach((innerSegment, index) => {
-    if (!innerSegment) return;  // Skip unfetched segments
+    if (!innerSegment) return; // Skip unfetched segments
     innerSegment.forEach((nameData) => {
       const name = nameData.title;
       const count = nameData.count;
@@ -111,16 +121,22 @@ export function joinSegments(segmentData: (SegmentData[] | undefined)[], logger?
   logger?.(`Joined ${segmentData.length} segments`);
 
   // Turn our map into an array
-  return Array.from(Object.keys(countsByName).map((key) => {
-    return countsByName[key];
-  }));
+  return Array.from(
+    Object.keys(countsByName).map((key) => {
+      return countsByName[key];
+    }),
+  );
 }
 
 /*
   Remove any artist/genre/etc. that has fewer than minPlays plays in its
   largest time segment.
 */
-export function cleanByMinPlays(data: SeriesData[], minPlays: number, logger?: (msg: string) => void) {
+export function cleanByMinPlays(
+  data: SeriesData[],
+  minPlays: number,
+  logger?: (msg: string) => void,
+) {
   const cleanedData = data.filter((obj) => {
     let maxPlays = 0;
     obj.counts.forEach((playCount) => {
@@ -213,11 +229,13 @@ export function getAnimationSteps(
   if (data.length <= startArtistCount) return [targetMinPlays];
 
   // Each artist's peak play count, sorted descending
-  const peakCounts = data.map((s) => {
-    let max = 0;
-    for (const c of s.counts) if (c > max) max = c;
-    return max;
-  }).sort((a, b) => b - a);
+  const peakCounts = data
+    .map((s) => {
+      let max = 0;
+      for (const c of s.counts) if (c > max) max = c;
+      return max;
+    })
+    .sort((a, b) => b - a);
 
   // Start at the threshold where only ~startArtistCount artists survive
   const startThreshold = peakCounts[Math.min(startArtistCount - 1, peakCounts.length - 1)];
@@ -233,7 +251,7 @@ export function getAnimationSteps(
   // Evenly sample maxSteps points
   const steps: number[] = [];
   for (let i = 0; i < maxSteps; i++) {
-    const idx = Math.floor(i * (breakpoints.length - 1) / (maxSteps - 1));
+    const idx = Math.floor((i * (breakpoints.length - 1)) / (maxSteps - 1));
     steps.push(breakpoints[idx]);
   }
   if (steps[steps.length - 1] !== targetMinPlays) {
@@ -276,17 +294,12 @@ export function cleanByTopN(data: SeriesData[], n: number) {
 */
 export function getTopTags(allTags: SegmentData[]) {
   // TODO use config file
-  const IGNORE_TAGS = [
-    'seen live',
-  ];
+  const IGNORE_TAGS = ['seen live'];
   const IGNORE_TAG_WEIGHT_UNDER = 50;
   const topTags: string[] = [];
   allTags.forEach((tag) => {
     // Make sure it's not on the blacklist
-    if (
-      IGNORE_TAGS.indexOf(tag.title) === -1 &&
-      tag.count > IGNORE_TAG_WEIGHT_UNDER
-    ) {
+    if (IGNORE_TAGS.indexOf(tag.title) === -1 && tag.count > IGNORE_TAG_WEIGHT_UNDER) {
       topTags.push(tag.title);
     }
   });

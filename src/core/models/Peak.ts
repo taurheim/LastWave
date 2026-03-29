@@ -25,10 +25,11 @@ export default class Peak {
 
   constructor(index: number, stack: StackPoint[]) {
     // Compute the actual spacing between data points for edge extrapolation
-    const spacing = stack.length >= 2
-      ? stack[Math.min(index + 1, stack.length - 1)].x - stack[Math.max(index - 1, 0)].x
-        || stack[1].x - stack[0].x
-      : 1;
+    const spacing =
+      stack.length >= 2
+        ? stack[Math.min(index + 1, stack.length - 1)].x - stack[Math.max(index - 1, 0)].x ||
+          stack[1].x - stack[0].x
+        : 1;
     const halfSpacing = spacing / 2;
 
     // 1. Grab all the surrounding points

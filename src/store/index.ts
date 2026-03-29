@@ -8,6 +8,42 @@ export interface Toast {
   createdAt: number;
 }
 
+export interface ColorScheme {
+  backgroundColor: string;
+  backgroundColorLight?: string;
+  fontColor: string;
+  fontColorLight?: string;
+  schemeColors: string[];
+}
+
+export interface RendererOptions {
+  color_scheme?: string;
+  height?: string;
+  width?: string;
+  font?: string;
+  offset?: string;
+  add_labels?: boolean;
+  add_months?: boolean;
+  add_years?: boolean;
+  show_username?: boolean;
+  show_watermark?: boolean;
+  deform_text?: boolean;
+  jitter_text?: boolean;
+  loading_animation?: boolean;
+  [key: string]: string | boolean | undefined;
+}
+
+export interface DataSourceOptions {
+  username?: string;
+  time_start?: Date;
+  time_end?: Date;
+  min_plays?: string;
+  group_by?: string;
+  method?: string;
+  _datePreset?: string;
+  [key: string]: string | Date | undefined;
+}
+
 interface LastWaveState {
   // Logging
   logs: string[];
@@ -19,12 +55,12 @@ interface LastWaveState {
   removeToast: (id: string) => void;
 
   // Options
-  rendererOptions: Record<string, any>;
-  dataSourceOptions: Record<string, any>;
-  setRendererOption: (key: string, value: any) => void;
-  setDataSourceOption: (key: string, value: any) => void;
-  setRendererOptions: (options: Record<string, any>) => void;
-  setDataSourceOptions: (options: Record<string, any>) => void;
+  rendererOptions: RendererOptions;
+  dataSourceOptions: DataSourceOptions;
+  setRendererOption: (key: string, value: string | boolean | undefined) => void;
+  setDataSourceOption: (key: string, value: string | Date | undefined) => void;
+  setRendererOptions: (options: RendererOptions) => void;
+  setDataSourceOptions: (options: DataSourceOptions) => void;
 
   // UI State
   showOptions: boolean;
@@ -50,7 +86,7 @@ interface LastWaveState {
   fullReset: () => void;
 }
 
-export const useLastWaveStore = create<LastWaveState>((set, get) => ({
+export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
   // Logging
   logs: [],
   log: (message: string) => set((state) => ({ logs: [...state.logs, message] })),
@@ -61,11 +97,15 @@ export const useLastWaveStore = create<LastWaveState>((set, get) => ({
     set((state) => ({
       toasts: [
         ...state.toasts,
-        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, message, type, createdAt: Date.now() },
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          message,
+          type,
+          createdAt: Date.now(),
+        },
       ],
     })),
-  removeToast: (id) =>
-    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   // Options
   rendererOptions: {},

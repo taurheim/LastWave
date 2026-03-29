@@ -1,4 +1,6 @@
 export default class TimeSpan {
-  constructor(public start: number, public end: number) {
-  }
+  constructor(
+    public start: number,
+    public end: number,
+  ) {}
 }

@@ -57,11 +57,18 @@ async function svgToPngBlob(svgEl: SVGSVGElement, fontFamily: string): Promise<B
       canvas.width = svgEl.width.baseVal.value || 800;
       canvas.height = svgEl.height.baseVal.value || 600;
       const ctx = canvas.getContext('2d');
-      if (!ctx) { reject(new Error('No canvas context')); return; }
+      if (!ctx) {
+        reject(new Error('No canvas context'));
+        return;
+      }
       ctx.drawImage(img, 0, 0);
       URL.revokeObjectURL(url);
       canvas.toBlob((blob) => {
-        blob ? resolve(blob) : reject(new Error('Failed to create PNG blob'));
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create PNG blob'));
+        }
       }, 'image/png');
     };
     img.onerror = reject;
@@ -80,12 +87,14 @@ export default function ImageActions() {
 
   function getFileName(): string {
     const username = dataSourceOptions.username ?? 'unknown';
-    const start = dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
-      ? dataSourceOptions.time_start.toLocaleDateString('en-US').replace(/\//g, '-')
-      : 'start';
-    const end = dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
-      ? dataSourceOptions.time_end.toLocaleDateString('en-US').replace(/\//g, '-')
-      : 'end';
+    const start =
+      dataSourceOptions.time_start instanceof Date && !isNaN(dataSourceOptions.time_start.getTime())
+        ? dataSourceOptions.time_start.toLocaleDateString('en-US').replace(/\//g, '-')
+        : 'start';
+    const end =
+      dataSourceOptions.time_end instanceof Date && !isNaN(dataSourceOptions.time_end.getTime())
+        ? dataSourceOptions.time_end.toLocaleDateString('en-US').replace(/\//g, '-')
+        : 'end';
     return `LastWave_${username}_${start}_${end}`;
   }
 
@@ -124,7 +133,7 @@ export default function ImageActions() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(pngUrl);
-    } catch (err) {
+    } catch {
       addToast('PNG download failed. Please try again or use "Download SVG" instead.');
     }
   }
@@ -154,7 +163,7 @@ export default function ImageActions() {
 
       setSharingLink(imageUrl.replace('.svg', '.png'));
       setShowDialog(true);
-    } catch (err) {
+    } catch {
       addToast('Could not generate share link. Please try again.');
     } finally {
       setUploadInProgress(false);
@@ -180,33 +189,39 @@ export default function ImageActions() {
   const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
 
   return (
-    <div className="py-4 max-lg:landscape:py-2.5 px-4">
+    <div className="px-4 py-4 max-lg:landscape:py-2.5">
       {/* Mobile layout — vertical in portrait, horizontal in landscape */}
-      <div className="flex flex-col max-lg:landscape:flex-row items-center max-lg:landscape:justify-center gap-3 max-lg:landscape:gap-2 lg:hidden">
+      <div className="flex flex-col items-center gap-3 lg:hidden max-lg:landscape:flex-row max-lg:landscape:justify-center max-lg:landscape:gap-2">
         {canNativeShare && (
           <button
-            onClick={nativeShare}
-            className="w-full max-lg:landscape:w-auto max-w-xs bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-3 max-lg:landscape:py-1.5 text-sm tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] max-lg:landscape:order-last max-lg:landscape:ml-auto"
+            onClick={() => {
+              void nativeShare();
+            }}
+            className="w-full max-w-xs rounded-lg bg-gradient-to-r from-lw-accent to-lw-cyan px-6 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] max-lg:landscape:order-last max-lg:landscape:ml-auto max-lg:landscape:w-auto max-lg:landscape:py-1.5"
           >
             Share
           </button>
         )}
         <button
-          onClick={downloadPng}
-          className={`w-full max-lg:landscape:w-auto max-w-xs rounded-lg px-6 py-3 max-lg:landscape:py-1.5 text-sm tracking-wider uppercase font-semibold transition-all ${
+          onClick={() => {
+            void downloadPng();
+          }}
+          className={`w-full max-w-xs rounded-lg px-6 py-3 text-sm font-semibold uppercase tracking-wider transition-all max-lg:landscape:w-auto max-lg:landscape:py-1.5 ${
             canNativeShare
-              ? 'border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent'
+              ? 'border border-lw-border text-lw-text hover:border-lw-accent hover:text-lw-accent'
               : 'bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]'
           }`}
         >
           Download
         </button>
         <button
-          onClick={cloudinaryUpload}
-          className="text-lw-muted hover:text-lw-accent text-xs tracking-wider uppercase transition-colors py-1 max-lg:landscape:px-4"
+          onClick={() => {
+            void cloudinaryUpload();
+          }}
+          className="py-1 text-xs uppercase tracking-wider text-lw-muted transition-colors hover:text-lw-accent max-lg:landscape:px-4"
         >
           {uploadInProgress ? (
-            <span className="inline-block w-4 h-4 border-2 border-lw-muted border-t-transparent rounded-full animate-spin" />
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
           ) : (
             'Get share link'
           )}
@@ -214,25 +229,29 @@ export default function ImageActions() {
       </div>
 
       {/* Desktop layout */}
-      <div className="hidden lg:flex justify-center items-center gap-3">
+      <div className="hidden items-center justify-center gap-3 lg:flex">
         <button
-          onClick={downloadPng}
-          className="bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg rounded-lg px-6 py-2.5 text-xs tracking-wider uppercase font-semibold transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] hover:scale-[1.02] active:scale-[0.98]"
+          onClick={() => {
+            void downloadPng();
+          }}
+          className="rounded-lg bg-gradient-to-r from-lw-accent to-lw-cyan px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-lw-bg transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] active:scale-[0.98]"
         >
           Download PNG
         </button>
         <button
           onClick={downloadSvg}
-          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all"
+          className="rounded-lg border border-lw-border px-5 py-2.5 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
         >
           Download SVG (Vectorized)
         </button>
         <button
-          onClick={cloudinaryUpload}
-          className="border border-lw-border hover:border-lw-accent text-lw-text hover:text-lw-accent rounded-lg px-5 py-2.5 text-xs tracking-wider uppercase transition-all min-w-[140px]"
+          onClick={() => {
+            void cloudinaryUpload();
+          }}
+          className="min-w-[140px] rounded-lg border border-lw-border px-5 py-2.5 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
         >
           {uploadInProgress ? (
-            <span className="inline-block w-4 h-4 border-2 border-lw-muted border-t-transparent rounded-full animate-spin" />
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
           ) : (
             'Get share link'
           )}
@@ -241,21 +260,35 @@ export default function ImageActions() {
 
       {/* Sharing Dialog */}
       {showDialog && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowDialog(false)}>
-          <div className="bg-lw-surface border border-lw-border rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-display text-xl text-lw-heading mb-4">Share this wave</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowDialog(false)}
+        >
+          <div
+            className="mx-4 w-full max-w-md rounded-xl border border-lw-border bg-lw-surface p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="mb-4 font-display text-xl text-lw-heading">Share this wave</h3>
             <input
               type="text"
               readOnly
               value={sharingLink}
               onClick={(e) => (e.target as HTMLInputElement).select()}
-              className="w-full bg-lw-bg border border-lw-border rounded-lg px-4 py-2.5 mb-4 text-sm text-lw-text focus:outline-none"
+              className="mb-4 w-full rounded-lg border border-lw-border bg-lw-bg px-4 py-2.5 text-sm text-lw-text focus:outline-none"
             />
-            <div className="flex justify-between items-center">
-              <a href={sharingLink} target="_blank" rel="noopener noreferrer" className="text-lw-accent hover:text-lw-cyan text-sm transition-colors">
+            <div className="flex items-center justify-between">
+              <a
+                href={sharingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-lw-accent transition-colors hover:text-lw-cyan"
+              >
                 Open link ↗
               </a>
-              <button onClick={() => setShowDialog(false)} className="text-lw-muted hover:text-lw-text text-sm transition-colors">
+              <button
+                onClick={() => setShowDialog(false)}
+                className="text-sm text-lw-muted transition-colors hover:text-lw-text"
+              >
                 Close
               </button>
             </div>

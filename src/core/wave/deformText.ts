@@ -30,17 +30,25 @@ function monotoneSlopes(xs: number[], ys: number[]): number[] {
   slopes[0] = secants[0];
   for (let i = 1; i < n - 1; i++) {
     if (secants[i - 1] * secants[i] > 0) {
-      slopes[i] = 3 * (deltas[i - 1] + deltas[i]) /
+      slopes[i] =
+        (3 * (deltas[i - 1] + deltas[i])) /
         ((2 * deltas[i] + deltas[i - 1]) / secants[i - 1] +
-         (deltas[i] + 2 * deltas[i - 1]) / secants[i]);
+          (deltas[i] + 2 * deltas[i - 1]) / secants[i]);
     }
   }
   slopes[n - 1] = secants[n - 2];
   return Array.from(slopes);
 }
 
-function hermitePoint(x0: number, y0: number, x1: number, y1: number,
-                      m0: number, m1: number, t: number): { x: number; y: number } {
+function hermitePoint(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  m0: number,
+  m1: number,
+  t: number,
+): { x: number; y: number } {
   const h = x1 - x0;
   const t2 = t * t;
   const t3 = t2 * t;
@@ -57,9 +65,9 @@ function hermitePoint(x0: number, y0: number, x1: number, y1: number,
 // ── Internal spline structure ───────────────────────────────────────
 
 interface InternalSpline {
-  getPointAtLength(len: number): { x: number; y: number };
+  getPointAtLength: (len: number) => { x: number; y: number };
   totalLen: number;
-  lengthAtX(x: number): number;
+  lengthAtX: (x: number) => number;
 }
 
 function buildInternalSpline(bandData: BandPoint[]): InternalSpline {
@@ -88,12 +96,13 @@ function buildInternalSpline(bandData: BandPoint[]): InternalSpline {
 
   // Also store per-sample arc lengths for faster getPointAtLength
   // sampleCumLens[seg][s] = cumulative length from start of spline to sample s of segment seg
-  const sampleCumLens: Float64Array[] = new Array(segCount);
+  const sampleCumLens: Float64Array[] = new Array<Float64Array>(segCount);
 
   for (let i = 0; i < segCount; i++) {
     const samples = new Float64Array(SAMPLES_PER_SEG + 1);
     samples[0] = cumLens[i];
-    let prevX = xs[i], prevY = ys[i];
+    let prevX = xs[i],
+      prevY = ys[i];
     for (let s = 1; s <= SAMPLES_PER_SEG; s++) {
       const t = s / SAMPLES_PER_SEG;
       const pt = hermitePoint(xs[i], ys[i], xs[i + 1], ys[i + 1], slopes[i], slopes[i + 1], t);
@@ -114,19 +123,23 @@ function buildInternalSpline(bandData: BandPoint[]): InternalSpline {
     if (len >= totalLen) return { x: xs[n - 1], y: ys[n - 1] };
 
     // Binary search for segment
-    let lo = 0, hi = segCount - 1;
+    let lo = 0,
+      hi = segCount - 1;
     while (lo < hi) {
       const mid = (lo + hi) >> 1;
-      if (cumLens[mid + 1] < len) lo = mid + 1; else hi = mid;
+      if (cumLens[mid + 1] < len) lo = mid + 1;
+      else hi = mid;
     }
     const seg = lo;
 
     // Binary search within segment samples for sub-sample precision
     const samples = sampleCumLens[seg];
-    let sLo = 0, sHi = SAMPLES_PER_SEG;
+    let sLo = 0,
+      sHi = SAMPLES_PER_SEG;
     while (sLo < sHi) {
       const sMid = (sLo + sHi) >> 1;
-      if (samples[sMid + 1] < len) sLo = sMid + 1; else sHi = sMid;
+      if (samples[sMid + 1] < len) sLo = sMid + 1;
+      else sHi = sMid;
     }
 
     // Linearly interpolate t within this sub-sample interval
@@ -135,7 +148,15 @@ function buildInternalSpline(bandData: BandPoint[]): InternalSpline {
     const frac = lenEnd > lenStart ? (len - lenStart) / (lenEnd - lenStart) : 0;
     const t = (sLo + frac) / SAMPLES_PER_SEG;
 
-    return hermitePoint(xs[seg], ys[seg], xs[seg + 1], ys[seg + 1], slopes[seg], slopes[seg + 1], t);
+    return hermitePoint(
+      xs[seg],
+      ys[seg],
+      xs[seg + 1],
+      ys[seg + 1],
+      slopes[seg],
+      slopes[seg + 1],
+      t,
+    );
   }
 
   function lengthAtX(targetX: number): number {
@@ -150,16 +171,21 @@ function buildInternalSpline(bandData: BandPoint[]): InternalSpline {
 
     // Since x is monotonically increasing with t in monotone Hermite,
     // solve for t analytically via bisection within the segment
-    const x0 = xs[seg], y0 = ys[seg];
-    const x1 = xs[seg + 1], y1 = ys[seg + 1];
-    const m0 = slopes[seg], m1 = slopes[seg + 1];
+    const x0 = xs[seg],
+      _y0 = ys[seg];
+    const x1 = xs[seg + 1],
+      _y1 = ys[seg + 1];
+    const _m0 = slopes[seg],
+      _m1 = slopes[seg + 1];
 
     // Bisect for t such that hermitePoint(..., t).x == targetX
-    let tLo = 0, tHi = 1;
+    let tLo = 0,
+      tHi = 1;
     for (let iter = 0; iter < 20; iter++) {
       const tMid = (tLo + tHi) * 0.5;
       const px = x0 + tMid * (x1 - x0); // x is linear in t for monotone Hermite
-      if (px < targetX) tLo = tMid; else tHi = tMid;
+      if (px < targetX) tLo = tMid;
+      else tHi = tMid;
     }
     const tSolved = (tLo + tHi) * 0.5;
 
@@ -231,10 +257,10 @@ export function computeDeformedText(
   // 3. MAX_VIABLE_RADIUS segments from the peak is reached.
   // This prevents the viable region from spanning across valleys between
   // separate humps, which would pull the centroid to unexpected locations.
-  const VIABLE_FRAC = 0.20;
+  const VIABLE_FRAC = 0.2;
   const MAX_VIABLE_RADIUS = 4;
-  const VALLEY_RISE = 1.5;   // rise ratio above running min to detect valley
-  const VALLEY_DIP = 0.7;    // running min must be below this fraction of peak
+  const VALLEY_RISE = 1.5; // rise ratio above running min to detect valley
+  const VALLEY_DIP = 0.7; // running min must be below this fraction of peak
 
   let viableLeftIdx = Math.max(0, peakIdx - MAX_VIABLE_RADIUS);
   let viableRightIdx = Math.min(bandData.length - 1, peakIdx + MAX_VIABLE_RADIUS);
@@ -259,7 +285,11 @@ export function computeDeformedText(
   // Search right from peak
   {
     let runMin = peakThickness;
-    for (let i = peakIdx + 1; i <= Math.min(bandData.length - 1, peakIdx + MAX_VIABLE_RADIUS); i++) {
+    for (
+      let i = peakIdx + 1;
+      i <= Math.min(bandData.length - 1, peakIdx + MAX_VIABLE_RADIUS);
+      i++
+    ) {
       const thick = bandData[i].thickness;
       if (thick / (peakThickness || 1) < VIABLE_FRAC) {
         viableRightIdx = i - 1;
@@ -276,45 +306,73 @@ export function computeDeformedText(
   const viableLeft = bandData[viableLeftIdx].x;
   const viableRight = bandData[viableRightIdx].x;
 
-  // Center text on the thickest point within the viable region.
+  // Center text using a blend of max-thickness point and viable region center.
+  // For spiky peaks (one dominant segment), use the max point to land on the bulge.
+  // For even/broad peaks, use the geometric center so text isn't pulled to one edge.
   let maxThickVal = 0;
   let maxThickX = (viableLeft + viableRight) / 2;
+  let totalThick = 0;
+  let numViable = 0;
   for (let i = viableLeftIdx; i <= viableRightIdx; i++) {
     if (bandData[i].thickness > maxThickVal) {
       maxThickVal = bandData[i].thickness;
       maxThickX = bandData[i].x;
     }
+    totalThick += bandData[i].thickness;
+    numViable++;
   }
-
-  // When the peak is near one edge of the viable region, shift text toward
-  // the side with more room. This prevents deformed text from extending into
-  // thin taper zones at band edges while utilizing the wider thick area.
+  const avgThick = numViable > 0 ? totalThick / numViable : 0;
+  // peakRatio ≈ 1.0 for uniform thickness, higher for spiky
+  const peakRatio = avgThick > 0 ? maxThickVal / avgThick : 1;
+  // blend: 0 → use geometric center (even peaks), 1 → use max point (spiky peaks)
+  const _blendFactor = Math.min(1.0, Math.max(0, (peakRatio - 1.2) / 1.0));
+  // Use max-thickness point when the peak is clearly dominant (far from center),
+  // but use the viable region center when thickness is fairly evenly distributed.
+  // Distance between max-thick point and geometric center relative to span indicates spikiness.
+  const viableCenter = (viableLeft + viableRight) / 2;
   const viableSpan = viableRight - viableLeft;
-  let thickCenterX = maxThickX;
-  if (viableSpan > 0) {
-    const roomLeft = maxThickX - viableLeft;
-    const roomRight = viableRight - maxThickX;
-    // How off-center the peak is (0=centered, approaches 1 at edge)
-    const imbalance = (roomRight - roomLeft) / viableSpan;
-    thickCenterX = maxThickX + imbalance * viableSpan * 0.20;
+  let thickCenterX: number;
+  if (viableSpan < 1 || numViable <= 2) {
+    // Tiny viable region — just use the thickest point
+    thickCenterX = maxThickX;
+  } else {
+    const blendFactor = Math.min(1.0, Math.max(0, (peakRatio - 1.2) / 1.0));
+    thickCenterX = viableCenter * (1 - blendFactor) + maxThickX * blendFactor;
   }
 
-  // Pass 1: compute deformed total width for centering
-  const tentativeStart = thickCenterX - approxTotalWidth / 2;
-  let deformedTotalWidth = 0;
-  {
-    let walkX = Math.max(firstBandX, tentativeStart);
+  // Pass 1: Binary search for the start position that places the middle
+  // character at the peak center. Uses the same spline-based walk as the
+  // rendering passes, so centering matches actual character positions.
+  // Target one char before geometric middle to account for the rendering's
+  // text-anchor:middle offset (each char is drawn centered on its position)
+  const midCharIdx = Math.max(0, Math.floor(text.length / 2) - 1);
+  const _deformedTotalWidth = approxTotalWidth; // fallback
+
+  function splineMiddleCharX(startX: number): number {
+    const startLen = lengthAtX(Math.max(firstBandX, startX));
+    let estLen = startLen;
     for (let c = 0; c < text.length; c++) {
-      const band = bandAtX(bandData, bandX0, bandXStep, walkX);
+      const pt = getPointAtLength(Math.min(estLen, totalLen));
+      if (c === midCharIdx) return pt.x;
+      const band = bandAtX(bandData, bandX0, bandXStep, pt.x);
       const thickRatio = peakThickness > 0 ? band.thickness / peakThickness : 1;
       const charFontSize = Math.max(3, renderFontSize * Math.pow(Math.min(thickRatio, 1.8), 0.85));
       const charW = measureText(text[c], fontFamily, charFontSize).width;
-      // Tighter tracking for smaller chars (larger sidebearing ratio); normal for large chars
-      const tracking = 0.90 + Math.min(charFontSize, 20) * 0.005;
-      deformedTotalWidth += charW * tracking;
-      walkX += charW * tracking;
+      const tracking = 0.9 + Math.min(charFontSize, 20) * 0.005;
+      estLen += charW * tracking;
     }
+    return getPointAtLength(Math.min(estLen, totalLen)).x;
   }
+
+  let bsLo = Math.max(firstBandX, thickCenterX - approxTotalWidth);
+  let bsHi = Math.min(lastBandX, thickCenterX);
+  for (let iter = 0; iter < 20; iter++) {
+    const mid = (bsLo + bsHi) / 2;
+    const midX = splineMiddleCharX(mid);
+    if (midX < thickCenterX) bsLo = mid;
+    else bsHi = mid;
+  }
+  const computedStart = (bsLo + bsHi) / 2;
 
   // Deterministic jitter: shift text slightly left/right based on artist name hash
   // so labels from different artists at the same peak don't stack vertically.
@@ -329,15 +387,18 @@ export function computeDeformedText(
     jitterOffset = jitterFrac * 15; // ±15px deterministic offset
   }
 
-  const idealStart = (thickCenterX + jitterOffset) - deformedTotalWidth / 2;
+  const idealStart = computedStart + jitterOffset;
   // Characters in thin areas are handled by the shrink-to-fit and center-snap in Pass 3.
   const textStartX = Math.max(firstBandX, idealStart);
   const startLen = lengthAtX(textStartX);
 
   // Pass 2: compute per-character sizing
   const charSizing: Array<{
-    ch: string; fontSize: number; scaleY: number;
-    opacity: number; width: number;
+    ch: string;
+    fontSize: number;
+    scaleY: number;
+    opacity: number;
+    width: number;
   }> = [];
   let estLen = startLen;
   for (let c = 0; c < text.length; c++) {
@@ -356,21 +417,23 @@ export function computeDeformedText(
       const bNext = bandAtX(bandData, bandX0, bandXStep, Math.min(lastBandX, pt.x + 3));
       const rawAngle = Math.atan2(bNext.centerY - bPrev.centerY, 6) * (180 / Math.PI);
       const clampedAngle = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, rawAngle));
-      const rad = Math.abs(clampedAngle * Math.PI / 180);
-      const cosA = Math.cos(rad); const sinA = Math.sin(rad);
+      const rad = Math.abs((clampedAngle * Math.PI) / 180);
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
       const halfW = fontSize * 0.3;
       const halfH = (fontSize * scaleY) / 2;
       const bboxH = halfW * sinA + halfH * cosA;
       if (bboxH > availHalfH) {
         const s = availHalfH / bboxH;
-        fontSize *= s; scaleY *= s;
+        fontSize *= s;
+        scaleY *= s;
       }
     }
 
     const opacity = Math.min(1, Math.max(0.15, localThick / (renderFontSize * 0.6)));
     const charW = measureText(text[c], fontFamily, fontSize).width;
     charSizing.push({ ch: text[c], fontSize, scaleY, opacity, width: charW });
-    estLen += charW * (0.90 + Math.min(fontSize, 20) * 0.005);
+    estLen += charW * (0.9 + Math.min(fontSize, 20) * 0.005);
   }
 
   // Pass 3: placement (position + angle from spline)
@@ -384,7 +447,7 @@ export function computeDeformedText(
     const { ch, opacity, width: charW } = charSizing[c];
     let placeFontSize = charSizing[c].fontSize;
     let placeScaleY = charSizing[c].scaleY;
-    const advance = charW * (0.90 + Math.min(charSizing[c].fontSize, 20) * 0.005);
+    const advance = charW * (0.9 + Math.min(charSizing[c].fontSize, 20) * 0.005);
 
     const midLen = Math.min(curLen + charW / 2, totalLen);
     const midPt = getPointAtLength(midLen);
@@ -407,11 +470,12 @@ export function computeDeformedText(
       midPt.y = actualCenter;
     }
 
-    const shrinkMargin = bandBoundsAtX ? BAND_MARGIN : 0.70;
+    const shrinkMargin = bandBoundsAtX ? BAND_MARGIN : 0.7;
     const availHalfH = (bounds.thickness * shrinkMargin) / 2;
     if (availHalfH > 0) {
-      const rad = Math.abs(angle * Math.PI / 180);
-      const cosA = Math.cos(rad); const sinA = Math.sin(rad);
+      const rad = Math.abs((angle * Math.PI) / 180);
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
       const halfW = charW / 2;
       const halfH = (placeFontSize * placeScaleY * 1.2) / 2;
       const rotatedHalfH = halfW * sinA + halfH * cosA;
@@ -425,8 +489,16 @@ export function computeDeformedText(
     // Hide characters past the spline endpoint (they pile up at chart edges)
     const finalOpacity = curLen >= totalLen ? 0 : opacity;
 
-    placements.push({ ch, x: midPt.x, y: midPt.y, fontSize: placeFontSize, scaleY: placeScaleY, angle,
-      opacity: finalOpacity, width: charW });
+    placements.push({
+      ch,
+      x: midPt.x,
+      y: midPt.y,
+      fontSize: placeFontSize,
+      scaleY: placeScaleY,
+      angle,
+      opacity: finalOpacity,
+      width: charW,
+    });
 
     // Overflow detection (for reporting, uses original sizing)
     const charHalfH = (charSizing[c].fontSize * charSizing[c].scaleY * 1.2) / 2;
@@ -444,9 +516,12 @@ export function computeDeformedText(
     curLen += advance;
   }
 
+  const debugBand = bandAtX(bandData, bandX0, bandXStep, thickCenterX);
   return {
     placements,
     overflowFraction: text.length > 0 ? overflowCount / text.length : 0,
     avgFontSizeRatio: measuredChars > 0 ? fontSizeRatioSum / measuredChars : 0,
+    debugCenterX: thickCenterX,
+    debugCenterY: debugBand.centerY,
   };
 }

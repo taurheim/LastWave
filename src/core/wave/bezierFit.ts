@@ -29,7 +29,7 @@ function slopeInterior(h0: number, h1: number, s0: number, s1: number): number {
   const p = (s0 * h1 + s1 * h0) / (h0 + h1);
   const sign0 = s0 < 0 ? -1 : 1;
   const sign1 = s1 < 0 ? -1 : 1;
-  return ((sign0 + sign1) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p))) || 0;
+  return (sign0 + sign1) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
 }
 
 /**
@@ -55,10 +55,15 @@ function cubicBezier(p0: number, p1: number, p2: number, p3: number, t: number):
 // ---------------------------------------------------------------------------
 
 interface CurveParams {
-  x0: number; y0: number;
-  x1: number; y1: number;
-  x2: number; y2: number;
-  m0: number; m1: number; m2: number;
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  m0: number;
+  m1: number;
+  m2: number;
 }
 
 /**
@@ -71,14 +76,19 @@ interface CurveParams {
  * - Series endpoints: slope2 formula with monotonicity clamping
  */
 function computeCurveParams(
-  x0: number, y0: number,
-  x1: number, y1: number,
-  x2: number, y2: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
   neighbors?: {
-    xPrev?: number; yPrev?: number;  // point before (x0,y0) in full series
-    xNext?: number; yNext?: number;  // point after (x2,y2) in full series
-    isFirstPoint?: boolean;          // is (x0,y0) the first series point?
-    isLastPoint?: boolean;           // is (x2,y2) the last series point?
+    xPrev?: number;
+    yPrev?: number; // point before (x0,y0) in full series
+    xNext?: number;
+    yNext?: number; // point after (x2,y2) in full series
+    isFirstPoint?: boolean; // is (x0,y0) the first series point?
+    isLastPoint?: boolean; // is (x2,y2) the last series point?
   },
 ): CurveParams {
   const h0 = x1 - x0;
@@ -86,7 +96,7 @@ function computeCurveParams(
   const s0 = h0 !== 0 ? (y1 - y0) / h0 : 0;
   const s1 = h1 !== 0 ? (y2 - y1) / h1 : 0;
 
-  const m1 = (h0 + h1) !== 0 ? slopeInterior(h0, h1, s0, s1) : 0;
+  const m1 = h0 + h1 !== 0 ? slopeInterior(h0, h1, s0, s1) : 0;
 
   let m0: number;
   let m2: number;
@@ -175,6 +185,7 @@ export function findOptimalLabel(
   measureText: MeasureTextFn,
   stack?: StackPoint[],
   peakIndex?: number,
+  deformText?: boolean,
 ): Label | null {
   const MIN_FONT = 2;
   // Safety margin based on center band height, applied uniformly.
@@ -192,43 +203,59 @@ export function findOptimalLabel(
   if (stack && peakIndex !== undefined) {
     const i = peakIndex;
     const n = stack.length;
-    const prevTop = i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y + stack[i - 2].y0 } : {};
-    const nextTop = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y + stack[i + 2].y0 } : {};
+    const prevTop =
+      i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y + stack[i - 2].y0 } : {};
+    const nextTop =
+      i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y + stack[i + 2].y0 } : {};
     const topNeighbors = {
-      ...prevTop, ...nextTop,
+      ...prevTop,
+      ...nextTop,
       isFirstPoint: i <= 1,
       isLastPoint: i >= n - 2,
     };
     const prevBot = i >= 2 ? { xPrev: stack[i - 2].x, yPrev: stack[i - 2].y0 } : {};
     const nextBot = i + 2 < n ? { xNext: stack[i + 2].x, yNext: stack[i + 2].y0 } : {};
     const botNeighbors = {
-      ...prevBot, ...nextBot,
+      ...prevBot,
+      ...nextBot,
       isFirstPoint: i <= 1,
       isLastPoint: i >= n - 2,
     };
 
     topCurve = computeCurveParams(
-      peak.topLeft.x, peak.topLeft.y,
-      peak.top.x, peak.top.y,
-      peak.topRight.x, peak.topRight.y,
+      peak.topLeft.x,
+      peak.topLeft.y,
+      peak.top.x,
+      peak.top.y,
+      peak.topRight.x,
+      peak.topRight.y,
       topNeighbors,
     );
     botCurve = computeCurveParams(
-      peak.bottomLeft.x, peak.bottomLeft.y,
-      peak.bottom.x, peak.bottom.y,
-      peak.bottomRight.x, peak.bottomRight.y,
+      peak.bottomLeft.x,
+      peak.bottomLeft.y,
+      peak.bottom.x,
+      peak.bottom.y,
+      peak.bottomRight.x,
+      peak.bottomRight.y,
       botNeighbors,
     );
   } else {
     topCurve = computeCurveParams(
-      peak.topLeft.x, peak.topLeft.y,
-      peak.top.x, peak.top.y,
-      peak.topRight.x, peak.topRight.y,
+      peak.topLeft.x,
+      peak.topLeft.y,
+      peak.top.x,
+      peak.top.y,
+      peak.topRight.x,
+      peak.topRight.y,
     );
     botCurve = computeCurveParams(
-      peak.bottomLeft.x, peak.bottomLeft.y,
-      peak.bottom.x, peak.bottom.y,
-      peak.bottomRight.x, peak.bottomRight.y,
+      peak.bottomLeft.x,
+      peak.bottomLeft.y,
+      peak.bottom.x,
+      peak.bottom.y,
+      peak.bottomRight.x,
+      peak.bottomRight.y,
     );
   }
 
@@ -263,8 +290,27 @@ export function findOptimalLabel(
   // Measure text once at a reference size and scale linearly
   const REF_SIZE = 32;
   const refDims = measureText(text, font, REF_SIZE);
-  const widthPerPx = refDims.width / REF_SIZE;   // width = fontSize * widthPerPx
-  const heightPerPx = refDims.height / REF_SIZE;  // height = fontSize * heightPerPx
+  const widthPerPx = refDims.width / REF_SIZE; // width = fontSize * widthPerPx
+  const heightPerPx = refDims.height / REF_SIZE; // height = fontSize * heightPerPx
+
+  // For deform text: compute the height-check window fraction once.
+  // When text at the height-limited font would be wider than the span,
+  // reduce the window so the font isn't penalized by thin edges.
+  let deformWindowFrac = 1.0;
+  if (deformText && span > 0 && maxAvailH > 0) {
+    // Measure what fraction of the span maintains substantial height.
+    // Narrow peaks (like NIN: sharp spike) have a small thick fraction
+    // and need a boost. Broad peaks keep their height across the span.
+    let thickColumns = 0;
+    const halfMax = maxAvailH * 0.5;
+    for (let i = 0; i <= span; i++) {
+      if (topVals[i] - botVals[i] >= halfMax) thickColumns++;
+    }
+    const thickFraction = thickColumns / (span + 1);
+    if (thickFraction < 0.6) {
+      deformWindowFrac = Math.max(0.16, thickFraction * 0.52);
+    }
+  }
 
   // Binary search on font size
   const maxFont = Math.floor(maxAvailH / heightPerPx) + 1;
@@ -286,16 +332,20 @@ export function findOptimalLabel(
     const textH = mid * heightPerPx;
     const wPx = Math.ceil(textW);
 
-    if (wPx > span) {
+    if (wPx > span && (!deformText || deformWindowFrac >= 1.0)) {
       hi = mid - 1;
       continue;
     }
 
-    const windowSize = wPx + 1;
+    const rawWindowSize = Math.min(wPx + 1, n);
+    const windowSize = deformText
+      ? Math.min(rawWindowSize, Math.max(1, Math.ceil(span * deformWindowFrac)))
+      : rawWindowSize;
     const numWindows = n - windowSize + 1;
 
     // Sliding window minimum of topVals
-    let front = 0, back = 0;
+    let front = 0,
+      back = 0;
     for (let i = 0; i < n; i++) {
       while (front < back && deque[front] <= i - windowSize) front++;
       while (front < back && topVals[deque[back - 1]] >= topVals[i]) back--;
@@ -304,7 +354,8 @@ export function findOptimalLabel(
     }
 
     // Sliding window maximum of botVals
-    front = 0; back = 0;
+    front = 0;
+    back = 0;
     for (let i = 0; i < n; i++) {
       while (front < back && deque[front] <= i - windowSize) front++;
       while (front < back && botVals[deque[back - 1]] <= botVals[i]) back--;

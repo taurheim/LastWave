@@ -18,12 +18,15 @@ const { title = 'LastWave' } = Astro.props;
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Roboto:wght@100;300;400;500&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Roboto:wght@100;300;400;500&display=swap"
+      rel="stylesheet"
+    />
     <title>{title}</title>
     <ClientRouter />
     <script is:inline>
       // Apply theme before first paint to avoid flash
-      (function() {
+      (function () {
         const stored = localStorage.getItem('lw-theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         if (stored === 'dark' || (!stored && prefersDark)) {
@@ -46,8 +49,8 @@ const { title = 'LastWave' } = Astro.props;
         --lw-text: 30 41 59;
         --lw-heading: 15 23 42;
         --lw-body-bg: #f0f2f5;
-        --lw-glow-a: rgba(0,105,155,0.06);
-        --lw-glow-b: rgba(0,120,122,0.04);
+        --lw-glow-a: rgba(0, 105, 155, 0.06);
+        --lw-glow-b: rgba(0, 120, 122, 0.04);
       }
       .dark {
         --lw-bg: 12 17 23;
@@ -61,8 +64,8 @@ const { title = 'LastWave' } = Astro.props;
         --lw-text: 226 232 240;
         --lw-heading: 255 255 255;
         --lw-body-bg: #0c1117;
-        --lw-glow-a: rgba(39,170,225,0.06);
-        --lw-glow-b: rgba(0,206,209,0.04);
+        --lw-glow-a: rgba(39, 170, 225, 0.06);
+        --lw-glow-b: rgba(0, 206, 209, 0.04);
       }
       body {
         background: var(--lw-body-bg);
@@ -84,47 +87,89 @@ const { title = 'LastWave' } = Astro.props;
         background: linear-gradient(90deg, var(--lw-accent), var(--lw-cyan));
         transition: width 0.3s ease;
       }
-      .nav-link:hover::after { width: 100%; }
+      .nav-link:hover::after {
+        width: 100%;
+      }
     </style>
   </head>
-  <body class="font-body text-lw-text min-h-screen pb-3 lg:pb-6">
+  <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
     <!-- Theme toggle -->
     <button
       id="theme-toggle"
-      class="fixed top-4 left-4 z-50 p-2 rounded-lg text-lw-muted hover:text-lw-accent transition-colors"
+      class="fixed left-4 top-4 z-50 rounded-lg p-2 text-lw-muted transition-colors hover:text-lw-accent"
       aria-label="Toggle theme"
     >
-      <svg id="theme-icon-moon" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0112.478 3.68a9.75 9.75 0 109.274 11.322z" />
+      <svg
+        id="theme-icon-moon"
+        class="hidden h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M21.752 15.002A9.718 9.718 0 0112.478 3.68a9.75 9.75 0 109.274 11.322z"></path>
       </svg>
-      <svg id="theme-icon-sun" class="w-5 h-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1.5M12 19.5V21M4.219 4.219l1.061 1.061M17.72 17.72l1.06 1.06M3 12h1.5M19.5 12H21M4.219 19.781l1.061-1.061M17.72 6.28l1.06-1.06" />
-        <circle cx="12" cy="12" r="4" />
+      <svg
+        id="theme-icon-sun"
+        class="hidden h-5 w-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 3v1.5M12 19.5V21M4.219 4.219l1.061 1.061M17.72 17.72l1.06 1.06M3 12h1.5M19.5 12H21M4.219 19.781l1.061-1.061M17.72 6.28l1.06-1.06"
+        ></path>
+        <circle cx="12" cy="12" r="4"></circle>
       </svg>
     </button>
 
-    <header class="pt-4 max-lg:landscape:pt-2 lg:pt-10 pb-1 max-lg:landscape:pb-0 lg:pb-3 text-center">
+    <header
+      class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
+    >
       <div class="inline-flex items-center gap-2 lg:gap-4">
         <div>
-          <h1 class="text-3xl max-lg:landscape:text-2xl lg:text-6xl font-thin tracking-tight text-lw-heading" style="font-family: 'Roboto', sans-serif;">
+          <h1
+            class="text-3xl font-thin tracking-tight text-lw-heading lg:text-6xl max-lg:landscape:text-2xl"
+            style="font-family: 'Roboto', sans-serif;"
+          >
             Last<span class="text-lw-accent">Wave</span>
           </h1>
-          <p class="text-lw-muted text-xs lg:text-sm tracking-[0.25em] uppercase mt-0.5 lg:mt-1 font-light hidden lg:block">
+          <p
+            class="mt-0.5 hidden text-xs font-light uppercase tracking-[0.25em] text-lw-muted lg:mt-1 lg:block lg:text-sm"
+          >
             Graph your music listening history!
           </p>
         </div>
       </div>
     </header>
 
-    <nav class="text-center mb-2 max-lg:landscape:mb-1 lg:mb-6">
-      <div class="inline-flex items-center gap-4 max-lg:landscape:gap-3 lg:gap-8 text-xs lg:text-sm tracking-widest uppercase text-lw-muted">
+    <nav class="mb-2 text-center lg:mb-6 max-lg:landscape:mb-1">
+      <div
+        class="inline-flex items-center gap-4 text-xs uppercase tracking-widest text-lw-muted lg:gap-8 lg:text-sm max-lg:landscape:gap-3"
+      >
         <a href="/" id="nav-home-link" class="nav-link hover:text-lw-accent">Home</a>
-        <span class="w-px h-3 bg-lw-border inline-block"></span>
+        <span class="inline-block h-3 w-px bg-lw-border"></span>
         <a href="/gallery" class="nav-link hover:text-lw-accent">Gallery</a>
-        <span class="w-px h-3 bg-lw-border inline-block"></span>
+        <span class="inline-block h-3 w-px bg-lw-border"></span>
         <a href="/about" class="nav-link hover:text-lw-accent">About</a>
-        <span class="w-px h-3 bg-lw-border inline-block"></span>
-        {import.meta.env.DEV && <a href="/lab" class="nav-link hover:text-lw-accent">Lab<sub class="ml-0.5 text-[9px] font-mono tracking-widest text-cyan-400 animate-pulse drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]">DEV</sub></a>}
+        <span class="inline-block h-3 w-px bg-lw-border"></span>
+        {
+          /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */
+          import.meta.env.DEV && (
+            <a href="/lab" class="nav-link hover:text-lw-accent">
+              Lab
+              <sub class="ml-0.5 animate-pulse font-mono text-[9px] tracking-widest text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.8)]">
+                DEV
+              </sub>
+            </a>
+          )
+        }
       </div>
     </nav>
 
@@ -134,9 +179,18 @@ const { title = 'LastWave' } = Astro.props;
 
     <ErrorToast client:load />
 
-    <footer id="site-footer" class="text-center mt-4 lg:mt-6 pb-2 lg:pb-3 text-lw-muted/40 text-xs tracking-wider">
-      <div class="w-12 h-px bg-gradient-to-r from-transparent via-lw-border to-transparent mx-auto mb-2"></div>
-      LastWave &middot; built by <a href="https://savas.ca" class="hover:text-lw-accent transition-colors">Niko Savas</a>
+    <footer
+      id="site-footer"
+      class="mt-4 pb-2 text-center text-xs tracking-wider text-lw-muted/40 lg:mt-6 lg:pb-3"
+    >
+      <div
+        class="mx-auto mb-2 h-px w-12 bg-gradient-to-r from-transparent via-lw-border to-transparent"
+      >
+      </div>
+      LastWave &middot; built by <a
+        href="https://savas.ca"
+        class="transition-colors hover:text-lw-accent">Niko Savas</a
+      >
     </footer>
 
     <script is:inline>
@@ -144,7 +198,7 @@ const { title = 'LastWave' } = Astro.props;
       if (!window.__lwTransitionSetup) {
         window.__lwTransitionSetup = true;
 
-        document.addEventListener('astro:before-swap', function(e) {
+        document.addEventListener('astro:before-swap', function (e) {
           // Apply theme to incoming document before swap to prevent flash
           var stored = localStorage.getItem('lw-theme');
           var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -156,7 +210,7 @@ const { title = 'LastWave' } = Astro.props;
         });
 
         // Re-bind toggle handler after every navigation (DOM elements are replaced)
-        document.addEventListener('astro:page-load', function() {
+        document.addEventListener('astro:page-load', function () {
           var moon = document.getElementById('theme-icon-moon');
           var sun = document.getElementById('theme-icon-sun');
           var toggle = document.getElementById('theme-toggle');
@@ -167,7 +221,7 @@ const { title = 'LastWave' } = Astro.props;
             sun.style.display = isDark ? 'block' : 'none';
           }
           updateIcon();
-          toggle.onclick = function() {
+          toggle.onclick = function () {
             var isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('lw-theme', isDark ? 'dark' : 'light');
             updateIcon();

@@ -25,4 +25,6 @@ export interface DeformResult {
   placements: CharPlacement[];
   overflowFraction: number;
   avgFontSizeRatio: number;
+  debugCenterX?: number;
+  debugCenterY?: number;
 }
