@@ -32,6 +32,7 @@ Every consecutive pair of frames should have **minimal visual delta** — includ
 - The **final render** (labels, deformed text, overflow detection) must NOT be changed
 - Silhouette centering must be used throughout — no fixed-baseline tricks that create a jump at the end
 - The animation should have a clear **left-to-right sweep** character
+- **The animation must happen while segments are loading**, not after all data has arrived. The visualization IS the loading indicator — waiting for all data defeats the purpose.
 
 ## Design
 
@@ -112,6 +113,8 @@ These were tried and failed — avoid repeating:
 4. **SVG teardown + rebuild every frame** (`svg.selectAll('*').remove()`) — wasteful and prevents any DOM-level continuity. Use keyed D3 data joins instead.
 5. **Recalculating minPlays threshold every frame** — `predictedMinPlays` changes as data arrives, causing the artist set to churn. Hold threshold fixed during sweep, only lower during buildup.
 6. **Running text placement on animation frames** — expensive and unnecessary. Only calculate labels on the final frame.
+7. **Band position flipping during sweep** — when sweep keyframes mask counts (multiply by frontier ramp), the masked peak values change each frame, which changes the stacking order via the scoring algorithm. Fix: either use unmasked counts for ordering (compute order from full data, apply mask only to visual shape), or use purely hash-based ordering (jitter=1.0) during animation so order is completely data-independent. A clip-path reveal on stable full-data geometry is the most stable approach — the d3 stack sees identical data every frame, and only the visible region changes.
+8. **Waiting for all data before animating** — defeats the purpose. The animation must stream during data fetching. The visualization IS the loading indicator.
 
 ## Scope Boundaries
 
