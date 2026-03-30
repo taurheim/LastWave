@@ -74,12 +74,15 @@ This is done at the data level (interpolating `SeriesData.counts[]`), NOT at the
 - To achieve this: once buildup is complete, the interpolation target IS the final data. The lerp naturally converges.
 - The final render uses `suppressLabels=false` which triggers the label pass, but the wave paths should be identical to the last animation frame
 
-### Ordering Stability
+### Ordering Stability — Prefetch Approach
 
-- During animation: use `jitter=1.0` (pure hash ordering) so band positions are completely data-independent
-- On final render: use the user's jitter setting (default 0.12) which blends peak-based centrality
-- **Problem:** this creates a reordering jump on the last frame
-- **Fix:** on the very last animation frame (when buildup is exhausted and all data has arrived), switch to the final jitter value. Since this is also the frame where the data has fully converged, the visual change is just a smooth reordering with identical data — minimal jump.
+The core insight: we can't know an artist's final peak count during streaming (their biggest week might not have arrived yet), but we CAN know their **total play ranking** from a single upfront API call.
+
+- **On submit**, fire a parallel `user.gettopartists` request for the full date range alongside the segment fetches. This returns a ranked list of all artists by total plays — available before most segments arrive.
+- Use this ranking as the **primary input to `stackOrderSlopeBalanced`** instead of per-segment peak counts. The ranking is known from frame 1, never changes, and produces identical output regardless of whether animation is on or off.
+- This eliminates the need for jitter=1.0 during animation or a last-frame reorder — the stacking order is the same on every frame including the final render.
+- The prefetch must be used for **both animated and non-animated** modes so turning animation on/off doesn't change the final graph.
+- For album mode, use `user.gettopalbums` instead. For tag/genre mode, fall back to hash-based ordering since there's no equivalent summary call.
 
 ### Color Stability
 
