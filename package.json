@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:accuracy": "vitest run tests/unit/wave-accuracy.test.ts --reporter=verbose",
+    "test:thrashing": "vitest run tests/unit/animation-thrashing.test.ts --reporter=verbose",
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
     "test:e2e": "playwright test",
     "lint": "eslint src/",
