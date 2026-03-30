@@ -64,14 +64,21 @@ export function stackOrderSlopeBalanced(
   //    relative order when their peak crosses a power-of-2 boundary.
   //    jitterFraction=0 → pure peak ordering (biggest in centre).
   //    jitterFraction=1 → pure hash ordering (deterministic but unrelated to size).
+  //
+  //    When jf≥0.99 (animation mode, jitter=1.0), clamp to effectiveJf=0.15 so
+  //    the animation ordering matches the final render's ordering exactly.
+  //    This eliminates the ~100% "final jump" when transitioning to the
+  //    production render (jitter=0.15), without changing how the final render
+  //    itself is computed.
   const scored: { idx: number; score: number; key: string }[] = new Array(n);
   const jf = Math.max(0, Math.min(1, jitterFraction));
+  const effectiveJf = jf >= 0.99 ? 0.15 : jf;
+  const maxBucket = maxPeak > 0 ? Math.log2(maxPeak) : 1;
   for (let j = 0; j < n; j++) {
     const bucket = peaks[j] > 0 ? Math.floor(Math.log2(peaks[j])) : 0;
-    const maxBucket = maxPeak > 0 ? Math.log2(maxPeak) : 1;
     const normBucket = maxBucket > 0 ? bucket / maxBucket : 0;
     const hash = hashKey(series[j].key);
-    scored[j] = { idx: j, score: (1 - jf) * normBucket + jf * hash, key: series[j].key };
+    scored[j] = { idx: j, score: (1 - effectiveJf) * normBucket + effectiveJf * hash, key: series[j].key };
   }
 
   // Sort descending — highest score first (will go to the centre).
