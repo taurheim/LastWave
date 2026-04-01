@@ -13,8 +13,12 @@ import type { Series } from 'd3-shape';
  *     than already-visible ones, guaranteeing they slot into edge positions
  *     without disturbing existing bands.
  *  2. Series are sorted by score (descending).
- *  3. Inside-out placement puts the highest-scoring (biggest) bands in the
- *     centre, alternating outward — the classic streamgraph layout.
+ *  3. Placement uses one of two strategies:
+ *     - Animation mode (stable slots): each artist's position depends only on
+ *       its own score and hash, so adding/removing artists shifts at most one
+ *       adjacent neighbour.
+ *     - Standard mode (inside-out): highest-scoring bands go to the centre,
+ *       alternating outward — the classic streamgraph layout.
  *
  * The hash-based jitter gives each artist a stable, deterministic tiebreaker
  * that adds organic variation among similarly-sized bands without depending
@@ -27,6 +31,14 @@ import type { Series } from 'd3-shape';
 // 0 = pure peak ordering, 1 = pure hash ordering; 0.12 gives a natural
 // organic feel while keeping big artists reliably central.
 const DEFAULT_JITTER = 0.12;
+
+// Hard ceiling on effective jitter — values above this are clamped so animation
+// frames produce orderings identical to the production default (0.15).
+const MAX_EFFECTIVE_JITTER = 0.15;
+
+// Jitter values above this threshold use stable slot placement instead of
+// classic inside-out. Set to -1 to always use stable placement.
+const STABLE_PLACEMENT_THRESHOLD = -1;
 
 // FNV-1a hash → normalised 0..1 float, seeded from the series key only.
 function hashKey(key: string): number {
@@ -59,38 +71,53 @@ export function stackOrderSlopeBalanced(
   }
 
   // 2. Score each series: blend of peak-based ordering and hash-based shuffle.
-  //    Peaks are bucketed (log2) so that small frame-to-frame changes during
-  //    the sweep animation don't cause bands to oscillate — artists only change
-  //    relative order when their peak crosses a power-of-2 boundary.
-  //    jitterFraction=0 → pure peak ordering (biggest in centre).
-  //    jitterFraction=1 → pure hash ordering (deterministic but unrelated to size).
-  //
-  //    When jf≥0.99 (animation mode, jitter=1.0), clamp to effectiveJf=0.15 so
-  //    the animation ordering matches the final render's ordering exactly.
-  //    This eliminates the ~100% "final jump" when transitioning to the
-  //    production render (jitter=0.15), without changing how the final render
-  //    itself is computed.
-  const scored: { idx: number; score: number; key: string }[] = new Array(n);
-  const jf = Math.max(0, Math.min(1, jitterFraction));
-  const effectiveJf = jf >= 0.99 ? 0.15 : jf;
-  const maxBucket = maxPeak > 0 ? Math.log2(maxPeak) : 1;
+  //    Peaks are bucketed (log2) and divided by BUCKET_DIVISOR for coarser
+  //    grouping, then normalised against BUCKET_NORMALIZER (a fixed constant)
+  //    instead of a data-dependent maximum. This guarantees that a series'
+  //    score depends only on its own peak — not on the current dataset — so
+  //    adding or removing other artists cannot re-rank existing ones.
+  //    jitterFraction is clamped to MAX_EFFECTIVE_JITTER so animation frames
+  //    produce orderings identical to the production default.
+  const scored: { idx: number; score: number; key: string; hash: number }[] = new Array(n);
+  const jf = Math.max(0, Math.min(MAX_EFFECTIVE_JITTER, jitterFraction));
+  const BUCKET_NORMALIZER = 20; // fixed: supports peaks up to 2^20 ≈ 1M
+  const BUCKET_DIVISOR = 3;     // coarser buckets → fewer boundary crossings during sweep
   for (let j = 0; j < n; j++) {
-    const bucket = peaks[j] > 0 ? Math.floor(Math.log2(peaks[j])) : 0;
-    const normBucket = maxBucket > 0 ? bucket / maxBucket : 0;
+    const bucket = peaks[j] > 0 ? Math.floor(Math.log2(peaks[j]) / BUCKET_DIVISOR) : 0;
+    const normBucket = bucket / BUCKET_NORMALIZER;
     const hash = hashKey(series[j].key);
-    scored[j] = { idx: j, score: (1 - effectiveJf) * normBucket + effectiveJf * hash, key: series[j].key };
+    scored[j] = { idx: j, score: (1 - jf) * normBucket + jf * hash, key: series[j].key, hash };
   }
 
   // Sort descending — highest score first (will go to the centre).
   // Key tiebreaker guarantees determinism regardless of input array order.
   scored.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
 
-  // 3. Centre-out placement: highest-scoring series go to the middle of the
-  //    stack, then alternate outward so smaller bands end up at the edges.
-  //    In a silhouette-offset streamgraph the centre is the most prominent.
+  // 3. Placement — two strategies:
+  //
+  //    Animation mode (jitterFraction > STABLE_PLACEMENT_THRESHOLD):
+  //      Stable slot-based placement. Each artist's position is a function of
+  //      its own score and hash only, so adding/removing artists shifts at most
+  //      one adjacent neighbour. This caps per-frame displacement.
+  //
+  //    Standard mode: classic inside-out interleaving — biggest in the centre,
+  //      alternating outward. The traditional streamgraph look.
+
+  if (jitterFraction > STABLE_PLACEMENT_THRESHOLD) {
+    const withTarget = scored.map((s) => {
+      const dist = (1 - s.score) * 0.5;
+      const target = s.hash < 0.5
+        ? 0.5 - dist
+        : 0.5 + dist;
+      return { idx: s.idx, target, key: s.key };
+    });
+    withTarget.sort((a, b) => a.target - b.target || a.key.localeCompare(b.key));
+    return withTarget.map((s) => s.idx);
+  }
+
+  // Classic centre-out interleaving (final render path).
   const order: number[] = new Array(n);
   const mid = n >> 1;
-  // For even n, centre pair is (mid-1, mid); for odd n, centre is mid.
   let lo = n % 2 === 0 ? mid - 1 : mid;
   let hi = n % 2 === 0 ? mid : mid + 1;
   for (let i = 0; i < n; i++) {
