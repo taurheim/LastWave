@@ -88,6 +88,7 @@ interface WaveVisualizationProps {
   onOverflowsDetected?: (overflows: OverflowInfo[]) => void;
   onRenderComplete?: () => void;
   onDrawingProgress?: (status: string) => void;
+  lockedYDomain?: [number, number];
   suppressLabels?: boolean;
 }
 
@@ -96,6 +97,7 @@ export default memo(function WaveVisualization({
   onOverflowsDetected,
   onRenderComplete,
   onDrawingProgress,
+  lockedYDomain,
   suppressLabels,
 }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -213,8 +215,8 @@ export default memo(function WaveVisualization({
       .domain([0, numSegments - 1])
       .range([0, width]);
 
-    const yMin = d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
-    const yMax = d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
+    const yMin = lockedYDomain?.[0] ?? (d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0);
+    const yMax = lockedYDomain?.[1] ?? (d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0);
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
 
     // Area generator
@@ -698,6 +700,7 @@ export default memo(function WaveVisualization({
     rendererOptions.jitter_text,
     rendererOptions.stack_jitter,
     suppressLabels,
+    lockedYDomain,
   ]);
 
   // ── Overlay effect: cheap decorations that can toggle without re-rendering waves+labels ──

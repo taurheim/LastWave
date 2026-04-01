@@ -20,6 +20,8 @@ import {
   findOptimalMinPlays,
   getAnimationSteps,
 } from '@/core/lastfm/util';
+import * as d3 from 'd3';
+import { stackOrderSlopeBalanced } from '@/core/wave/stackOrder';
 
 const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
@@ -177,6 +179,8 @@ export default function LastWaveApp() {
   const animFrameCountRef = useRef(0);
   const animDoneResolveRef = useRef<(() => void) | null>(null);
   const animBuildupStepsRef = useRef<number[]>([]);
+  const lockedYDomainRef = useRef<[number, number] | null>(null);
+  const [lockedYDomain, setLockedYDomain] = useState<[number, number] | undefined>(undefined);
 
   const showFullSizeBtn = showFullSvg || imageOverflows;
 
@@ -348,6 +352,37 @@ export default function LastWaveApp() {
       streamMinPlaysRef.current = predictedMinPlays * 3;
     }
 
+    if (!lockedYDomainRef.current) {
+      const totalSegments = allSegments.length;
+      const arrivedCount = allSegments.filter((s) => s !== undefined).length;
+      if (arrivedCount > 0 && arrivedCount / totalSegments >= 0.3) {
+        const targetMinPlays = findOptimalMinPlays(joined, 30);
+        const finalCleaned = cleanByMinPlays(joined, targetMinPlays);
+        if (finalCleaned.length > 0 && finalCleaned[0].counts.length > 0) {
+          const estKeys = finalCleaned.map((s) => s.title);
+          const numSeg = finalCleaned[0].counts.length;
+          const estTable: Record<string, number>[] = [];
+          for (let i = 0; i < numSeg; i++) {
+            const row: Record<string, number> = { index: i };
+            finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+            estTable.push(row);
+          }
+          const estStack = d3
+            .stack<Record<string, number>>()
+            .keys(estKeys)
+            .offset(d3.stackOffsetSilhouette)
+            .order((s: d3.Series<Record<string, number>, string>[]) =>
+              stackOrderSlopeBalanced(s, 0.15),
+            );
+          const stacked = estStack(estTable);
+          const yMin = d3.min(stacked, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
+          const yMax = d3.max(stacked, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
+          lockedYDomainRef.current = [yMin, yMax];
+          setLockedYDomain([yMin, yMax]);
+        }
+      }
+    }
+
     const cleaned = cleanByMinPlays(masked, streamMinPlaysRef.current);
     setSeriesData(cleaned);
   }
@@ -368,6 +403,8 @@ export default function LastWaveApp() {
     // Clear previous graph data
     setSeriesData([]);
     rawSeriesDataRef.current = [];
+    lockedYDomainRef.current = null;
+    setLockedYDomain(undefined);
 
     // Hide options, show loading bar
     store.setShowOptions(false);
@@ -649,6 +686,8 @@ export default function LastWaveApp() {
       // First: render the final frame without labels (fast path)
       isAnimatingRef.current = false;
       setDrawingStatus('Placing text…');
+      lockedYDomainRef.current = null;
+      setLockedYDomain(undefined);
       setSeriesData(data);
 
       // Yield two frames so the browser paints the final wave shapes
@@ -739,6 +778,7 @@ export default function LastWaveApp() {
                   onOverflowsDetected={setOverflows}
                   onRenderComplete={handleRenderComplete}
                   onDrawingProgress={handleDrawingProgress}
+                  lockedYDomain={lockedYDomain}
                   suppressLabels={suppressLabels}
                 />
               </ImageScaler>
@@ -809,6 +849,7 @@ export default function LastWaveApp() {
                 onOverflowsDetected={setOverflows}
                 onRenderComplete={handleRenderComplete}
                 onDrawingProgress={handleDrawingProgress}
+                lockedYDomain={lockedYDomain}
                 suppressLabels={suppressLabels}
               />
             </ImageScaler>
