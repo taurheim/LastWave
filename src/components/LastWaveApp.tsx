@@ -329,15 +329,6 @@ export default function LastWaveApp() {
     const joined = joinSegments(allSegments);
     if (joined.length === 0) return;
 
-    // Apply progressive mask: full left of frontier, fading at frontier edge, zero right of it
-    const masked = joined.map((series) => ({
-      ...series,
-      counts: series.counts.map((count, i) => {
-        const scale = Math.max(0, Math.min(1, (frontier - i) / RAMP_WIDTH));
-        return Math.round(count * scale);
-      }),
-    }));
-
     // During sweep, hold the threshold at its initial value so only the biggest
     // artists are shown. New artists are added during the buildup phase instead,
     // which prevents the silhouette centering from jumping as the sweep advances.
@@ -349,7 +340,7 @@ export default function LastWaveApp() {
         5,
         Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)),
       );
-      streamMinPlaysRef.current = predictedMinPlays * 3;
+      streamMinPlaysRef.current = predictedMinPlays * 2;
     }
 
     if (!lockedYDomainRef.current) {
@@ -383,8 +374,17 @@ export default function LastWaveApp() {
       }
     }
 
-    const cleaned = cleanByMinPlays(masked, streamMinPlaysRef.current);
-    setSeriesData(cleaned);
+    // Filter by UNMASKED peaks first (stable artist set throughout sweep),
+    // then apply the frontier mask for the left-to-right reveal.
+    const cleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
+    const masked = cleaned.map((series) => ({
+      ...series,
+      counts: series.counts.map((count, i) => {
+        const scale = Math.max(0, Math.min(1, (frontier - i) / RAMP_WIDTH));
+        return Math.round(count * scale);
+      }),
+    }));
+    setSeriesData(masked);
   }
 
   async function handleSubmit() {

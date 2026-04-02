@@ -241,18 +241,23 @@ export function getAnimationSteps(
   const startThreshold = peakCounts[Math.min(startArtistCount - 1, peakCounts.length - 1)];
   if (startThreshold <= targetMinPlays) return [targetMinPlays];
 
-  // Return a single breakpoint at the final target so the buildup phase
-  // consists of exactly one frame.  Going from the sweep's last frame (which
-  // shows only artists with peak ≥ sweepThreshold, typically 0–1 artists)
-  // directly to the full artist set means:
-  //  • The one common artist — if any — stays near the chart centre in both
-  //    frames (it is the highest-scoring band in both), so its centroid
-  //    barely moves: typically < 2% displacement, below the 5% penalty
-  //    threshold.
-  //  • There is only one transition event where a centre-out parity flip
-  //    could occur, keeping the probability of a catastrophic 100%
-  //    displacement low.
-  return [targetMinPlays];
+  // Unique breakpoints between start and target, descending
+  const breakpoints = [...new Set(peakCounts)]
+    .filter((t) => t >= targetMinPlays && t <= startThreshold)
+    .sort((a, b) => b - a);
+
+  if (breakpoints.length <= maxSteps) return breakpoints;
+
+  // Evenly sample maxSteps points
+  const steps: number[] = [];
+  for (let i = 0; i < maxSteps; i++) {
+    const idx = Math.floor((i * (breakpoints.length - 1)) / (maxSteps - 1));
+    steps.push(breakpoints[idx]);
+  }
+  if (steps[steps.length - 1] !== targetMinPlays) {
+    steps[steps.length - 1] = targetMinPlays;
+  }
+  return steps;
 }
 
 /*
