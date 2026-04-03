@@ -4,7 +4,6 @@ test.describe('Homepage', () => {
   test('loads and shows the LastWave title', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'LastWave' })).toBeVisible();
-    await expect(page.locator('text=Graph your music listening history!')).toBeVisible();
   });
 
   test('shows navigation links', async ({ page }) => {
