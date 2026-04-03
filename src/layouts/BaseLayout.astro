@@ -68,7 +68,7 @@ const { title = 'LastWave' } = Astro.props;
     </style>
   </head>
   <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
-    <!-- Decorative background waves -->
+    <!-- Decorative background waves — streamgraph-style, asymmetric band widths -->
     <svg
       class="fixed inset-0 -z-10 h-full w-full"
       viewBox="0 0 1440 900"
@@ -76,29 +76,29 @@ const { title = 'LastWave' } = Astro.props;
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <!-- Orange — big sweeping band from left up to top-right -->
+      <!-- Orange (widest band — top) -->
       <path
-        d="M-100,500 C100,420 300,300 500,220 C700,140 900,60 1100,20 C1300,-20 1440,-10 1540,0
-           L1540,160 C1440,140 1300,120 1100,180 C900,240 700,340 500,420 C300,500 100,580 -100,650 Z"
+        d="M-100,100 C100,50 350,-20 600,-70 C850,-90 1100,-100 1540,-100
+           L1540,190 C1100,170 850,140 600,170 C350,230 100,330 -100,400 Z"
         fill="#E8842A" opacity="0.6"
       />
-      <!-- Red/crimson — flows from bottom-left through center-right -->
+      <!-- Red/crimson (medium, bulges in center) -->
       <path
-        d="M-100,700 C50,620 200,530 400,480 C650,420 850,350 1050,320 C1250,290 1400,300 1540,320
-           L1540,480 C1400,450 1250,430 1050,470 C850,510 650,580 400,640 C200,700 50,770 -100,850 Z"
+        d="M-100,400 C100,330 350,230 600,170 C850,140 1100,170 1540,190
+           L1540,340 C1100,330 850,340 600,360 C350,400 100,490 -100,550 Z"
         fill="#C13B2A" opacity="0.55"
       />
-      <!-- Green — wide band from lower-left sweeping to right -->
+      <!-- Blue (narrows toward right) -->
       <path
-        d="M-100,780 C150,710 350,600 580,560 C810,520 1000,490 1200,440 C1350,400 1440,410 1540,430
-           L1540,610 C1440,580 1350,560 1200,600 C1000,650 810,700 580,740 C350,780 150,860 -100,950 Z"
-        fill="#6B8E3B" opacity="0.55"
-      />
-      <!-- Blue — flows between green and red -->
-      <path
-        d="M-100,620 C100,560 280,470 500,430 C720,390 950,380 1150,350 C1300,330 1440,350 1540,370
-           L1540,500 C1440,480 1300,460 1150,480 C950,510 720,530 500,570 C280,610 100,690 -100,760 Z"
+        d="M-100,550 C100,490 350,400 600,360 C850,340 1100,330 1540,340
+           L1540,460 C1100,440 850,450 600,490 C350,560 100,660 -100,700 Z"
         fill="#2E6DB4" opacity="0.55"
+      />
+      <!-- Green (widens toward right) -->
+      <path
+        d="M-100,700 C100,660 350,560 600,490 C850,450 1100,440 1540,460
+           L1540,690 C1100,670 850,670 600,700 C350,760 100,840 -100,890 Z"
+        fill="#6B8E3B" opacity="0.55"
       />
     </svg>
 
