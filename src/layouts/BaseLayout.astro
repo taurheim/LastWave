@@ -24,18 +24,6 @@ const { title = 'LastWave' } = Astro.props;
     />
     <title>{title}</title>
     <ClientRouter />
-    <script is:inline>
-      // Apply theme before first paint to avoid flash
-      (function () {
-        const stored = localStorage.getItem('lw-theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (stored === 'dark' || (!stored && prefersDark)) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      })();
-    </script>
     <style>
       @font-face {
         font-family: 'Super Arena';
@@ -80,60 +68,14 @@ const { title = 'LastWave' } = Astro.props;
     </style>
   </head>
   <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
-    <!-- Theme toggle -->
-    <button
-      id="theme-toggle"
-      class="fixed left-4 top-4 z-50 rounded-lg p-2 text-lw-muted transition-colors hover:text-lw-accent"
-      aria-label="Toggle theme"
-    >
-      <svg
-        id="theme-icon-moon"
-        class="hidden h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M21.752 15.002A9.718 9.718 0 0112.478 3.68a9.75 9.75 0 109.274 11.322z"></path>
-      </svg>
-      <svg
-        id="theme-icon-sun"
-        class="hidden h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M12 3v1.5M12 19.5V21M4.219 4.219l1.061 1.061M17.72 17.72l1.06 1.06M3 12h1.5M19.5 12H21M4.219 19.781l1.061-1.061M17.72 6.28l1.06-1.06"
-        ></path>
-        <circle cx="12" cy="12" r="4"></circle>
-      </svg>
-    </button>
-
     <header
       class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
     >
-      <div class="inline-flex items-center gap-2 lg:gap-4">
-        <div>
-          <h1
-            class="text-3xl font-thin tracking-tight text-lw-heading lg:text-6xl max-lg:landscape:text-2xl"
-            style="font-family: 'Roboto', sans-serif;"
-          >
-            Last<span class="text-lw-accent">Wave</span>
-          </h1>
-          <p
-            class="mt-0.5 hidden text-xs font-light uppercase tracking-[0.25em] text-lw-muted lg:mt-1 lg:block lg:text-sm"
-          >
-            Graph your music listening history!
-          </p>
-        </div>
-      </div>
+      <h1
+        class="font-display text-4xl text-lw-heading lg:text-7xl max-lg:landscape:text-3xl"
+      >
+        LastWave
+      </h1>
     </header>
 
     <nav class="mb-2 text-center lg:mb-6 max-lg:landscape:mb-1">
@@ -168,41 +110,5 @@ const { title = 'LastWave' } = Astro.props;
       >
     </footer>
 
-    <script is:inline>
-      // Preserve theme across navigations via view transitions
-      if (!window.__lwTransitionSetup) {
-        window.__lwTransitionSetup = true;
-
-        document.addEventListener('astro:before-swap', function (e) {
-          // Apply theme to incoming document before swap to prevent flash
-          var stored = localStorage.getItem('lw-theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (stored === 'dark' || (!stored && prefersDark)) {
-            e.newDocument.documentElement.classList.add('dark');
-          } else {
-            e.newDocument.documentElement.classList.remove('dark');
-          }
-        });
-
-        // Re-bind toggle handler after every navigation (DOM elements are replaced)
-        document.addEventListener('astro:page-load', function () {
-          var moon = document.getElementById('theme-icon-moon');
-          var sun = document.getElementById('theme-icon-sun');
-          var toggle = document.getElementById('theme-toggle');
-          if (!moon || !sun || !toggle) return;
-          function updateIcon() {
-            var isDark = document.documentElement.classList.contains('dark');
-            moon.style.display = isDark ? 'none' : 'block';
-            sun.style.display = isDark ? 'block' : 'none';
-          }
-          updateIcon();
-          toggle.onclick = function () {
-            var isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('lw-theme', isDark ? 'dark' : 'light');
-            updateIcon();
-          };
-        });
-      }
-    </script>
   </body>
 </html>
