@@ -68,7 +68,7 @@ const { title = 'LastWave' } = Astro.props;
     </style>
   </head>
   <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
-    <!-- Decorative background waves — streamgraph-style, asymmetric band widths -->
+    <!-- Decorative background waves — big sinusoidal streamgraph -->
     <svg
       class="fixed inset-0 -z-10 h-full w-full"
       viewBox="0 0 1440 900"
@@ -76,28 +76,28 @@ const { title = 'LastWave' } = Astro.props;
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
-      <!-- Orange (widest band — top) -->
+      <!-- Orange (widest, outermost) -->
       <path
-        d="M-100,100 C100,50 350,-20 600,-70 C850,-90 1100,-100 1540,-100
-           L1540,190 C1100,170 850,140 600,170 C350,230 100,330 -100,400 Z"
+        d="M-100,-150 C200,0 450,300 700,350 C950,300 1250,0 1540,-100
+           L1540,180 C1250,250 950,500 700,540 C450,480 200,310 -100,200 Z"
         fill="#E8842A" opacity="0.6"
       />
-      <!-- Red/crimson (medium, bulges in center) -->
+      <!-- Red/crimson -->
       <path
-        d="M-100,400 C100,330 350,230 600,170 C850,140 1100,170 1540,190
-           L1540,340 C1100,330 850,340 600,360 C350,400 100,490 -100,550 Z"
+        d="M-100,200 C200,310 450,480 700,540 C950,500 1250,250 1540,180
+           L1540,340 C1250,400 950,630 700,660 C450,600 200,440 -100,360 Z"
         fill="#C13B2A" opacity="0.55"
       />
-      <!-- Blue (narrows toward right) -->
+      <!-- Blue -->
       <path
-        d="M-100,550 C100,490 350,400 600,360 C850,340 1100,330 1540,340
-           L1540,460 C1100,440 850,450 600,490 C350,560 100,660 -100,700 Z"
+        d="M-100,360 C200,440 450,600 700,660 C950,630 1250,400 1540,340
+           L1540,450 C1250,510 950,720 700,750 C450,690 200,540 -100,470 Z"
         fill="#2E6DB4" opacity="0.55"
       />
-      <!-- Green (widens toward right) -->
+      <!-- Green (innermost) -->
       <path
-        d="M-100,700 C100,660 350,560 600,490 C850,450 1100,440 1540,460
-           L1540,690 C1100,670 850,670 600,700 C350,760 100,840 -100,890 Z"
+        d="M-100,470 C200,540 450,690 700,750 C950,720 1250,510 1540,450
+           L1540,620 C1250,670 950,860 700,890 C450,820 200,690 -100,630 Z"
         fill="#6B8E3B" opacity="0.55"
       />
     </svg>
