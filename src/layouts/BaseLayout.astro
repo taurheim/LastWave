@@ -76,25 +76,29 @@ const { title = 'LastWave' } = Astro.props;
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
+      <!-- Orange — big sweeping band from left up to top-right -->
       <path
-        d="M-50,320 C200,250 400,180 720,220 C1040,260 1250,150 1500,120
-           L1500,200 C1250,230 1040,340 720,300 C400,260 200,330 -50,400 Z"
+        d="M-100,500 C100,420 300,300 500,220 C700,140 900,60 1100,20 C1300,-20 1440,-10 1540,0
+           L1540,160 C1440,140 1300,120 1100,180 C900,240 700,340 500,420 C300,500 100,580 -100,650 Z"
+        fill="#E8842A" opacity="0.6"
+      />
+      <!-- Red/crimson — flows from bottom-left through center-right -->
+      <path
+        d="M-100,700 C50,620 200,530 400,480 C650,420 850,350 1050,320 C1250,290 1400,300 1540,320
+           L1540,480 C1400,450 1250,430 1050,470 C850,510 650,580 400,640 C200,700 50,770 -100,850 Z"
+        fill="#C13B2A" opacity="0.55"
+      />
+      <!-- Green — wide band from lower-left sweeping to right -->
+      <path
+        d="M-100,780 C150,710 350,600 580,560 C810,520 1000,490 1200,440 C1350,400 1440,410 1540,430
+           L1540,610 C1440,580 1350,560 1200,600 C1000,650 810,700 580,740 C350,780 150,860 -100,950 Z"
+        fill="#6B8E3B" opacity="0.55"
+      />
+      <!-- Blue — flows between green and red -->
+      <path
+        d="M-100,620 C100,560 280,470 500,430 C720,390 950,380 1150,350 C1300,330 1440,350 1540,370
+           L1540,500 C1440,480 1300,460 1150,480 C950,510 720,530 500,570 C280,610 100,690 -100,760 Z"
         fill="#2E6DB4" opacity="0.55"
-      />
-      <path
-        d="M-50,420 C200,350 450,290 750,340 C1050,390 1200,270 1500,240
-           L1500,330 C1200,360 1050,480 750,430 C450,380 200,440 -50,510 Z"
-        fill="#6B8E3B" opacity="0.5"
-      />
-      <path
-        d="M-50,540 C250,470 500,410 780,460 C1060,510 1250,390 1500,360
-           L1500,460 C1250,490 1060,610 780,560 C500,510 250,570 -50,640 Z"
-        fill="#E8842A" opacity="0.5"
-      />
-      <path
-        d="M-50,660 C200,590 480,530 760,580 C1040,630 1280,520 1500,490
-           L1500,590 C1280,620 1040,730 760,680 C480,630 200,690 -50,760 Z"
-        fill="#C13B2A" opacity="0.5"
       />
     </svg>
 
@@ -102,7 +106,8 @@ const { title = 'LastWave' } = Astro.props;
       class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
     >
       <h1
-        class="font-display text-4xl text-lw-heading lg:text-7xl max-lg:landscape:text-3xl"
+        class="font-display text-5xl text-lw-heading lg:text-8xl max-lg:landscape:text-4xl"
+        style="text-shadow: 0 2px 8px rgba(245, 223, 197, 0.8);"
       >
         LastWave
       </h1>
