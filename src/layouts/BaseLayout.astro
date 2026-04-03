@@ -68,6 +68,36 @@ const { title = 'LastWave' } = Astro.props;
     </style>
   </head>
   <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
+    <!-- Decorative background waves -->
+    <svg
+      class="fixed inset-0 -z-10 h-full w-full"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        d="M-50,320 C200,250 400,180 720,220 C1040,260 1250,150 1500,120
+           L1500,200 C1250,230 1040,340 720,300 C400,260 200,330 -50,400 Z"
+        fill="#2E6DB4" opacity="0.55"
+      />
+      <path
+        d="M-50,420 C200,350 450,290 750,340 C1050,390 1200,270 1500,240
+           L1500,330 C1200,360 1050,480 750,430 C450,380 200,440 -50,510 Z"
+        fill="#6B8E3B" opacity="0.5"
+      />
+      <path
+        d="M-50,540 C250,470 500,410 780,460 C1060,510 1250,390 1500,360
+           L1500,460 C1250,490 1060,610 780,560 C500,510 250,570 -50,640 Z"
+        fill="#E8842A" opacity="0.5"
+      />
+      <path
+        d="M-50,660 C200,590 480,530 760,580 C1040,630 1280,520 1500,490
+           L1500,590 C1280,620 1040,730 760,680 C480,630 200,690 -50,760 Z"
+        fill="#C13B2A" opacity="0.5"
+      />
+    </svg>
+
     <header
       class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
     >
