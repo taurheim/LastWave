@@ -29,6 +29,7 @@ Regardless of mode, always:
 
 ### Feature Specs
 - Specs live in `specs/` — template at `specs/_template.md`
+- **Always save specs to the `specs/` directory** at the repo root (not `docs/`, not `docs/superpowers/specs/`, not anywhere else)
 - Use `/agent build-spec` to collaboratively write specs with the human
 - Each spec defines: acceptance criteria, visual expectations, interaction flow, scope boundaries
 
