@@ -106,6 +106,14 @@ The core insight: we can't know an artist's final peak count during streaming (t
 6. Final render (labels, overflow, deformed text) is identical to current behavior
 7. Animation completes in ~2.5-4 seconds total
 
+## Hard Invariants
+
+These must NEVER be violated — they are the root cause of every failed animation attempt:
+
+1. **Color continuity:** An artist's color must be identical in the sweep, buildup, AND final render. The color map is computed once and persists through all phases. Never recompute or reassign colors between animation and final render.
+
+2. **Order continuity:** The stacking order (which band sits above/below which) must be identical in the buildup and final render. The order used for the last animation frame must be the same order used for the final labeled render. Never switch jitter values or ordering algorithms between phases.
+
 ## Lessons Learned (from prior implementation attempts)
 
 These were tried and failed — avoid repeating:

@@ -79,3 +79,13 @@ When modifying any wave text placement or deformed text code (`src/core/wave/`),
 ## Import conventions
 
 - Import the Zustand store as `@/store/index` (not `@/store`) — a legacy `src/store.ts` file shadows the directory import.
+
+## Animation Hard Invariants
+
+When modifying animation code (`LastWaveApp.tsx`, `WaveVisualization.tsx`, `stackOrder.ts`), these invariants must NEVER be violated:
+
+1. **Color continuity:** An artist's color must be identical in the sweep, buildup, AND final render. The `lockedColorMap` is computed once during animation and persists through all phases including the final labeled render. Never clear or recompute it between animation end and final render.
+
+2. **Order continuity:** The stacking order must be identical in the buildup and final render. The same jitter value and ordering algorithm must be used for both. Never switch ordering parameters between the last animation frame and the final render.
+
+Breaking either invariant causes visible color flashing or band jumping on the animation→final transition, which is the most jarring visual artifact in the system. See `specs/animation-smoothing.md` for full context.

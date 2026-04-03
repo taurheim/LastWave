@@ -89,6 +89,7 @@ interface WaveVisualizationProps {
   onRenderComplete?: () => void;
   onDrawingProgress?: (status: string) => void;
   lockedYDomain?: [number, number];
+  lockedColorMap?: Map<string, string>;
   suppressLabels?: boolean;
 }
 
@@ -98,6 +99,7 @@ export default memo(function WaveVisualization({
   onRenderComplete,
   onDrawingProgress,
   lockedYDomain,
+  lockedColorMap,
   suppressLabels,
 }: WaveVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -200,14 +202,13 @@ export default memo(function WaveVisualization({
 
     const stackedData = stack(tableData);
 
-    // When using slope-balanced order, color adjacency must use the visual
-    // stacking order (which differs from input order). Standard order preserves it.
-    // In balanced mode, skip adjacency fixing entirely — the hash-based assignment
-    // is stable across animation frames, but adjacency fixing would shift colors
-    // as new artists appear at the edges during progressive loading.
+    // Use prominence-aware locked color map when available (during animation).
+    // Fall back to hash-based assignment for final render or non-balanced modes.
     const colorKeys = offsetName === 'balanced' ? stackedData.map((layer) => layer.key) : keys;
     const fixAdj = offsetName !== 'balanced' && !suppressLabels;
-    const colorMap = assignStackColors(colorKeys, colors, fixAdj);
+    const colorMap = lockedColorMap && lockedColorMap.size > 0
+      ? lockedColorMap
+      : assignStackColors(colorKeys, colors, fixAdj);
 
     // Scales
     const xScale = d3
@@ -701,6 +702,7 @@ export default memo(function WaveVisualization({
     rendererOptions.stack_jitter,
     suppressLabels,
     lockedYDomain,
+    lockedColorMap,
   ]);
 
   // ── Overlay effect: cheap decorations that can toggle without re-rendering waves+labels ──

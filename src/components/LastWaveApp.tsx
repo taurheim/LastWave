@@ -22,6 +22,12 @@ import {
 } from '@/core/lastfm/util';
 import * as d3 from 'd3';
 import { stackOrderSlopeBalanced } from '@/core/wave/stackOrder';
+import schemes from '@/core/config/schemes.json';
+
+// d3's .order() type expects (series: Series) => number[] but our ordering
+// function takes Series[] (the full array). Cast once here to avoid repetition.
+const balancedOrder = ((s: d3.Series<Record<string, number>, string>[]) =>
+  stackOrderSlopeBalanced(s, 0.15)) as unknown as (series: d3.Series<Record<string, number>, string>) => number[];
 
 const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
@@ -173,6 +179,7 @@ export default function LastWaveApp() {
   const streamSegmentsRef = useRef<(SegmentData[] | undefined)[]>([]);
   const streamTimerRef = useRef<ReturnType<typeof setTimeout>>();
   const streamMinPlaysRef = useRef<number>(Infinity);
+  const sweepBandCapRef = useRef<number>(Infinity);
   const streamTagDataRef = useRef<Record<string, { tags: string[] }>>({});
   const revealFrontierRef = useRef(0);
   const animFrameTimerRef = useRef<ReturnType<typeof setInterval>>();
@@ -181,6 +188,8 @@ export default function LastWaveApp() {
   const animBuildupStepsRef = useRef<number[]>([]);
   const lockedYDomainRef = useRef<[number, number] | null>(null);
   const [lockedYDomain, setLockedYDomain] = useState<[number, number] | undefined>(undefined);
+  const [lockedColorMap, setLockedColorMap] = useState<Map<string, string> | undefined>(undefined);
+  const lockedColorMapRef = useRef<Map<string, string> | null>(null);
 
   const showFullSizeBtn = showFullSvg || imageOverflows;
 
@@ -329,54 +338,121 @@ export default function LastWaveApp() {
     const joined = joinSegments(allSegments);
     if (joined.length === 0) return;
 
-    // During sweep, hold the threshold at its initial value so only the biggest
-    // artists are shown. New artists are added during the buildup phase instead,
-    // which prevents the silhouette centering from jumping as the sweep advances.
-    if (streamMinPlaysRef.current === Infinity) {
-      const totalSegments = allSegments.length;
-      const arrivedCount = allSegments.filter((s) => s !== undefined).length;
-      const partialMinPlays = findOptimalMinPlays(joined, 30);
-      const predictedMinPlays = Math.max(
-        5,
-        Math.round(partialMinPlays * Math.sqrt(totalSegments / arrivedCount)),
-      );
-      streamMinPlaysRef.current = predictedMinPlays * 2;
-    }
+    // Defer sweep threshold + y-domain lock until 30% of segments have arrived.
+    // This gives a reliable estimate of the data distribution. Before that,
+    // render nothing (the sweep frontier advances but no bands are shown).
+    const totalSegments = allSegments.length;
+    const arrivedCount = allSegments.filter((s) => s !== undefined).length;
+    const enoughData = arrivedCount > 0 && arrivedCount / totalSegments >= 0.5;
 
-    if (!lockedYDomainRef.current) {
-      const totalSegments = allSegments.length;
-      const arrivedCount = allSegments.filter((s) => s !== undefined).length;
-      if (arrivedCount > 0 && arrivedCount / totalSegments >= 0.3) {
-        const targetMinPlays = findOptimalMinPlays(joined, 30);
-        const finalCleaned = cleanByMinPlays(joined, targetMinPlays);
-        if (finalCleaned.length > 0 && finalCleaned[0].counts.length > 0) {
-          const estKeys = finalCleaned.map((s) => s.title);
-          const numSeg = finalCleaned[0].counts.length;
-          const estTable: Record<string, number>[] = [];
-          for (let i = 0; i < numSeg; i++) {
-            const row: Record<string, number> = { index: i };
-            finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
-            estTable.push(row);
-          }
-          const estStack = d3
+    if (streamMinPlaysRef.current === Infinity && enoughData) {
+      // Estimate sweep threshold using artist-pool growth ratio.
+      // At 50% data, findOptimalMinPlays underestimates the full threshold
+      // because unseen segments will bring new artists and higher peaks.
+      // Scale by growthRatio (full artist count / partial artist count) to
+      // compensate. Also store the estimated final band count as a hard cap
+      // so the sweep never shows more bands than the final chart.
+      const partialMinPlays = findOptimalMinPlays(joined, 30);
+      const partialArtistCount = joined.filter((s) => s.counts.some((c) => c > 0)).length;
+      const fullArtistEstimate = Math.round(partialArtistCount * (totalSegments / arrivedCount));
+      const growthRatio = fullArtistEstimate / Math.max(1, partialArtistCount);
+      const estThreshold = Math.max(5, Math.round(partialMinPlays * Math.sqrt(growthRatio)));
+
+      // Estimated final band count = bands surviving the estimated threshold
+      const estFinalBands = joined.filter((s) => Math.max(...s.counts) >= estThreshold).length;
+      sweepBandCapRef.current = Math.max(3, estFinalBands);
+
+      // Sweep threshold targets ~half the estimated final bands
+      const targetSweepBands = Math.max(3, Math.ceil(estFinalBands / 2));
+      const peaksSorted = joined
+        .map((s) => Math.max(...s.counts))
+        .filter((p) => p >= estThreshold)
+        .sort((a, b) => b - a);
+      streamMinPlaysRef.current =
+        peaksSorted[Math.min(targetSweepBands - 1, peaksSorted.length - 1)] || estThreshold;
+
+      // Reset frame counter so the full animation budget (50 frames / 2.5s)
+      // starts from when we actually have enough data to show something.
+      animFrameCountRef.current = 0;
+
+      // Phase 1 color assignment: assign colors to sweep artists in STACKING
+      // ORDER so adjacent bands never share a color. This runs once at 50% data.
+      //
+      // HARD INVARIANT: This color map persists through sweep, buildup, AND
+      // final render. It must never be cleared or recomputed between animation
+      // and the final labeled render. See specs/animation-smoothing.md.
+      if (!lockedColorMapRef.current) {
+        const store = useLastWaveStore.getState();
+        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const palette = scheme.schemeColors;
+        const nColors = palette.length;
+
+        // Compute stacking order for the sweep set using d3.stack
+        const sweepCleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
+        const sweepKeys = sweepCleaned.map((s) => s.title);
+        const sweepTable: Record<string, number>[] = [];
+        const numSeg = sweepCleaned[0]?.counts.length ?? 0;
+        for (let i = 0; i < numSeg; i++) {
+          const row: Record<string, number> = { index: i };
+          sweepCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          sweepTable.push(row);
+        }
+        if (sweepKeys.length > 0 && numSeg > 0) {
+          const sweepStack = d3
             .stack<Record<string, number>>()
-            .keys(estKeys)
+            .keys(sweepKeys)
             .offset(d3.stackOffsetSilhouette)
-            .order((s: d3.Series<Record<string, number>, string>[]) =>
-              stackOrderSlopeBalanced(s, 0.15),
-            );
-          const stacked = estStack(estTable);
-          const yMin = d3.min(stacked, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
-          const yMax = d3.max(stacked, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
-          lockedYDomainRef.current = [yMin, yMax];
-          setLockedYDomain([yMin, yMax]);
+            .order(balancedOrder);
+          const stacked = sweepStack(sweepTable);
+          // Assign evenly-spaced colors in visual stacking order
+          const cmap = new Map<string, string>();
+          for (let i = 0; i < stacked.length; i++) {
+            cmap.set(stacked[i].key, palette[i % nColors]);
+          }
+          lockedColorMapRef.current = cmap;
+          setLockedColorMap(cmap);
         }
       }
     }
 
+    if (!lockedYDomainRef.current && enoughData) {
+      const targetMinPlays = findOptimalMinPlays(joined, 30);
+      const finalCleaned = cleanByMinPlays(joined, targetMinPlays);
+      if (finalCleaned.length > 0 && finalCleaned[0].counts.length > 0) {
+        const estKeys = finalCleaned.map((s) => s.title);
+        const numSeg = finalCleaned[0].counts.length;
+        const estTable: Record<string, number>[] = [];
+        for (let i = 0; i < numSeg; i++) {
+          const row: Record<string, number> = { index: i };
+          finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          estTable.push(row);
+        }
+        const estStack = d3
+          .stack<Record<string, number>>()
+          .keys(estKeys)
+          .offset(d3.stackOffsetSilhouette)
+          .order(balancedOrder);
+        const stacked = estStack(estTable);
+        const yMin = d3.min(stacked, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
+        const yMax = d3.max(stacked, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
+        lockedYDomainRef.current = [yMin, yMax];
+        setLockedYDomain([yMin, yMax]);
+      }
+    }
+
+    // Before enough data, don't render (sweep frontier advances but nothing shows)
+    if (streamMinPlaysRef.current === Infinity) return;
+
     // Filter by UNMASKED peaks first (stable artist set throughout sweep),
     // then apply the frontier mask for the left-to-right reveal.
-    const cleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
+    // Cap to estimated final band count so sweep never shows more than final.
+    let cleaned = cleanByMinPlays(joined, streamMinPlaysRef.current);
+    if (cleaned.length > sweepBandCapRef.current) {
+      cleaned = cleaned
+        .sort((a, b) => Math.max(...b.counts) - Math.max(...a.counts))
+        .slice(0, sweepBandCapRef.current);
+    }
     const masked = cleaned.map((series) => ({
       ...series,
       counts: series.counts.map((count, i) => {
@@ -405,8 +481,8 @@ export default function LastWaveApp() {
     rawSeriesDataRef.current = [];
     lockedYDomainRef.current = null;
     setLockedYDomain(undefined);
-
-    // Hide options, show loading bar
+    lockedColorMapRef.current = null;
+    setLockedColorMap(undefined);
     store.setShowOptions(false);
     store.setShowLoadingBar(true);
 
@@ -520,6 +596,60 @@ export default function LastWaveApp() {
               const steps = getAnimationSteps(joined, finalMinPlays, 3, remainingFrames);
               const currentThreshold = streamMinPlaysRef.current;
               animBuildupStepsRef.current = steps.filter((s) => s < currentThreshold);
+
+              // Phase 2 color assignment: assign colors to NEW artists (not in
+              // sweep) based on the final stacking order. Walk the full order and
+              // pick colors that don't collide with neighbors. Sweep artists keep
+              // their existing colors.
+              if (lockedColorMapRef.current) {
+                const store = useLastWaveStore.getState();
+                const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+                const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+                const palette = scheme.schemeColors;
+                const nColors = palette.length;
+
+                const finalCleaned = cleanByMinPlays(joined, finalMinPlays);
+                const finalKeys = finalCleaned.map((s) => s.title);
+                const finalTable: Record<string, number>[] = [];
+                const numSeg = finalCleaned[0]?.counts.length ?? 0;
+                for (let i = 0; i < numSeg; i++) {
+                  const row: Record<string, number> = { index: i };
+                  finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+                  finalTable.push(row);
+                }
+                if (finalKeys.length > 0 && numSeg > 0) {
+                  const finalStack = d3
+                    .stack<Record<string, number>>()
+                    .keys(finalKeys)
+                    .offset(d3.stackOffsetSilhouette)
+                    .order(balancedOrder);
+                  const stacked = finalStack(finalTable);
+                  const cmap = lockedColorMapRef.current;
+                  const orderedKeys = stacked.map((layer) => layer.key);
+
+                  for (let i = 0; i < orderedKeys.length; i++) {
+                    if (cmap.has(orderedKeys[i])) continue; // sweep artist — keep color
+
+                    // New artist: pick a color that doesn't match neighbors
+                    const prevColor = i > 0 ? cmap.get(orderedKeys[i - 1]) : undefined;
+                    const nextColor = i < orderedKeys.length - 1 ? cmap.get(orderedKeys[i + 1]) : undefined;
+
+                    // Try evenly-spaced first, then scan for non-conflicting
+                    let chosen = palette[i % nColors];
+                    if (chosen === prevColor || chosen === nextColor) {
+                      for (let offset = 1; offset < nColors; offset++) {
+                        const candidate = palette[(i + offset) % nColors];
+                        if (candidate !== prevColor && candidate !== nextColor) {
+                          chosen = candidate;
+                          break;
+                        }
+                      }
+                    }
+                    cmap.set(orderedKeys[i], chosen);
+                  }
+                  setLockedColorMap(new Map(cmap));
+                }
+              }
             }
           } else if (animBuildupStepsRef.current.length > 0) {
             // Phase 2: step through decreasing minPlays thresholds
@@ -688,6 +818,9 @@ export default function LastWaveApp() {
       setDrawingStatus('Placing text…');
       lockedYDomainRef.current = null;
       setLockedYDomain(undefined);
+      // HARD INVARIANT: Do NOT clear lockedColorMap here. Colors assigned
+      // during animation must persist identically into the final render.
+      // See specs/animation-smoothing.md.
       setSeriesData(data);
 
       // Yield two frames so the browser paints the final wave shapes
@@ -779,6 +912,7 @@ export default function LastWaveApp() {
                   onRenderComplete={handleRenderComplete}
                   onDrawingProgress={handleDrawingProgress}
                   lockedYDomain={lockedYDomain}
+                  lockedColorMap={lockedColorMap}
                   suppressLabels={suppressLabels}
                 />
               </ImageScaler>
@@ -850,6 +984,7 @@ export default function LastWaveApp() {
                 onRenderComplete={handleRenderComplete}
                 onDrawingProgress={handleDrawingProgress}
                 lockedYDomain={lockedYDomain}
+                lockedColorMap={lockedColorMap}
                 suppressLabels={suppressLabels}
               />
             </ImageScaler>
