@@ -19,7 +19,7 @@ const { title = 'LastWave' } = Astro.props;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Roboto:wght@100;300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
     <title>{title}</title>
@@ -37,41 +37,28 @@ const { title = 'LastWave' } = Astro.props;
       })();
     </script>
     <style>
-      :root {
-        --lw-bg: 240 242 245;
-        --lw-surface: 255 255 255;
-        --lw-border: 200 205 212;
-        --lw-accent: 0 105 155;
-        --lw-accent-dim: 0 85 128;
-        --lw-teal: 176 212 212;
-        --lw-cyan: 0 120 122;
-        --lw-muted: 70 85 100;
-        --lw-text: 30 41 59;
-        --lw-heading: 15 23 42;
-        --lw-body-bg: #f0f2f5;
-        --lw-glow-a: rgba(0, 105, 155, 0.06);
-        --lw-glow-b: rgba(0, 120, 122, 0.04);
+      @font-face {
+        font-family: 'Super Arena';
+        src: url('/fonts/SuperArena.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
       }
-      .dark {
-        --lw-bg: 12 17 23;
-        --lw-surface: 20 27 36;
-        --lw-border: 30 42 54;
-        --lw-accent: 39 170 225;
-        --lw-accent-dim: 32 145 190;
-        --lw-teal: 47 79 79;
-        --lw-cyan: 0 206 209;
-        --lw-muted: 122 143 160;
-        --lw-text: 226 232 240;
-        --lw-heading: 255 255 255;
-        --lw-body-bg: #0c1117;
-        --lw-glow-a: rgba(39, 170, 225, 0.06);
-        --lw-glow-b: rgba(0, 206, 209, 0.04);
+      :root {
+        --lw-bg: 245 223 197;
+        --lw-surface: 255 255 255;
+        --lw-border: 61 12 17;
+        --lw-accent: 196 40 40;
+        --lw-accent-dim: 163 33 33;
+        --lw-teal: 212 168 67;
+        --lw-cyan: 139 107 139;
+        --lw-muted: 139 115 85;
+        --lw-text: 61 28 30;
+        --lw-heading: 45 10 16;
+        --lw-body-bg: #f5dfc5;
       }
       body {
         background: var(--lw-body-bg);
-        background-image:
-          radial-gradient(ellipse 80% 60% at 50% 0%, var(--lw-glow-a) 0%, transparent 70%),
-          radial-gradient(ellipse 60% 40% at 80% 100%, var(--lw-glow-b) 0%, transparent 60%);
       }
       .nav-link {
         position: relative;
@@ -84,7 +71,7 @@ const { title = 'LastWave' } = Astro.props;
         left: 0;
         width: 0;
         height: 1px;
-        background: linear-gradient(90deg, var(--lw-accent), var(--lw-cyan));
+        background: rgb(var(--lw-accent));
         transition: width 0.3s ease;
       }
       .nav-link:hover::after {
