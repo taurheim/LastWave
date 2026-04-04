@@ -226,7 +226,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   onClick={() => setRendererOption('color_scheme', name)}
                   className={`group flex flex-col items-center rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 ${
                     isSelected
-                      ? 'border-lw-accent bg-lw-accent/10 shadow-lg'
+                      ? 'border-lw-accent bg-lw-surface shadow-lg'
                       : 'border-lw-border bg-lw-surface hover:border-lw-muted/50'
                   }`}
                 >
