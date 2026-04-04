@@ -162,7 +162,7 @@ export default memo(function WaveVisualization({
     const offsetFn = OFFSET_MAP[offsetName] ?? d3.stackOffsetSilhouette;
     const addLabels = !suppressLabels && (rendererOptions.add_labels ?? true);
     const deformText = rendererOptions.deform_text ?? true;
-    const jitterText = rendererOptions.jitter_text ?? true;
+    const jitterText = true;
     const stackJitter = parseFloat(rendererOptions.stack_jitter as string) || 0.15;
 
     // Determine dimensions
@@ -703,7 +703,6 @@ export default memo(function WaveVisualization({
     rendererOptions.height,
     rendererOptions.add_labels,
     rendererOptions.deform_text,
-    rendererOptions.jitter_text,
     rendererOptions.stack_jitter,
     suppressLabels,
     lockedYDomain,
