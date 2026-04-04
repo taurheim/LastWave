@@ -136,28 +136,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
               ))}
             </select>
           </div>
-          {offset === 'balanced' && (
-            <div>
-              <div className="mb-2 flex items-baseline justify-between sm:mb-1 lg:mb-2">
-                <label htmlFor="stack-jitter" className="text-sm font-medium text-lw-text">
-                  Jitter
-                </label>
-                <span className="text-lg font-semibold tabular-nums text-lw-accent sm:text-base lg:text-lg">
-                  {parseFloat(stackJitter as string).toFixed(2)}
-                </span>
-              </div>
-              <input
-                id="stack-jitter"
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={parseFloat(stackJitter as string)}
-                onChange={(e) => setRendererOption('stack_jitter', e.target.value)}
-                className="h-2 w-full cursor-pointer accent-lw-accent"
-              />
-            </div>
-          )}
         </div>
 
         <div className="h-px w-full bg-lw-border" />
@@ -176,7 +154,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 { label: 'Month names', checked: addMonths, key: 'add_months' },
                 { label: 'Year names', checked: addYears, key: 'add_years' },
                 { label: 'Watermark', checked: showWatermark, key: 'show_watermark' },
-                { label: 'Artist / album / tag names', checked: addLabels, key: 'add_labels' },
+                { label: 'Wave labels', checked: addLabels, key: 'add_labels' },
               ].map((opt) => (
                 <label key={opt.key} className="group flex cursor-pointer items-center gap-2.5">
                   <input
