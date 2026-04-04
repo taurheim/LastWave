@@ -224,9 +224,9 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   key={name}
                   type="button"
                   onClick={() => setRendererOption('color_scheme', name)}
-                  className={`group flex flex-col items-center rounded-lg border p-2.5 transition-all duration-200 ${
+                  className={`group flex flex-col items-center rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 ${
                     isSelected
-                      ? 'border-lw-accent bg-lw-accent/10 shadow-[0_0_12px_rgba(39,170,225,0.15)]'
+                      ? 'border-lw-accent bg-lw-accent/10 shadow-lg'
                       : 'border-lw-border bg-lw-surface hover:border-lw-muted/50'
                   }`}
                 >
