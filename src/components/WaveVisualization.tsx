@@ -860,7 +860,9 @@ export default memo(function WaveVisualization({
 
   return (
     <div id="svg-wrapper" className="flex justify-center overflow-x-auto">
-      <svg ref={svgRef} style={{ display: 'block' }} />
+      <div className="overflow-hidden rounded-lg border-2 border-lw-border shadow-md">
+        <svg ref={svgRef} style={{ display: 'block' }} />
+      </div>
     </div>
   );
 });
