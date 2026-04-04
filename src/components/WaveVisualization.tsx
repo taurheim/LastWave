@@ -231,17 +231,13 @@ export default memo(function WaveVisualization({
     // During animation (suppressLabels), do a fast render: paths + static text, no artist labels.
     // Uses incremental updates instead of full teardown so D3 can smoothly morph paths.
     if (suppressLabels) {
+      // Fast path: full teardown + rebuild of waves, but skip text labels.
+      // This avoids DOM ordering issues where bg rect could paint over paths.
+      svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
 
-      // Remove artist labels from any previous full render so stale text
-      // doesn't persist while the user drags controls
-      svg.selectAll('text:not(.anim-overlay)').remove();
-      svg.selectAll('.deform-label').remove();
-
-      // Background rect — create once, update on subsequent frames
-      const bg = svg.selectAll<SVGRectElement, null>('rect.bg').data([null]);
-      bg.join('rect')
-        .attr('class', 'bg')
+      // Background
+      svg.append('rect')
         .attr('width', width)
         .attr('height', height)
         .attr('fill', bgColor);
@@ -253,8 +249,7 @@ export default memo(function WaveVisualization({
       const addYears = rendererOptions.add_years ?? isYearRange;
       const showWatermark = rendererOptions.show_watermark ?? true;
 
-      // Year separator lines — remove and redraw (cheap, static)
-      svg.selectAll('line.year-sep').remove();
+      // Year separator lines
       if (addYears && timeStart && timeEnd) {
         const startMs =
           timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
@@ -282,28 +277,17 @@ export default memo(function WaveVisualization({
         }
       }
 
-      // Wave paths — use keyed join so D3 morphs existing paths with transitions
+      // Wave paths
       svg
         .selectAll<SVGPathElement, d3.Series<Record<string, number>, string>>('path.wave')
         .data(stackedData, (d) => d.key)
-        .join(
-          (enter) =>
-            enter
-              .append('path')
-              .attr('class', 'wave')
-              .attr('d', (d) => area(d as [number, number][]) ?? '')
-              .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
-              .attr('stroke', 'none'),
-          (update) =>
-            update
-              .attr('d', (d) => area(d as [number, number][]) ?? '')
-              .attr('fill', (d) => colorMap.get(d.key) ?? colors[0]),
-          (exit) => exit.remove(),
-        );
+        .join('path')
+        .attr('class', 'wave')
+        .attr('d', (d) => area(d as [number, number][]) ?? '')
+        .attr('fill', (d) => colorMap.get(d.key) ?? colors[0])
+        .attr('stroke', 'none');
 
-      // Overlays (months, years, watermark) — remove old, redraw fresh
-      svg.selectAll('.anim-overlay').remove();
-
+      // Overlays (months, years, watermark)
       if (addMonths && timeStart && timeEnd) {
         const startMs =
           timeStart instanceof Date ? timeStart.getTime() : new Date(timeStart).getTime();
