@@ -974,7 +974,7 @@ export default function LastWaveApp() {
               </div>
             )}
             <ImageScaler
-              showFullSvg={showCustomize ? false : showFullSvg}
+              showFullSvg={false}
               setShowFullSvg={setShowFullSvg}
               minChartHeight={showCustomize ? 150 : undefined}
             >
@@ -990,16 +990,6 @@ export default function LastWaveApp() {
             </ImageScaler>
             {showActions && (
               <>
-                {showFullSizeBtn && (
-                  <div className="absolute left-6 top-2 z-10">
-                    <button
-                      onClick={() => setShowFullSvg(!showFullSvg)}
-                      className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
-                    >
-                      {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
-                    </button>
-                  </div>
-                )}
                 <div className="absolute right-6 top-2 z-10">
                   <button
                     onClick={() => setShowCustomize(!showCustomize)}
