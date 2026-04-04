@@ -120,13 +120,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
         {/* Date Range + Data Set — sentence style */}
         <div>
-          <div className="flex flex-wrap items-baseline justify-center gap-2">
-            <span className="text-lg text-lw-muted lg:text-xl">Graph my</span>
+          <div className="flex flex-nowrap items-baseline justify-center gap-1.5 lg:gap-2">
+            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
             <span className="relative inline-block">
               <select
                 value={datePreset}
                 onChange={(e) => handleDatePresetChange(e.target.value)}
-                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-6 text-lg font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none lg:text-xl"
+                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
               >
                 {easyDateEntries.map(([name]) => (
                   <option key={name} value={name} className="bg-lw-bg text-lw-text">
@@ -147,12 +147,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
-            <span className="text-lg text-lw-muted lg:text-xl">of</span>
+            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">of</span>
             <span className="relative inline-block">
               <select
                 value={method}
                 onChange={(e) => setDataSourceOption('method', e.target.value)}
-                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-6 text-lg font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none lg:text-xl"
+                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
               >
                 <option value="artist" className="bg-lw-bg text-lw-text">
                   Artists
