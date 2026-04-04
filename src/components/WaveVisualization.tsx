@@ -233,6 +233,11 @@ export default memo(function WaveVisualization({
     if (suppressLabels) {
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
 
+      // Remove artist labels from any previous full render so stale text
+      // doesn't persist while the user drags controls
+      svg.selectAll('text:not(.anim-overlay)').remove();
+      svg.selectAll('.deform-label').remove();
+
       // Background rect — create once, update on subsequent frames
       const bg = svg.selectAll<SVGRectElement, null>('rect.bg').data([null]);
       bg.join('rect')
