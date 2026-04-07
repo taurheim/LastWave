@@ -464,6 +464,56 @@ export default function LastWaveApp() {
         .sort((a, b) => Math.max(...b.counts) - Math.max(...a.counts))
         .slice(0, sweepBandCapRef.current);
     }
+    // Incremental color assignment: artists that crossed the threshold after
+    // the initial 50%-data color assignment need colors before they render,
+    // otherwise they fall back to colors[0] (red for mosaic).
+    if (lockedColorMapRef.current) {
+      const cmap = lockedColorMapRef.current;
+      const newArtists = cleaned.filter((s) => !cmap.has(s.title));
+      if (newArtists.length > 0) {
+        const store = useLastWaveStore.getState();
+        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const palette = scheme.schemeColors;
+        const nColors = palette.length;
+
+        // Compute current stacking order to pick neighbor-safe colors
+        const sweepKeys = cleaned.map((s) => s.title);
+        const numSeg = cleaned[0]?.counts.length ?? 0;
+        const sweepTable: Record<string, number>[] = [];
+        for (let i = 0; i < numSeg; i++) {
+          const row: Record<string, number> = { index: i };
+          cleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          sweepTable.push(row);
+        }
+        const sweepStack = d3
+          .stack<Record<string, number>>()
+          .keys(sweepKeys)
+          .offset(d3.stackOffsetSilhouette)
+          .order(balancedOrder);
+        const stacked = sweepStack(sweepTable);
+        const orderedKeys = stacked.map((layer) => layer.key);
+
+        for (let i = 0; i < orderedKeys.length; i++) {
+          if (cmap.has(orderedKeys[i])) continue;
+          const prevColor = i > 0 ? cmap.get(orderedKeys[i - 1]) : undefined;
+          const nextColor = i < orderedKeys.length - 1 ? cmap.get(orderedKeys[i + 1]) : undefined;
+          let chosen = palette[i % nColors];
+          if (chosen === prevColor || chosen === nextColor) {
+            for (let offset = 1; offset < nColors; offset++) {
+              const candidate = palette[(i + offset) % nColors];
+              if (candidate !== prevColor && candidate !== nextColor) {
+                chosen = candidate;
+                break;
+              }
+            }
+          }
+          cmap.set(orderedKeys[i], chosen);
+        }
+        setLockedColorMap(new Map(cmap));
+      }
+    }
+
     const masked = cleaned.map((series) => ({
       ...series,
       counts: series.counts.map((count, i) => {
