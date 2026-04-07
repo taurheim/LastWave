@@ -173,10 +173,24 @@ export default memo(function WaveVisualization({
     // Pivot data: from SeriesData[] to tabular format for d3.stack
     const keys = seriesData.map((s) => s.title);
     const tableData: Record<string, number>[] = [];
+
+    // Compute a tiny epsilon relative to the dataset's max value.
+    // This prevents non-adjacent bands from colliding when all bands
+    // between them are zero — the epsilon keeps a microscopically thin
+    // sliver so the stack never fully collapses.
+    let globalMax = 0;
+    for (const s of seriesData) {
+      for (const c of s.counts) {
+        if (c > globalMax) globalMax = c;
+      }
+    }
+    const epsilon = globalMax * 0.001;
+
     for (let i = 0; i < numSegments; i++) {
       const row: Record<string, number> = { index: i };
       seriesData.forEach((s) => {
-        row[s.title] = s.counts[i] ?? 0;
+        const v = s.counts[i] ?? 0;
+        row[s.title] = v === 0 ? epsilon : v;
       });
       tableData.push(row);
     }
