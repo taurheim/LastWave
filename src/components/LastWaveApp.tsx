@@ -70,12 +70,14 @@ function ImageScaler({
   setShowFullSvg: _setShowFullSvg,
   onOverflowChange,
   minChartHeight,
+  className,
   children,
 }: {
   showFullSvg: boolean;
   setShowFullSvg: (v: boolean) => void;
   onOverflowChange?: (overflowing: boolean) => void;
   minChartHeight?: number;
+  className?: string;
   children: ReactNode;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -124,7 +126,7 @@ function ImageScaler({
   return (
     <div
       ref={containerRef}
-      className={`mx-4 ${showFullSvg ? 'overflow-x-auto [&_#svg-wrapper]:!overflow-visible' : ''}`}
+      className={`${className ?? 'mx-4'} ${showFullSvg ? 'overflow-x-auto [&_#svg-wrapper]:!overflow-visible' : ''}`}
     >
       <div
         className={scaleDown ? 'overflow-hidden' : ''}
@@ -964,18 +966,19 @@ export default function LastWaveApp() {
       {/* Desktop layout */}
       <div className="hidden lg:block">
         {showVisualization && (
-          <div className="relative">
-            <div
-              className={`relative ${!imageOverflows && !showFullSvg ? 'mx-auto w-fit max-w-full' : ''}`}
-            >
-              {(showLoadingBar || drawingStatus) && (
-                <div className="absolute inset-x-0 top-3 z-20 text-center">
-                  <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
-                    {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
-                  </span>
-                </div>
-              )}
+          <div
+            className={`relative ${!imageOverflows && !showFullSvg ? 'mx-auto w-fit max-w-full' : ''}`}
+          >
+            {(showLoadingBar || drawingStatus) && (
+              <div className="absolute inset-x-0 top-3 z-20 text-center">
+                <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
+                  {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
+                </span>
+              </div>
+            )}
+            <div className="relative mx-4">
               <ImageScaler
+                className=""
                 showFullSvg={showFullSvg}
                 setShowFullSvg={setShowFullSvg}
                 onOverflowChange={setImageOverflows}
@@ -993,7 +996,7 @@ export default function LastWaveApp() {
               {showActions && (
                 <>
                   {showFullSizeBtn && (
-                    <div className="absolute left-6 top-2 z-10">
+                    <div className="absolute left-4 top-2 z-10">
                       <button
                         onClick={() => setShowFullSvg(!showFullSvg)}
                         className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
@@ -1002,7 +1005,7 @@ export default function LastWaveApp() {
                       </button>
                     </div>
                   )}
-                  <div className="absolute right-6 top-2 z-10 flex gap-2">
+                  <div className="absolute right-4 top-2 z-10 flex gap-2">
                     <button
                       ref={customizeToggleRef}
                       onClick={() => setShowCustomize(!showCustomize)}
@@ -1017,15 +1020,15 @@ export default function LastWaveApp() {
                   </div>
                 </>
               )}
+              {showActions && showCustomize && (
+                <div
+                  ref={customizePanelRef}
+                  className="absolute right-4 top-12 z-30 max-h-[calc(100vh-8rem)] w-[min(420px,40%)] overflow-y-auto rounded-xl border border-lw-border bg-lw-bg/95 shadow-lg backdrop-blur-sm"
+                >
+                  <CustomizePanel maxPlays={maxPlaysInDataset} />
+                </div>
+              )}
             </div>
-            {showActions && showCustomize && (
-              <div
-                ref={customizePanelRef}
-                className="absolute right-6 top-12 z-30 max-h-[calc(100vh-8rem)] w-[min(420px,40%)] overflow-y-auto rounded-xl border border-lw-border bg-lw-bg/95 shadow-lg backdrop-blur-sm"
-              >
-                <CustomizePanel maxPlays={maxPlaysInDataset} />
-              </div>
-            )}
           </div>
         )}
       </div>
