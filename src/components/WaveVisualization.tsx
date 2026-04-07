@@ -45,12 +45,14 @@ function hashString(s: string): number {
 
 // Assign colors to stacked layers.
 // Each artist gets a stable color from a hash of its name (survives animation).
-// When `fixAdjacency` is true (final render), a post-pass shifts any adjacent
-// bands that ended up with the same color.
+// When `fixAdjacency` is true (final render), a post-pass shifts any visually
+// adjacent bands that ended up with the same color — including non-stack-neighbors
+// that can touch when intermediate bands go to zero.
 function assignStackColors(
   keys: string[],
   colors: string[],
   fixAdjacency = false,
+  tableData?: Record<string, number>[],
 ): Map<string, string> {
   const n = colors.length;
   const stride = Math.max(1, Math.round(n * 0.618));
@@ -61,17 +63,50 @@ function assignStackColors(
     map.set(key, colors[Math.abs(hashString(key) * stride) % n]);
   }
 
-  // Fix adjacent duplicates: ensure no two stacked neighbors share a color
+  // Fix adjacent duplicates: ensure no two visually-adjacent bands share a color.
+  // "Visually adjacent" means either direct stack neighbors OR bands that can
+  // touch because all bands between them are zero at some time segment.
   if (fixAdjacency && n >= 2) {
+    // Build conflict set: for each band, which other bands must differ in color
+    const conflicts = new Map<number, Set<number>>();
+    for (let i = 0; i < keys.length; i++) conflicts.set(i, new Set());
+
+    // Direct stack neighbors always conflict
+    for (let i = 0; i < keys.length - 1; i++) {
+      conflicts.get(i)!.add(i + 1);
+      conflicts.get(i + 1)!.add(i);
+    }
+
+    // Scan data for visual adjacency: when intermediate bands are all zero,
+    // the two non-zero bands on either side visually touch
+    if (tableData) {
+      for (const row of tableData) {
+        // Find indices of bands with non-zero values at this time segment
+        const nonZero: number[] = [];
+        for (let i = 0; i < keys.length; i++) {
+          if ((row[keys[i]] ?? 0) > 0) nonZero.push(i);
+        }
+        // Consecutive non-zero bands in the stack are visually adjacent
+        for (let k = 0; k < nonZero.length - 1; k++) {
+          const a = nonZero[k], b = nonZero[k + 1];
+          conflicts.get(a)!.add(b);
+          conflicts.get(b)!.add(a);
+        }
+      }
+    }
+
+    // Greedy recolor: for each band, if its color conflicts with any visual
+    // neighbor, pick the first non-conflicting color
     for (let i = 0; i < keys.length; i++) {
-      const prev = i > 0 ? map.get(keys[i - 1]) : undefined;
-      const next = i < keys.length - 1 ? map.get(keys[i + 1]) : undefined;
-      if (map.get(keys[i]) === prev || map.get(keys[i]) === next) {
-        // Pick the first color that doesn't conflict with either neighbor
+      const neighborColors = new Set<string>();
+      for (const j of conflicts.get(i)!) {
+        neighborColors.add(map.get(keys[j])!);
+      }
+      if (neighborColors.has(map.get(keys[i])!)) {
         const cur = colors.indexOf(map.get(keys[i])!);
         for (let offset = 1; offset < n; offset++) {
           const candidate = colors[(cur + offset) % n];
-          if (candidate !== prev && candidate !== next) {
+          if (!neighborColors.has(candidate)) {
             map.set(keys[i], candidate);
             break;
           }
@@ -205,10 +240,10 @@ export default memo(function WaveVisualization({
     // Use prominence-aware locked color map when available (during animation).
     // Fall back to hash-based assignment for final render or non-balanced modes.
     const colorKeys = offsetName === 'balanced' ? stackedData.map((layer) => layer.key) : keys;
-    const fixAdj = offsetName !== 'balanced' && !suppressLabels;
+    const fixAdj = !suppressLabels;
     const colorMap = lockedColorMap && lockedColorMap.size > 0
       ? lockedColorMap
-      : assignStackColors(colorKeys, colors, fixAdj);
+      : assignStackColors(colorKeys, colors, fixAdj, tableData);
 
     // Scales
     const xScale = d3
