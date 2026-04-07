@@ -1034,7 +1034,7 @@ export default function LastWaveApp() {
       <div
         className={`lg:hidden ${
           showVisualization
-            ? 'flex min-h-[calc(100svh-10rem)] flex-col justify-center max-lg:landscape:min-h-[calc(100svh-8rem)]'
+            ? 'flex min-h-[calc(100svh-15rem)] flex-col justify-center max-lg:landscape:min-h-[calc(100svh-8rem)]'
             : ''
         }`}
       >
@@ -1048,8 +1048,9 @@ export default function LastWaveApp() {
               </div>
             )}
             <ImageScaler
-              showFullSvg={false}
+              showFullSvg={showCustomize ? false : showFullSvg}
               setShowFullSvg={setShowFullSvg}
+              onOverflowChange={setImageOverflows}
               minChartHeight={showCustomize ? 150 : undefined}
             >
               <WaveVisualization
@@ -1064,6 +1065,16 @@ export default function LastWaveApp() {
             </ImageScaler>
             {showActions && (
               <>
+                {showFullSizeBtn && (
+                  <div className="absolute left-6 top-2 z-10">
+                    <button
+                      onClick={() => setShowFullSvg(!showFullSvg)}
+                      className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
+                    >
+                      {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
+                    </button>
+                  </div>
+                )}
                 <div className="absolute right-6 top-2 z-10">
                   <button
                     onClick={() => setShowCustomize(!showCustomize)}
