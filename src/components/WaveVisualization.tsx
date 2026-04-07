@@ -298,11 +298,11 @@ export default memo(function WaveVisualization({
       svg.selectAll('*').remove();
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
 
-      // Background
+      // Background — transparent during animation so page background shows through
       svg.append('rect')
         .attr('width', width)
         .attr('height', height)
-        .attr('fill', bgColor);
+        .attr('fill', 'transparent');
 
       const fontColor: string =
         !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;
@@ -910,7 +910,7 @@ export default memo(function WaveVisualization({
 
   return (
     <div id="svg-wrapper" className="flex justify-center overflow-x-auto">
-      <div className="overflow-hidden rounded-lg border-2 border-lw-border shadow-md">
+      <div className="overflow-hidden rounded-lg">
         <svg ref={svgRef} style={{ display: 'block' }} />
       </div>
     </div>

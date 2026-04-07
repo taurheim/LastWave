@@ -268,6 +268,17 @@ export default function LastWaveApp() {
     }
   }, []);
 
+  // Slurp decorative background waves as soon as we leave the options screen
+  useEffect(() => {
+    const el = document.getElementById('decorative-bg-waves');
+    if (!el) return;
+    if (!showOptions) {
+      el.classList.add('slurp');
+    } else {
+      el.classList.remove('slurp');
+    }
+  }, [showOptions]);
+
   const renderTimeRef = useRef(50); // adaptive render time estimate (ms)
 
   // Re-filter data when minPlays changes — suppress labels during rapid changes
@@ -461,6 +472,11 @@ export default function LastWaveApp() {
       }),
     }));
     setSeriesData(masked);
+
+    // Reveal the visualization container on the very first rendered frame
+    if (!useLastWaveStore.getState().showVisualization) {
+      useLastWaveStore.getState().setShowVisualization(true);
+    }
   }
 
   async function handleSubmit() {
@@ -541,8 +557,7 @@ export default function LastWaveApp() {
       revealFrontierRef.current = 0;
       animFrameCountRef.current = 0;
 
-      // Show empty chart immediately
-      store.setShowVisualization(true);
+      // Visualization is revealed later, on first rendered frame (see renderStreamFrame)
 
       if (loadingAnim) {
         setSuppressLabels(true);
@@ -886,6 +901,15 @@ export default function LastWaveApp() {
 
       {/* Options */}
       {showOptions && <WaveOptions onSubmit={() => void handleSubmit()} />}
+
+      {/* Loading status shown before visualization renders (over decorative waves) */}
+      {!showOptions && !showVisualization && showLoadingBar && (
+        <div className="py-32 text-center">
+          <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
+            {loadingStatusText}
+          </span>
+        </div>
+      )}
 
       {/* Desktop layout */}
       <div className="hidden lg:block">

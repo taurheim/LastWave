@@ -25,7 +25,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Auto-detect slow devices and disable animations
+  // Auto-detect slow devices and disable animations; set default color scheme
   useEffect(() => {
     if (rendererOptions.loading_animation !== undefined) return;
     const cores = navigator.hardwareConcurrency ?? 4;
@@ -34,11 +34,16 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       setRendererOption('loading_animation', false);
     }
   }, []);
+  useEffect(() => {
+    if (!rendererOptions.color_scheme) {
+      setRendererOption('color_scheme', 'mosaic');
+    }
+  }, []);
 
   // Initialize defaults on first render if empty
   const username = dataSourceOptions.username ?? '';
   const datePreset = dataSourceOptions._datePreset ?? 'Last 3 months';
-  const colorScheme = rendererOptions.color_scheme ?? 'lastwave';
+  const colorScheme = rendererOptions.color_scheme ?? 'mosaic';
 
   // Data source advanced defaults
   const timeStart =
