@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLastWaveStore, type DataSourceOptions, type RendererOptions } from '@/store/index';
+import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
@@ -44,6 +44,24 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const username = dataSourceOptions.username ?? '';
   const datePreset = dataSourceOptions._datePreset ?? 'Last 3 months';
   const colorScheme = rendererOptions.color_scheme ?? 'mosaic';
+
+  // Apply theme background color and decorative wave colors
+  useEffect(() => {
+    const schemeName = colorScheme as keyof typeof schemes;
+    const scheme = (schemes as Record<string, ColorScheme>)[schemeName];
+    if (!scheme) return;
+
+    const bgColor = scheme.backgroundColorLight ?? scheme.backgroundColor;
+    document.documentElement.style.setProperty('--lw-body-bg', bgColor);
+
+    const waveSvg = document.getElementById('decorative-bg-waves');
+    if (waveSvg && scheme.bgWaveColors) {
+      const paths = waveSvg.querySelectorAll('path');
+      scheme.bgWaveColors.forEach((color, i) => {
+        if (paths[i]) paths[i].setAttribute('fill', color);
+      });
+    }
+  }, [colorScheme]);
 
   // Data source advanced defaults
   const timeStart =

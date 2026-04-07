@@ -13,6 +13,7 @@ export interface ColorScheme {
   backgroundColorLight?: string;
   fontColor: string;
   fontColorLight?: string;
+  bgWaveColors?: string[];
   schemeColors: string[];
 }
 

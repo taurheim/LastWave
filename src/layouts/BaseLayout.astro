@@ -47,6 +47,7 @@ const { title = 'LastWave' } = Astro.props;
       }
       body {
         background: var(--lw-body-bg);
+        transition: background 0.5s ease;
       }
       .nav-link {
         position: relative;
@@ -68,7 +69,7 @@ const { title = 'LastWave' } = Astro.props;
 
       /* Decorative wave slurp animation — pulled off to the right like a string */
       #decorative-bg-waves path {
-        transition: clip-path 0.6s cubic-bezier(0.5, 0, 0.15, 1);
+        transition: clip-path 0.6s cubic-bezier(0.5, 0, 0.15, 1), fill 0.5s ease;
         clip-path: inset(0 0 0 0);
       }
       #decorative-bg-waves.slurp path {
@@ -94,25 +95,25 @@ const { title = 'LastWave' } = Astro.props;
       <path
         d="M-56,415 C164,538 300,203 486,203 C775,231 819,330 1005,330 C1169,308 1338,57 1524,57
            L1526,185 C1340,185 1180,358 1007,367 C821,367 788,278 525,292 C339,292 206,560 -53,518 Z"
-        fill="#E8842A" opacity="0.2"
+        fill="#F77F00" opacity="0.2"
       />
-      <!-- Red/crimson -->
+      <!-- Red -->
       <path
         d="M-53,518 C206,560 339,292 525,292 C788,278 821,367 1007,367 C1180,358 1340,185 1526,185
            L1527,357 C1341,357 1223,426 1008,421 C822,421 772,333 542,334 C377,345 195,555 -81,641 Z"
-        fill="#C13B2A" opacity="0.2"
+        fill="#D62828" opacity="0.2"
       />
       <!-- Blue -->
       <path
         d="M-81,641 C195,555 377,345 542,334 C772,333 822,421 1008,421 C1223,426 1341,357 1527,357
            L1529,449 C1343,449 1322,465 1023,444 C770,423 673,313 458,391 C286,466 165,567 -58,691 Z"
-        fill="#2E6DB4" opacity="0.2"
+        fill="#3A86FF" opacity="0.2"
       />
       <!-- Green -->
       <path
         d="M-58,691 C165,567 286,466 458,391 C673,313 770,423 1023,444 C1322,465 1343,449 1529,449
            L1526,561 C1340,561 1164,492 1016,467 C849,441 741,387 544,409 C379,432 343,592 -15,826 Z"
-        fill="#6B8E3B" opacity="0.2"
+        fill="#6A994E" opacity="0.2"
       />
     </svg>
 

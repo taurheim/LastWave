@@ -3,6 +3,7 @@
     "backgroundColor": "#f5dfc5",
     "backgroundColorLight": "#f5dfc5",
     "fontColor": "#021004",
+    "bgWaveColors": ["#F77F00", "#D62828", "#3A86FF", "#6A994E"],
     "schemeColors": [
       "#E63946",
       "#06D6A0",
@@ -40,6 +41,7 @@
     "backgroundColor": "#0c1117",
     "backgroundColorLight": "#f0f2f5",
     "fontColor": "#000000",
+    "bgWaveColors": ["#00FFFF", "#0147FA", "#37FDFC", "#048282"],
     "schemeColors": [
       "#838B8B",
       "#00FFFF",
@@ -77,6 +79,7 @@
     "backgroundColor": "#1A0A0A",
     "backgroundColorLight": "#FFF5F5",
     "fontColor": "#280400",
+    "bgWaveColors": ["#BF2A2A", "#D98C10", "#F06B3A", "#994747"],
     "schemeColors": [
       "#a73c3c",
       "#A0B840",
@@ -113,6 +116,7 @@
   "budapest": {
     "backgroundColor": "#FBCFE8",
     "fontColor": "#380050",
+    "bgWaveColors": ["#DC2626", "#7C4DFF", "#00ACC1", "#8BC34A"],
     "schemeColors": [
       "#DC2626",
       "#67E8F9",
@@ -150,6 +154,7 @@
     "backgroundColor": "#0A0E1A",
     "backgroundColorLight": "#EFF4F9",
     "fontColor": "#ffffff",
+    "bgWaveColors": ["#334489", "#6ea23d", "#4C72A0", "#2D8F3C"],
     "schemeColors": [
       "#334489",
       "#6ea23d",
