@@ -43,6 +43,25 @@ function hashString(s: string): number {
   return h >>> 0;
 }
 
+// Parse "#RRGGBB" to [r, g, b].
+function hexToRgb(hex: string): [number, number, number] {
+  const v = parseInt(hex.slice(1), 16);
+  return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff];
+}
+
+// Weighted Euclidean RGB distance — approximates perceptual difference.
+// Uses Compuphase's redmean formula for cheap perceptual weighting.
+function colorDistance(a: string, b: string): number {
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  const rMean = (r1 + r2) / 2;
+  const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+  return Math.sqrt((2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db);
+}
+
+// Threshold below which two colors are considered "too similar" to be adjacent.
+const COLOR_SIMILARITY_THRESHOLD = 60;
+
 // Assign colors to stacked layers.
 // Each artist gets a stable color from a hash of its name (survives animation).
 // When `fixAdjacency` is true (final render), a post-pass shifts any visually
@@ -95,22 +114,30 @@ function assignStackColors(
       }
     }
 
-    // Greedy recolor: for each band, if its color conflicts with any visual
-    // neighbor, pick the first non-conflicting color
+    // Greedy recolor: for each band, if its color is too similar to any visual
+    // neighbor's color, pick the most perceptually distinct alternative
     for (let i = 0; i < keys.length; i++) {
-      const neighborColors = new Set<string>();
+      const neighborColors: string[] = [];
       for (const j of conflicts.get(i)!) {
-        neighborColors.add(map.get(keys[j])!);
+        neighborColors.push(map.get(keys[j])!);
       }
-      if (neighborColors.has(map.get(keys[i])!)) {
-        const cur = colors.indexOf(map.get(keys[i])!);
+      const myColor = map.get(keys[i])!;
+      const tooSimilar = neighborColors.some(
+        (nc) => colorDistance(myColor, nc) < COLOR_SIMILARITY_THRESHOLD,
+      );
+      if (tooSimilar) {
+        // Pick the color with the greatest minimum distance to all neighbors
+        let bestColor = myColor;
+        let bestMinDist = 0;
         for (let offset = 1; offset < n; offset++) {
-          const candidate = colors[(cur + offset) % n];
-          if (!neighborColors.has(candidate)) {
-            map.set(keys[i], candidate);
-            break;
+          const candidate = colors[(colors.indexOf(myColor) + offset) % n];
+          const minDist = Math.min(...neighborColors.map((nc) => colorDistance(candidate, nc)));
+          if (minDist > bestMinDist) {
+            bestMinDist = minDist;
+            bestColor = candidate;
           }
         }
+        map.set(keys[i], bestColor);
       }
     }
   }
