@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLastWaveStore } from '@/store/index';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
 import { fetchWithRetry } from '@/core/fetchWithRetry';
@@ -84,6 +84,25 @@ export default function ImageActions() {
   const [sharingLink, setSharingLink] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [uploadInProgress, setUploadInProgress] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const desktopDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        mobileDropdownRef.current?.contains(target) ||
+        desktopDropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setDropdownOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
 
   function getFileName(): string {
     const username = dataSourceOptions.username ?? 'unknown';
@@ -192,68 +211,173 @@ export default function ImageActions() {
     <div className="px-4 py-4 max-lg:landscape:py-2.5">
       {/* Mobile layout — vertical in portrait, horizontal in landscape */}
       <div className="flex flex-col items-center gap-3 lg:hidden max-lg:landscape:flex-row max-lg:landscape:justify-center max-lg:landscape:gap-2">
-        {canNativeShare && (
-          <button
-            onClick={() => {
-              void nativeShare();
-            }}
-            className="w-full max-w-xs rounded-lg bg-gradient-to-r from-lw-accent to-lw-cyan px-6 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] max-lg:landscape:order-last max-lg:landscape:ml-auto max-lg:landscape:w-auto max-lg:landscape:py-1.5"
-          >
-            Share
-          </button>
+        {canNativeShare ? (
+          <>
+            <button
+              onClick={() => {
+                void nativeShare();
+              }}
+              className="w-full max-w-xs rounded-lg bg-lw-accent px-6 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:order-last max-lg:landscape:ml-auto max-lg:landscape:w-auto max-lg:landscape:py-1.5"
+            >
+              Share
+            </button>
+            <div ref={mobileDropdownRef} className="relative flex w-full max-w-xs max-lg:landscape:w-auto">
+              <button
+                onClick={() => {
+                  void downloadPng();
+                }}
+                className="flex-1 rounded-l-lg border border-r-0 border-lw-border py-3 text-sm font-semibold uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent max-lg:landscape:px-6 max-lg:landscape:py-1.5"
+              >
+                Download
+              </button>
+              <button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="rounded-r-lg border border-lw-border px-3 py-3 text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent max-lg:landscape:py-1.5"
+                aria-label="Download options"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+              {dropdownOpen && (
+                <div className="absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+                  <button
+                    onClick={() => {
+                      void downloadPng();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                  >
+                    PNG
+                  </button>
+                  <button
+                    onClick={() => {
+                      downloadSvg();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                  >
+                    SVG (Vectorized)
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div ref={mobileDropdownRef} className="relative flex w-full max-w-xs max-lg:landscape:w-auto">
+              <button
+                onClick={() => {
+                  void downloadPng();
+                }}
+                className="flex-1 rounded-l-lg bg-lw-accent py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:px-6 max-lg:landscape:py-1.5"
+              >
+                Download
+              </button>
+              <button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="rounded-r-lg border-l border-lw-bg/20 bg-lw-accent px-3 py-3 text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:py-1.5"
+                aria-label="Download options"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+              {dropdownOpen && (
+                <div className="absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+                  <button
+                    onClick={() => {
+                      void downloadPng();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                  >
+                    PNG
+                  </button>
+                  <button
+                    onClick={() => {
+                      downloadSvg();
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                  >
+                    SVG (Vectorized)
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => {
+                void cloudinaryUpload();
+              }}
+              className="py-1 text-xs uppercase tracking-wider text-lw-muted transition-colors hover:text-lw-accent max-lg:landscape:px-4"
+            >
+              {uploadInProgress ? (
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
+              ) : (
+                'Share'
+              )}
+            </button>
+          </>
         )}
-        <button
-          onClick={() => {
-            void downloadPng();
-          }}
-          className={`w-full max-w-xs rounded-lg px-6 py-3 text-sm font-semibold uppercase tracking-wider transition-all max-lg:landscape:w-auto max-lg:landscape:py-1.5 ${
-            canNativeShare
-              ? 'border border-lw-border text-lw-text hover:border-lw-accent hover:text-lw-accent'
-              : 'bg-gradient-to-r from-lw-accent to-lw-cyan text-lw-bg hover:shadow-[0_0_20px_rgba(39,170,225,0.25)]'
-          }`}
-        >
-          Download
-        </button>
-        <button
-          onClick={() => {
-            void cloudinaryUpload();
-          }}
-          className="py-1 text-xs uppercase tracking-wider text-lw-muted transition-colors hover:text-lw-accent max-lg:landscape:px-4"
-        >
-          {uploadInProgress ? (
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
-          ) : (
-            'Get share link'
-          )}
-        </button>
       </div>
 
       {/* Desktop layout */}
       <div className="hidden items-center justify-center gap-3 lg:flex">
-        <button
-          onClick={() => {
-            void downloadPng();
-          }}
-          className="rounded-lg bg-gradient-to-r from-lw-accent to-lw-cyan px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-lw-bg transition-all hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(39,170,225,0.25)] active:scale-[0.98]"
-        >
-          Download PNG
-        </button>
-        <button
-          onClick={downloadSvg}
-          className="rounded-lg border border-lw-border px-5 py-2.5 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
-        >
-          Download SVG (Vectorized)
-        </button>
+        {/* Split download button */}
+        <div ref={desktopDropdownRef} className="relative flex w-44">
+          <button
+            onClick={() => {
+              void downloadPng();
+            }}
+            className="flex-1 rounded-l-lg bg-lw-accent py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim active:scale-[0.98]"
+          >
+            Download
+          </button>
+          <button
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            className="rounded-r-lg border-l border-lw-bg/20 bg-lw-accent px-3 py-3 text-lw-bg transition-all hover:bg-lw-accent-dim active:scale-[0.98]"
+            aria-label="Download options"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {dropdownOpen && (
+            <div className="absolute left-0 top-full z-50 mt-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+              <button
+                onClick={() => {
+                  void downloadPng();
+                  setDropdownOpen(false);
+                }}
+                className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+              >
+                PNG
+              </button>
+              <button
+                onClick={() => {
+                  downloadSvg();
+                  setDropdownOpen(false);
+                }}
+                className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+              >
+                SVG (Vectorized)
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Share button */}
         <button
           onClick={() => {
             void cloudinaryUpload();
           }}
-          className="min-w-[140px] rounded-lg border border-lw-border px-5 py-2.5 text-xs uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
+          className="w-44 rounded-lg border border-lw-border py-3 text-sm uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
         >
           {uploadInProgress ? (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
           ) : (
-            'Get share link'
+            'Share'
           )}
         </button>
       </div>

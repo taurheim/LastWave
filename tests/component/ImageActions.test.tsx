@@ -10,24 +10,22 @@ describe('ImageActions', () => {
     });
   });
 
-  it('renders desktop Download PNG button', () => {
+  it('renders desktop Download button', () => {
     render(<ImageActions />);
-    expect(screen.getByRole('button', { name: 'Download PNG' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Download' }).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders desktop Download SVG button', () => {
+  it('renders download options dropdown toggles', () => {
     render(<ImageActions />);
-    expect(screen.getByRole('button', { name: /Download SVG/i })).toBeInTheDocument();
+    const toggles = screen.getAllByRole('button', { name: 'Download options' });
+    expect(toggles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders Get share link buttons', () => {
+  it('renders download and share buttons', () => {
     render(<ImageActions />);
-    const buttons = screen.getAllByRole('button', { name: /share link/i });
-    expect(buttons.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('renders mobile Download button', () => {
-    render(<ImageActions />);
-    expect(screen.getByRole('button', { name: 'Download' })).toBeInTheDocument();
+    const downloads = screen.getAllByRole('button', { name: 'Download' });
+    expect(downloads.length).toBeGreaterThanOrEqual(1);
+    const shares = screen.getAllByRole('button', { name: /share/i });
+    expect(shares.length).toBeGreaterThanOrEqual(1);
   });
 });

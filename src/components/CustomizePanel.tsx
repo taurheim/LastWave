@@ -169,6 +169,37 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             </div>
           </div>
 
+          {/* Font */}
+          <div>
+            <div className="space-y-3 sm:space-y-2 lg:space-y-3">
+              <div>
+                <label htmlFor="font-picker" className="mb-1 block text-xs text-lw-muted">
+                  Font
+                </label>
+                {fontsLoaded ? (
+                  <select
+                    value={font}
+                    onChange={(e) => setRendererOption('font', e.target.value)}
+                    className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
+                  >
+                    {displayFonts.map((f) => (
+                      <option key={f} value={f} style={{ fontFamily: f }}>
+                        {f}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <button
+                    onClick={fetchFonts}
+                    className="text-xs text-lw-accent transition-colors hover:text-lw-text"
+                  >
+                    Load available fonts
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Image */}
           <div>
             <h3 className="mb-4 text-xs uppercase tracking-widest text-lw-accent sm:mb-2 lg:mb-4">
@@ -199,31 +230,6 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   onChange={(e) => setRendererOption('height', e.target.value)}
                   className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
                 />
-              </div>
-              <div>
-                <label htmlFor="font-picker" className="mb-1 block text-xs text-lw-muted">
-                  Font
-                </label>
-                {fontsLoaded ? (
-                  <select
-                    value={font}
-                    onChange={(e) => setRendererOption('font', e.target.value)}
-                    className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
-                  >
-                    {displayFonts.map((f) => (
-                      <option key={f} value={f} style={{ fontFamily: f }}>
-                        {f}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <button
-                    onClick={fetchFonts}
-                    className="text-xs text-lw-accent transition-colors hover:text-lw-text"
-                  >
-                    Load available fonts
-                  </button>
-                )}
               </div>
             </div>
           </div>

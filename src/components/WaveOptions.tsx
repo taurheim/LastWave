@@ -249,7 +249,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   onClick={() => setRendererOption('color_scheme', name)}
                   className={`group flex flex-col items-center rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 ${
                     isSelected
-                      ? 'border-lw-accent bg-lw-surface shadow-lg'
+                      ? 'border-lw-accent bg-lw-accent/15 shadow-lg ring-1 ring-lw-accent/30'
                       : 'border-lw-border bg-lw-surface hover:border-lw-muted/50'
                   }`}
                 >
@@ -298,7 +298,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 onChange={(e) => setDataSourceOption('group_by', e.target.value)}
                 className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none"
               >
-                {['week', 'month', 'day', 'year'].map((v) => (
+                {['day', 'week', 'month', 'year'].map((v) => (
                   <option key={v} value={v} className="bg-lw-bg text-lw-text">
                     {v}
                   </option>

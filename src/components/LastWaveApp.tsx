@@ -1094,6 +1094,23 @@ export default function LastWaveApp() {
             )}
           </div>
         )}
+        {/* Portrait rotation hint — below chart, hidden in landscape and when customizing */}
+        {showVisualization && !showCustomize && (
+          <div className="flex items-center justify-center gap-2 py-3 opacity-[0.18] max-lg:landscape:hidden">
+            <span className="text-2xl text-lw-text" style={{ animation: 'lw-rotate-hint 2.5s ease-in-out infinite' }}>
+              ↻
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-lw-text">
+              Rotate for best view
+            </span>
+            <style>{`
+              @keyframes lw-rotate-hint {
+                0%, 100% { transform: rotate(-15deg); }
+                50% { transform: rotate(75deg); }
+              }
+            `}</style>
+          </div>
+        )}
         {showActions && showCustomize && (
           <div className="max-lg:landscape:max-h-[calc(100svh-5.25rem)] max-lg:landscape:overflow-y-auto">
             <CustomizePanel maxPlays={maxPlaysInDataset} />
@@ -1148,7 +1165,7 @@ export default function LastWaveApp() {
 
       {/* Image Actions (download/share) — sticky on mobile */}
       {showActions && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-lw-border bg-lw-bg/90 backdrop-blur-sm lg:relative lg:z-auto lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-lw-border bg-lw-surface/80 backdrop-blur-sm lg:relative lg:z-auto lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none">
           <ImageActions />
         </div>
       )}
@@ -1156,7 +1173,7 @@ export default function LastWaveApp() {
       {/* Spacer so fixed mobile bar doesn't cover content */}
       {showActions && (
         <div
-          className={`lg:hidden ${showCustomize ? 'h-20 max-lg:landscape:h-0' : 'h-20 max-lg:landscape:h-10'}`}
+          className={`lg:hidden ${showCustomize ? 'h-[7rem] max-lg:landscape:h-12' : 'h-[7rem] max-lg:landscape:h-10'}`}
         />
       )}
 
