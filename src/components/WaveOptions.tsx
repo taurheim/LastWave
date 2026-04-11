@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions } from '@/store/index';
+import { useState, useEffect, useRef } from 'react';
+import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/index';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
@@ -24,6 +24,35 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const serviceDropdownRef = useRef<HTMLDivElement>(null);
+
+  const service: ServiceType = dataSourceOptions.service ?? 'lastfm';
+
+  useEffect(() => {
+    const saved = localStorage.getItem('lastwave:service') as ServiceType | null;
+    if (saved === 'lastfm' || saved === 'listenbrainz') {
+      setDataSourceOption('service', saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target as Node)) {
+        setServiceDropdownOpen(false);
+      }
+    }
+    if (serviceDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [serviceDropdownOpen]);
+
+  function handleServiceChange(s: ServiceType) {
+    setDataSourceOption('service', s);
+    localStorage.setItem('lastwave:service', s);
+    setServiceDropdownOpen(false);
+  }
 
   // Auto-detect slow devices and disable animations; set default color scheme
   useEffect(() => {
@@ -126,19 +155,57 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
         {/* Username */}
         <div>
           <label className="mb-2 block text-xs uppercase tracking-widest text-lw-muted">
-            last.fm username
+            {service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
           </label>
-          <input
-            type="search"
-            value={username}
-            onChange={(e) => setDataSourceOption('username', e.target.value)}
-            autoComplete="off"
-            data-1p-ignore
-            data-lpignore="true"
-            data-bwignore
-            className="w-full rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
-            placeholder="Enter your username"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="search"
+              value={username}
+              onChange={(e) => setDataSourceOption('username', e.target.value)}
+              autoComplete="off"
+              data-1p-ignore
+              data-lpignore="true"
+              data-bwignore
+              className="min-w-0 flex-1 rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              placeholder="Enter your username"
+            />
+            <div className="relative" ref={serviceDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-lw-border bg-lw-surface transition-colors hover:border-lw-accent/50"
+                title={`Data source: ${service === 'listenbrainz' ? 'ListenBrainz' : 'Last.fm'}`}
+              >
+                <img
+                  src={service === 'listenbrainz' ? '/icons/listenbrainz.svg' : '/icons/lastfm.svg'}
+                  alt=""
+                  className="h-4 w-4"
+                />
+              </button>
+              {serviceDropdownOpen && (
+                <div className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-lg">
+                  {([
+                    { key: 'lastfm' as ServiceType, label: 'Last.fm', icon: '/icons/lastfm.svg' },
+                    { key: 'listenbrainz' as ServiceType, label: 'ListenBrainz', icon: '/icons/listenbrainz.svg' },
+                  ]).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => handleServiceChange(opt.key)}
+                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                        service === opt.key
+                          ? 'bg-lw-accent/15 text-lw-accent'
+                          : 'text-lw-text hover:bg-lw-accent/10'
+                      }`}
+                    >
+                      <img src={opt.icon} alt="" className="h-4 w-4" />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Date Range + Data Set — sentence style */}

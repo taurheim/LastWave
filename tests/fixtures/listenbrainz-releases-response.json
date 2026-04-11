@@ -1,0 +1,34 @@
+{
+  "payload": {
+    "releases": [
+      {
+        "artist_mbids": [],
+        "artist_name": "Radiohead",
+        "listen_count": 25,
+        "release_mbid": "",
+        "release_name": "OK Computer"
+      },
+      {
+        "artist_mbids": [],
+        "artist_name": "Pink Floyd",
+        "listen_count": 18,
+        "release_mbid": "",
+        "release_name": "The Dark Side of the Moon"
+      },
+      {
+        "artist_mbids": [],
+        "artist_name": "Coldplay",
+        "listen_count": 15,
+        "release_mbid": "",
+        "release_name": "A Rush of Blood to the Head"
+      }
+    ],
+    "count": 3,
+    "total_release_count": 30,
+    "range": "custom",
+    "last_updated": 1588494361,
+    "user_id": "testuser",
+    "from_ts": 1234567890,
+    "to_ts": 1234667890
+  }
+}

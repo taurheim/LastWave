@@ -34,8 +34,11 @@ export interface RendererOptions {
   [key: string]: string | boolean | undefined;
 }
 
+export type ServiceType = 'lastfm' | 'listenbrainz';
+
 export interface DataSourceOptions {
   username?: string;
+  service?: ServiceType;
   time_start?: Date;
   time_end?: Date;
   min_plays?: string;
@@ -110,7 +113,7 @@ export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
 
   // Options
   rendererOptions: {},
-  dataSourceOptions: { username: 'Taurheim' },
+  dataSourceOptions: { username: 'Taurheim', service: 'lastfm' },
   setRendererOption: (key, value) =>
     set((state) => ({ rendererOptions: { ...state.rendererOptions, [key]: value } })),
   setDataSourceOption: (key, value) =>
@@ -183,7 +186,7 @@ export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
       logs: [],
       toasts: [],
       rendererOptions: {},
-      dataSourceOptions: { username: 'Taurheim' },
+      dataSourceOptions: { username: 'Taurheim', service: 'lastfm' },
       showOptions: true,
       showLoadingBar: false,
       showActions: false,

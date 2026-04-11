@@ -4,14 +4,14 @@ import WaveOptions from '@/components/WaveOptions';
 import WaveVisualization from '@/components/WaveVisualization';
 import ImageActions from '@/components/ImageActions';
 import CustomizePanel from '@/components/CustomizePanel';
-import { fetchWithRetry } from '@/core/fetchWithRetry';
 import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SegmentData from '@/core/models/SegmentData';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
-import LastFmApi, { type LastFmResponse } from '@/core/lastfm/LastFmApi';
+import type { DataSource } from '@/core/dataSource';
+import { LastFmDataSource } from '@/core/lastfm/LastFmDataSource';
+import ListenBrainzDataSource from '@/core/listenbrainz/ListenBrainzDataSource';
 import TimeSpan from '@/core/lastfm/models/TimeSpan';
-import URLParameter from '@/core/lastfm/models/URLParameter';
 import {
   splitTimeSpan,
   joinSegments,
@@ -537,8 +537,10 @@ export default function LastWaveApp() {
     const rOpts = store.rendererOptions;
 
     const username = dsOpts.username;
+    const service = dsOpts.service ?? 'lastfm';
+    const serviceName = service === 'listenbrainz' ? 'ListenBrainz' : 'Last.fm';
     if (!username) {
-      setError('Please enter a last.fm username');
+      setError(`Please enter a ${serviceName} username`);
       return;
     }
 
@@ -575,7 +577,9 @@ export default function LastWaveApp() {
     store.setStages(stages);
 
     try {
-      const api = new LastFmApi(LAST_FM_API_KEY);
+      const dataSource: DataSource = service === 'listenbrainz'
+        ? new ListenBrainzDataSource()
+        : new LastFmDataSource(LAST_FM_API_KEY);
 
       // Build time span
       const startDate =
@@ -760,15 +764,7 @@ export default function LastWaveApp() {
       const fetchMethod = isTagMode ? 'artist' : method;
 
       const segmentTasks = segments.map((seg) => async () => {
-        const params = [
-          new URLParameter('user', username),
-          new URLParameter('from', String(seg.start)),
-          new URLParameter('to', String(seg.end)),
-        ];
-        const url = api.getAPIRequestURL(fetchMethod, params);
-        const response = await fetchWithRetry(url);
-        const json = (await response.json()) as LastFmResponse;
-        return api.parseResponseJSON(json);
+        return dataSource.fetchSegment(username, fetchMethod, seg.start, seg.end);
       });
 
       const segmentData = await pooled(
@@ -1128,7 +1124,8 @@ export default function LastWaveApp() {
               const body = [
                 '## Misaligned Label Report',
                 '',
-                `**Last.fm Username:** ${dsOpts.username ?? ''}`,
+                `**Service:** ${dsOpts.service === 'listenbrainz' ? 'ListenBrainz' : 'Last.fm'}`,
+                `**Username:** ${dsOpts.username ?? ''}`,
                 `**Misaligned Labels:** ${labels}`,
                 `**Minimum Plays:** ${dsOpts.min_plays ?? '10'}`,
                 `**Date Range:** ${dsOpts._datePreset ?? 'Custom'} (${String(dsOpts.time_start ?? '')} – ${String(dsOpts.time_end ?? '')})`,
