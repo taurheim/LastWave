@@ -16,7 +16,7 @@ describe('WaveOptions', () => {
 
   it('renders username input', () => {
     render(<WaveOptions onSubmit={mockOnSubmit} />);
-    expect(screen.getByPlaceholderText('Enter your username')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('last.fm username')).toBeInTheDocument();
   });
 
   it('renders submit button', () => {

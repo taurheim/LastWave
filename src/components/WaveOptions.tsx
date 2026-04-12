@@ -154,9 +154,6 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="mb-6 space-y-4 lg:space-y-5">
         {/* Username */}
         <div>
-          <label className="mb-2 block text-xs uppercase tracking-widest text-lw-muted">
-            {service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
-          </label>
           <div className="flex items-center gap-2">
             <input
               type="search"
@@ -167,19 +164,19 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               data-lpignore="true"
               data-bwignore
               className="min-w-0 flex-1 rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
-              placeholder="Enter your username"
+              placeholder={service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
             />
             <div className="relative" ref={serviceDropdownRef}>
               <button
                 type="button"
                 onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-lw-border bg-lw-surface transition-colors hover:border-lw-accent/50"
+                className="flex shrink-0 items-center justify-center rounded-lg bg-transparent p-1 transition-colors hover:bg-lw-accent/10"
                 title={`Data source: ${service === 'listenbrainz' ? 'ListenBrainz' : 'Last.fm'}`}
               >
                 <img
                   src={service === 'listenbrainz' ? '/icons/listenbrainz.svg' : '/icons/lastfm.svg'}
                   alt=""
-                  className="h-4 w-4"
+                  className="h-10 w-10"
                 />
               </button>
               {serviceDropdownOpen && (
