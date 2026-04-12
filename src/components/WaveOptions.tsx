@@ -154,7 +154,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="mb-6 space-y-4 lg:space-y-5">
         {/* Username */}
         <div>
-          <div className="flex items-center gap-2">
+          <div className="relative">
             <input
               type="search"
               value={username}
@@ -163,10 +163,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               data-1p-ignore
               data-lpignore="true"
               data-bwignore
-              className="min-w-0 flex-1 rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              className="w-full rounded-lg border border-lw-border bg-lw-surface px-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
               placeholder={service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
             />
-            <div className="relative" ref={serviceDropdownRef}>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+0.5rem)]" ref={serviceDropdownRef}>
               <button
                 type="button"
                 onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
