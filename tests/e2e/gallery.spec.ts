@@ -6,18 +6,22 @@ import { fileURLToPath } from 'url';
 const FIXTURE_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures');
 
 async function mockGalleryApi(page: import('@playwright/test').Page) {
-  const mockIds = Array.from({ length: 12 }, (_, i) => `mock-gallery-img-${i}`);
+  const mockIds = Array.from({ length: 20 }, (_, i) => `mock-gallery-img-${i}`);
 
   await page.route('**/image/list/browser_upload.json', (route) =>
     route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
-        resources: mockIds.map((id) => ({ public_id: id })),
+        resources: mockIds.map((id, i) => ({
+          public_id: id,
+          width: i % 4 === 0 ? 9000 : i % 3 === 0 ? 5000 : i % 2 === 0 ? 2400 : 800,
+          height: 600,
+        })),
       }),
     }),
   );
 
-  await page.route('**/image/upload/mock-gallery-img-*.png', (route) => {
+  await page.route('**/image/upload/**mock-gallery-img-*.png', (route) => {
     const url = route.request().url();
     const match = url.match(/mock-gallery-img-(\d+)\.png/);
     const idx = match ? Number(match[1]) % 3 : 0;
@@ -30,19 +34,21 @@ async function mockGalleryApi(page: import('@playwright/test').Page) {
 }
 
 test.describe('Gallery Page', () => {
-  test('loads gallery page with pagination buttons', async ({ page }) => {
+  test('loads gallery page with image grid', async ({ page }) => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
     await expect(page.getByRole('heading', { name: 'LastWave' })).toBeVisible();
-    await expect(page.getByRole('button', { name: '← Previous' })).toBeVisible({ timeout: 15000 });
-    await expect(page.getByRole('button', { name: 'Next →' })).toBeVisible();
+    await expect(page.locator('img[loading="lazy"]').first()).toBeVisible({ timeout: 15000 });
   });
 
-  test('paginates between pages', async ({ page }) => {
+  test('shows Load More button and loads more images', async ({ page }) => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
-    await expect(page.getByText('Page 1 / 2')).toBeVisible({ timeout: 15000 });
-    await page.getByRole('button', { name: 'Next →' }).click();
-    await expect(page.getByText('Page 2 / 2')).toBeVisible();
+    const loadMore = page.getByTestId('load-more');
+    await expect(loadMore).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Showing 12 of 20')).toBeVisible();
+    await loadMore.click();
+    await expect(page.getByText('20 visualizations')).toBeVisible();
+    await expect(loadMore).not.toBeVisible();
   });
 });
