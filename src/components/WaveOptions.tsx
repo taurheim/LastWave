@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/index';
+import SpotifyModal from './SpotifyModal';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
@@ -25,6 +26,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [spotifyModalOpen, setSpotifyModalOpen] = useState(false);
   const serviceDropdownRef = useRef<HTMLDivElement>(null);
 
   const service: ServiceType = dataSourceOptions.service ?? 'lastfm';
@@ -182,13 +184,21 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               {serviceDropdownOpen && (
                 <div className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-lg">
                   {([
-                    { key: 'lastfm' as ServiceType, label: 'Last.fm', icon: '/icons/lastfm.svg' },
-                    { key: 'listenbrainz' as ServiceType, label: 'ListenBrainz', icon: '/icons/listenbrainz.svg' },
+                    { key: 'lastfm' as const, label: 'Last.fm', icon: '/icons/lastfm.svg' },
+                    { key: 'listenbrainz' as const, label: 'ListenBrainz', icon: '/icons/listenbrainz.svg' },
+                    { key: 'spotify' as const, label: 'Spotify', icon: '/icons/spotify.svg' },
                   ]).map((opt) => (
                     <button
                       key={opt.key}
                       type="button"
-                      onClick={() => handleServiceChange(opt.key)}
+                      onClick={() => {
+                        if (opt.key === 'spotify') {
+                          setSpotifyModalOpen(true);
+                          setServiceDropdownOpen(false);
+                        } else {
+                          handleServiceChange(opt.key);
+                        }
+                      }}
                       className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
                         service === opt.key
                           ? 'bg-lw-accent/15 text-lw-accent'
@@ -393,6 +403,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           Generate
         </button>
       </div>
+      <SpotifyModal open={spotifyModalOpen} onClose={() => setSpotifyModalOpen(false)} />
     </form>
   );
 }
