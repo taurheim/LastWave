@@ -4,20 +4,21 @@ import { fetchWithRetry } from '@/core/fetchWithRetry';
 const API_BASE_URL = 'https://api.listenbrainz.org/1';
 const LISTENS_PAGE_SIZE = 100;
 
-type StatsSupport = 'unknown' | 'supported' | 'unsupported';
-
+/**
+ * Fetches listening data from ListenBrainz by paginating through the
+ * raw listens endpoint and aggregating counts client-side.
+ *
+ * The ListenBrainz stats API (/stats/user/…) only offers pre-computed
+ * aggregates for fixed ranges (week, month, year, all_time) — it cannot
+ * return data for an arbitrary time window, which is what we need for
+ * per-segment fetching.  So we always use the listens endpoint instead.
+ */
 export default class ListenBrainzApi {
-  private statsSupport: StatsSupport = 'unknown';
-
   async fetchTopArtists(
     username: string,
     from: number,
     to: number,
   ): Promise<SegmentData[]> {
-    if (this.statsSupport !== 'unsupported') {
-      const result = await this.fetchStats(username, 'artists', from, to);
-      if (result !== null) return result;
-    }
     return this.aggregateListens(username, from, to, (listen) => {
       return listen.track_metadata.artist_name;
     });
@@ -28,65 +29,11 @@ export default class ListenBrainzApi {
     from: number,
     to: number,
   ): Promise<SegmentData[]> {
-    if (this.statsSupport !== 'unsupported') {
-      const result = await this.fetchStats(username, 'releases', from, to);
-      if (result !== null) return result;
-    }
     return this.aggregateListens(username, from, to, (listen) => {
       const release = listen.track_metadata.release_name;
       if (!release) return null;
       return `${release} · ${listen.track_metadata.artist_name}`;
     });
-  }
-
-  private async fetchStats(
-    username: string,
-    entity: 'artists' | 'releases',
-    from: number,
-    to: number,
-  ): Promise<SegmentData[] | null> {
-    const url =
-      `${API_BASE_URL}/stats/user/${encodeURIComponent(username)}/${entity}` +
-      `?from_ts=${from}&to_ts=${to}&count=${LISTENS_PAGE_SIZE}`;
-
-    let response: Response;
-    try {
-      response = await fetchWithRetry(url);
-    } catch {
-      this.statsSupport = 'unsupported';
-      return null;
-    }
-
-    if (response.status === 204) {
-      this.statsSupport = 'supported';
-      return [];
-    }
-
-    if (response.status === 400) {
-      this.statsSupport = 'unsupported';
-      return null;
-    }
-
-    if (!response.ok) {
-      throw new Error(`ListenBrainz stats API error: ${response.status}`);
-    }
-
-    this.statsSupport = 'supported';
-    const json = await response.json();
-
-    if (entity === 'artists') {
-      const artists = json?.payload?.artists ?? [];
-      return artists.map(
-        (a: { artist_name: string; listen_count: number }) =>
-          new SegmentData(a.artist_name, a.listen_count),
-      );
-    }
-
-    const releases = json?.payload?.releases ?? [];
-    return releases.map(
-      (r: { release_name: string; artist_name: string; listen_count: number }) =>
-        new SegmentData(`${r.release_name} · ${r.artist_name}`, r.listen_count),
-    );
   }
 
   private async aggregateListens(
