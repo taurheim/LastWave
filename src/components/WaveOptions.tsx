@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/index';
 import SpotifyModal from './SpotifyModal';
+import ServiceWheel from './ServiceWheel';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
@@ -24,9 +25,8 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const setDataSourceOption = useLastWaveStore((s) => s.setDataSourceOption);
   const setRendererOption = useLastWaveStore((s) => s.setRendererOption);
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [spotifyModalOpen, setSpotifyModalOpen] = useState(false);
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const serviceDropdownRef = useRef<HTMLDivElement>(null);
 
   const service: ServiceType = dataSourceOptions.service ?? 'lastfm';
@@ -61,9 +61,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
     if (rendererOptions.loading_animation !== undefined) return;
     const cores = navigator.hardwareConcurrency ?? 4;
     const memoryGB = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 4; // Chrome/Edge only, defaults to 4
-    if (cores <= 2 || memoryGB <= 2) {
-      setRendererOption('loading_animation', false);
-    }
+    setRendererOption('loading_animation', !(cores <= 2 || memoryGB <= 2));
   }, []);
   useEffect(() => {
     if (!rendererOptions.color_scheme) {
@@ -169,48 +167,13 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               placeholder={service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
             />
             <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[calc(100%+0.5rem)]" ref={serviceDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
-                className="flex shrink-0 items-center justify-center rounded-lg bg-transparent p-1 transition-colors hover:bg-lw-accent/10"
-                title={`Data source: ${service === 'listenbrainz' ? 'ListenBrainz' : 'Last.fm'}`}
-              >
-                <img
-                  src={service === 'listenbrainz' ? '/icons/listenbrainz.svg' : '/icons/lastfm.svg'}
-                  alt=""
-                  className="h-10 w-10"
-                />
-              </button>
-              {serviceDropdownOpen && (
-                <div className="absolute right-0 top-full z-50 mt-1 w-44 overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-lg">
-                  {([
-                    { key: 'lastfm' as const, label: 'Last.fm', icon: '/icons/lastfm.svg' },
-                    { key: 'listenbrainz' as const, label: 'ListenBrainz', icon: '/icons/listenbrainz.svg' },
-                    { key: 'spotify' as const, label: 'Spotify', icon: '/icons/spotify.svg' },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() => {
-                        if (opt.key === 'spotify') {
-                          setSpotifyModalOpen(true);
-                          setServiceDropdownOpen(false);
-                        } else {
-                          handleServiceChange(opt.key);
-                        }
-                      }}
-                      className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-                        service === opt.key
-                          ? 'bg-lw-accent/15 text-lw-accent'
-                          : 'text-lw-text hover:bg-lw-accent/10'
-                      }`}
-                    >
-                      <img src={opt.icon} alt="" className="h-4 w-4" />
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <ServiceWheel
+                service={service}
+                dropdownOpen={serviceDropdownOpen}
+                onToggleDropdown={() => setServiceDropdownOpen(!serviceDropdownOpen)}
+                onServiceChange={handleServiceChange}
+                onSpotifyClick={() => { setSpotifyModalOpen(true); setServiceDropdownOpen(false); }}
+              />
             </div>
           </div>
         </div>
@@ -271,9 +234,32 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </span>
+            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">by</span>
+            <span className="relative inline-block">
+              <select
+                value={groupBy}
+                onChange={(e) => setDataSourceOption('group_by', e.target.value)}
+                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+              >
+                {['day', 'week', 'month', 'year'].map((v) => (
+                  <option key={v} value={v} className="bg-lw-bg text-lw-text">
+                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
           </div>
           {method === 'tag' && (
-            <p className="mt-2 text-center text-sm text-amber-500">
+            <p className="mt-2 text-center text-sm text-amber-800 dark:text-amber-300">
               ⚠️ Fetching genres is currently very slow due to rate limits. Be prepared to wait a
               few minutes!
             </p>
@@ -349,50 +335,6 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           </div>
         </div>
       </div>
-
-      {/* Advanced Options Toggle */}
-      <div className="mb-6 text-center">
-        <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-xs uppercase tracking-widest text-lw-muted transition-colors hover:text-lw-accent"
-        >
-          Advanced Options {showAdvanced ? '−' : '+'}
-        </button>
-      </div>
-
-      {/* Advanced Options */}
-      {showAdvanced && (
-        <div className="mx-auto mb-8 max-w-sm rounded-xl border border-lw-border bg-lw-surface/50 p-6">
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1 block text-xs text-lw-muted">Group by</label>
-              <select
-                value={groupBy}
-                onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none"
-              >
-                {['day', 'week', 'month', 'year'].map((v) => (
-                  <option key={v} value={v} className="bg-lw-bg text-lw-text">
-                    {v}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <label className="group flex cursor-pointer items-center gap-2.5 pt-1">
-              <input
-                type="checkbox"
-                checked={rendererOptions.loading_animation ?? true}
-                onChange={(e) => setRendererOption('loading_animation', e.target.checked)}
-                className="rounded border-lw-border bg-lw-bg accent-lw-accent"
-              />
-              <span className="text-xs text-lw-muted transition-colors group-hover:text-lw-text">
-                Loading animation
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
 
       {/* Submit */}
       <div className="text-center">
