@@ -102,82 +102,102 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </div>
 
         {/* Instructions */}
-        <ol className="list-decimal space-y-2.5 pl-5 text-sm text-lw-text">
-          {guide !== 'listenbrainz' && (
-            <li>
-              <a
-                href="https://www.last.fm/join"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                Create a last.fm account
-              </a>
-            </li>
-          )}
-          {guide !== 'lastfm' && (
-            <li>
-              <a
-                href="https://musicbrainz.org/register"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                Create a ListenBrainz account
-              </a>
-            </li>
-          )}
-          {guide !== 'listenbrainz' && (
-            <li>
-              <a
-                href="https://www.last.fm/settings/applications"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                Connect &ldquo;Spotify Scrobbling&rdquo; to last.fm
-              </a>
-            </li>
-          )}
-          {guide !== 'lastfm' && (
-            <li>
-              <a
-                href="https://listenbrainz.org/settings/music-services/details/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                &ldquo;Record Spotify Listening History&rdquo; in ListenBrainz
-              </a>
-            </li>
-          )}
-          {guide !== 'listenbrainz' && (
-            <li>
-              <a
-                href="https://savas.ca/scrobblify"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                Upload your last two weeks from Spotify
-              </a>{' '}
-              <span className="text-lw-muted">(to last.fm)</span>
-            </li>
-          )}
-          {guide !== 'lastfm' && (
-            <li>
-              <a
-                href="https://listenbrainz.org/settings/import/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
-              >
-                Upload your Spotify history
-              </a>{' '}
-              <span className="text-lw-muted">(to ListenBrainz)</span>
-            </li>
-          )}
-        </ol>
+        <div className="space-y-4 text-sm text-lw-text">
+          {/* Create Account */}
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Create account</p>
+            <ol className="list-decimal space-y-2 pl-5">
+              {guide !== 'listenbrainz' && (
+                <li>
+                  <a
+                    href="https://www.last.fm/join"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    Create a last.fm account
+                  </a>
+                </li>
+              )}
+              {guide !== 'lastfm' && (
+                <li>
+                  <a
+                    href="https://musicbrainz.org/register"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    Create a ListenBrainz account
+                  </a>
+                </li>
+              )}
+            </ol>
+          </div>
+
+          {/* Connect to Spotify */}
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Connect to Spotify</p>
+            <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 3 : 2}>
+              {guide !== 'listenbrainz' && (
+                <li>
+                  <a
+                    href="https://www.last.fm/settings/applications"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    Connect &ldquo;Spotify Scrobbling&rdquo; to last.fm
+                  </a>
+                </li>
+              )}
+              {guide !== 'lastfm' && (
+                <li>
+                  <a
+                    href="https://listenbrainz.org/settings/music-services/details/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    &ldquo;Record Spotify Listening History&rdquo; in ListenBrainz
+                  </a>
+                </li>
+              )}
+            </ol>
+          </div>
+
+          {/* Upload History */}
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Upload history</p>
+            <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 5 : 3}>
+              {guide !== 'listenbrainz' && (
+                <li>
+                  <a
+                    href="https://savas.ca/scrobblify"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    Upload your last two weeks from Spotify
+                  </a>{' '}
+                  <span className="text-lw-muted">(to last.fm)</span>
+                </li>
+              )}
+              {guide !== 'lastfm' && (
+                <li>
+                  <a
+                    href="https://listenbrainz.org/settings/import/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                  >
+                    Upload your Spotify history
+                  </a>{' '}
+                  <span className="text-lw-muted">(to ListenBrainz)</span>
+                </li>
+              )}
+            </ol>
+          </div>
+        </div>
       </div>
     </div>
   );
