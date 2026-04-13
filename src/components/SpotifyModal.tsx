@@ -28,7 +28,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-lw-border bg-lw-bg p-6 shadow-2xl sm:p-8">
+      <div className="relative mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-lw-border bg-lw-bg p-6 text-left shadow-2xl sm:p-8">
         {/* Close button */}
         <button
           type="button"
