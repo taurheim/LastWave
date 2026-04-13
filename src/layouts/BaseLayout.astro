@@ -4,9 +4,17 @@ import ErrorToast from '@/components/ErrorToast';
 
 interface Props {
   title?: string;
+  description?: string;
+  ogImage?: string;
 }
 
-const { title = 'LastWave' } = Astro.props;
+const {
+  title = 'LastWave',
+  description = 'Visualize your music listening history as a beautiful wave graph. Connect your Last.fm or ListenBrainz account to see your top artists, albums, and genres over time.',
+  ogImage = '/LastWave_Taurheim_12-27-2024_3-27-2025.png',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://lastwave.app');
 ---
 
 <!doctype html>
@@ -14,8 +22,24 @@ const { title = 'LastWave' } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Graph your music listening history with LastWave" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site ?? 'https://lastwave.app').href} />
+    <meta property="og:site_name" content="LastWave" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site ?? 'https://lastwave.app').href} />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,6 +48,29 @@ const { title = 'LastWave' } = Astro.props;
     />
     <title>{title}</title>
     <ClientRouter />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "LastWave",
+      "url": "https://lastwave.app",
+      "description": "Visualize your music listening history as a beautiful wave graph. Connect your Last.fm or ListenBrainz account to see your top artists, albums, and genres over time.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Niko Savas",
+        "url": "https://savas.ca"
+      },
+      "keywords": "music visualization, listening history, last.fm, listenbrainz, scrobble chart, music stats, artist trends, streaming history"
+    })} />
+
     <style>
       @font-face {
         font-family: 'Super Arena';
