@@ -1,4 +1,5 @@
 import { render, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import GalleryBrowser from '@/components/GalleryBrowser';
 
 describe('GalleryBrowser', () => {
@@ -6,67 +7,69 @@ describe('GalleryBrowser', () => {
     vi.restoreAllMocks();
   });
 
+  const mockResources = Array.from({ length: 15 }, (_, i) => ({
+    public_id: `img${i}`,
+    width: 2000,
+    height: 550,
+  }));
+
+  function mockFetchSuccess(resources = mockResources) {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ resources }),
+    } as Response);
+  }
+
   it('shows loading spinner before fetch resolves', () => {
     vi.spyOn(global, 'fetch').mockReturnValue(new Promise(() => {}));
-
     render(<GalleryBrowser />);
     expect(screen.getByTestId('gallery-spinner')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Previous/ })).not.toBeInTheDocument();
   });
 
-  it('renders pagination buttons after loading', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ resources: [] }),
-    } as Response);
-
-    render(<GalleryBrowser />);
+  it('renders image grid after loading', async () => {
+    mockFetchSuccess();
+    const { container } = render(<GalleryBrowser />);
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Previous/ })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Next/ })).toBeInTheDocument();
+      const images = container.querySelectorAll('img[loading="lazy"]');
+      expect(images.length).toBe(12); // IMAGES_PER_BATCH
     });
   });
 
-  it('shows page info text after loading', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ resources: [] }),
-    } as Response);
-
+  it('shows Load More button when more images exist', async () => {
+    mockFetchSuccess();
     render(<GalleryBrowser />);
     await waitFor(() => {
-      expect(screen.getByText(/Page 1/)).toBeInTheDocument();
+      expect(screen.getByTestId('load-more')).toBeInTheDocument();
+      expect(screen.getByText('Showing 12 of 15')).toBeInTheDocument();
     });
   });
 
-  it('disables Previous Page on first page', async () => {
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ resources: [] }),
-    } as Response);
-
-    render(<GalleryBrowser />);
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();
-    });
-  });
-
-  it('renders images after fetch resolves', async () => {
-    const mockResources = [
-      { public_id: 'img1' },
-      { public_id: 'img2' },
-    ];
-
-    vi.spyOn(global, 'fetch').mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ resources: mockResources }),
-    } as Response);
-
+  it('loads more images when Load More is clicked', async () => {
+    mockFetchSuccess();
+    const user = userEvent.setup();
     const { container } = render(<GalleryBrowser />);
 
     await waitFor(() => {
-      const images = container.querySelectorAll('[style*="background-image"]');
-      expect(images.length).toBe(2);
+      expect(screen.getByTestId('load-more')).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByTestId('load-more'));
+
+    await waitFor(() => {
+      const images = container.querySelectorAll('img[loading="lazy"]');
+      expect(images.length).toBe(15); // all loaded
+    });
+  });
+
+  it('hides Load More when all images are visible', async () => {
+    mockFetchSuccess([
+      { public_id: 'img1', width: 800, height: 600 },
+      { public_id: 'img2', width: 800, height: 600 },
+    ]);
+    render(<GalleryBrowser />);
+    await waitFor(() => {
+      expect(screen.queryByTestId('load-more')).not.toBeInTheDocument();
+      expect(screen.getByText('2 visualizations')).toBeInTheDocument();
     });
   });
 
@@ -76,7 +79,6 @@ describe('GalleryBrowser', () => {
 
     render(<GalleryBrowser />);
 
-    // Advance past retry delays (1s + 2s exponential backoff)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(10000);
     });
