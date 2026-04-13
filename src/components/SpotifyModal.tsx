@@ -151,6 +151,32 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
               </a>
             </li>
           )}
+          {guide !== 'listenbrainz' && (
+            <li>
+              <a
+                href="https://savas.ca/scrobblify"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+              >
+                Upload your last two weeks from Spotify
+              </a>{' '}
+              <span className="text-lw-muted">(to last.fm)</span>
+            </li>
+          )}
+          {guide !== 'lastfm' && (
+            <li>
+              <a
+                href="https://listenbrainz.org/settings/import/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+              >
+                Upload your Spotify history
+              </a>{' '}
+              <span className="text-lw-muted">(to ListenBrainz)</span>
+            </li>
+          )}
         </ol>
       </div>
     </div>
