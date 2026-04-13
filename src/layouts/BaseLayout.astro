@@ -14,7 +14,7 @@ const {
   ogImage = '/LastWave_Taurheim_12-27-2024_3-27-2025.png',
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://lastwave.app');
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca/lastwave');
 ---
 
 <!doctype html>
@@ -31,14 +31,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://lastwave
     <meta property="og:url" content={canonicalURL.href} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(ogImage, Astro.site ?? 'https://lastwave.app').href} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site ?? 'https://savas.ca/lastwave').href} />
     <meta property="og:site_name" content="LastWave" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={new URL(ogImage, Astro.site ?? 'https://lastwave.app').href} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site ?? 'https://savas.ca/lastwave').href} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -54,7 +54,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://lastwave
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "LastWave",
-      "url": "https://lastwave.app",
+      "url": "https://savas.ca/lastwave",
       "description": "Visualize your music listening history as a beautiful wave graph. Connect your Last.fm or ListenBrainz account to see your top artists, albums, and genres over time.",
       "applicationCategory": "MultimediaApplication",
       "operatingSystem": "Any",

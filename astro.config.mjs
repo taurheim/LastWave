@@ -4,7 +4,7 @@ import tailwind from '@astrojs/tailwind';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
-  site: 'https://lastwave.app',
+  site: 'https://savas.ca/lastwave',
   integrations: [react(), tailwind(), sitemap()],
   vite: {
     server: {
