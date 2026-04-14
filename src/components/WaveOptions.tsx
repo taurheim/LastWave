@@ -154,7 +154,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
         <div>
-          <div className={`relative transition-all duration-300 ${serviceDropdownOpen ? 'mr-20 sm:mr-0' : ''}`} ref={serviceDropdownRef}>
+          <div className={`relative transition-all duration-300 ${serviceDropdownOpen ? 'mr-24 sm:mr-0' : ''}`} ref={serviceDropdownRef}>
             <input
               type="search"
               value={username}

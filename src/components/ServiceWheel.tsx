@@ -68,7 +68,7 @@ export default function ServiceWheel({
   const wheelOrder = getWheelOrder(service);
 
   return (
-    <div className="flex flex-col items-center gap-0">
+    <div className="flex flex-col items-start gap-0" style={{ width: 42, overflow: 'visible' }}>
       {wheelOrder.map((key, i) => {
         const isActive = key === service;
         const isAbove = i === 0;
@@ -78,15 +78,19 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className="relative flex items-center justify-center rounded-lg px-1 transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
-            style={{ height: 42 }}
+            className="grid items-center rounded-lg transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
+            style={{
+              height: 42,
+              width: 'max-content',
+              gridTemplateColumns: '42px auto',
+            }}
             tabIndex={0}
           >
-            {/* Icon */}
+            {/* Icon — in a fixed-width grid cell so it never shifts */}
             <img
               src={getIcon(key)}
               alt={isActive ? getLabel(key) : ''}
-              className="shrink-0 transition-all duration-300"
+              className="shrink-0 justify-self-center transition-all duration-300"
               style={{
                 width: isActive ? 40 : 24,
                 height: isActive ? 40 : 24,
@@ -101,12 +105,12 @@ export default function ServiceWheel({
               }}
             />
 
-            {/* Label — absolutely positioned so it never shifts the icon column */}
+            {/* Label — in auto grid cell, expands rightward without moving icon */}
             <span
-              className="pointer-events-none absolute left-full top-1/2 whitespace-nowrap text-sm transition-all duration-300 ease-out"
+              className="overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ease-out"
               style={{
+                maxWidth: dropdownOpen ? 120 : 0,
                 opacity: dropdownOpen ? 1 : 0,
-                transform: `translateY(-50%) translateX(${dropdownOpen ? '0' : '-8px'})`,
               }}
             >
               <span
