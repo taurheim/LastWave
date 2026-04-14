@@ -183,12 +183,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           <div className="flex flex-col items-center gap-y-0.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-1.5 sm:gap-y-0 lg:gap-x-2">
             {/* Line 1: Graph my <date preset> */}
             <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
-              <span className="whitespace-nowrap text-base text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
+              <span className="whitespace-nowrap text-lw-muted text-[1.4rem] sm:text-lg lg:text-xl">Graph my</span>
               <span className="relative inline-block">
                 <select
                   value={datePreset}
                   onChange={(e) => handleDatePresetChange(e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-base font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1.4rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   {easyDateEntries.map(([name]) => (
                     <option key={name} value={name} className="bg-lw-bg text-lw-text">
@@ -212,12 +212,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
             </div>
             {/* Line 2: of <Artists> by <Week> — slightly smaller on mobile */}
             <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
-              <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">of</span>
+              <span className="text-[1rem] text-lw-muted sm:text-lg lg:text-xl">of</span>
               <span className="relative inline-block">
                 <select
                   value={method}
                   onChange={(e) => setDataSourceOption('method', e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   <option value="artist" className="bg-lw-bg text-lw-text">
                     Artists
@@ -239,12 +239,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </span>
-              <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">by</span>
+              <span className="text-[1rem] text-lw-muted sm:text-lg lg:text-xl">by</span>
               <span className="relative inline-block">
                 <select
                   value={groupBy}
                   onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   {['day', 'week', 'month', 'year'].map((v) => (
                     <option key={v} value={v} className="bg-lw-bg text-lw-text">
