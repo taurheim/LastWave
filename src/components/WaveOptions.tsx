@@ -180,83 +180,89 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
         {/* Date Range + Data Set — sentence style */}
         <div>
-          <div className="flex flex-wrap items-baseline justify-center gap-x-1 gap-y-0 sm:gap-x-1.5 lg:gap-x-2">
-            <span className="whitespace-nowrap text-sm text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
-            <span className="relative inline-block">
-              <select
-                value={datePreset}
-                onChange={(e) => handleDatePresetChange(e.target.value)}
-                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
-              >
-                {easyDateEntries.map(([name]) => (
-                  <option key={name} value={name} className="bg-lw-bg text-lw-text">
-                    {name}
+          <div className="flex flex-col items-center gap-y-0.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-1.5 sm:gap-y-0 lg:gap-x-2">
+            {/* Line 1: Graph my <date preset> */}
+            <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
+              <span className="whitespace-nowrap text-base text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
+              <span className="relative inline-block">
+                <select
+                  value={datePreset}
+                  onChange={(e) => handleDatePresetChange(e.target.value)}
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-base font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                >
+                  {easyDateEntries.map(([name]) => (
+                    <option key={name} value={name} className="bg-lw-bg text-lw-text">
+                      {name}
+                    </option>
+                  ))}
+                  <option value="Custom" className="bg-lw-bg text-lw-text">
+                    Custom range
                   </option>
-                ))}
-                <option value="Custom" className="bg-lw-bg text-lw-text">
-                  Custom range
-                </option>
-              </select>
-              <svg
-                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </span>
-            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">of</span>
-            <span className="relative inline-block">
-              <select
-                value={method}
-                onChange={(e) => setDataSourceOption('method', e.target.value)}
-                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
-              >
-                <option value="artist" className="bg-lw-bg text-lw-text">
-                  Artists
-                </option>
-                <option value="album" className="bg-lw-bg text-lw-text">
-                  Albums
-                </option>
-                <option value="tag" className="bg-lw-bg text-lw-text">
-                  Genres
-                </option>
-              </select>
-              <svg
-                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </span>
-            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">by</span>
-            <span className="relative inline-block">
-              <select
-                value={groupBy}
-                onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
-              >
-                {['day', 'week', 'month', 'year'].map((v) => (
-                  <option key={v} value={v} className="bg-lw-bg text-lw-text">
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </div>
+            {/* Line 2: of <Artists> by <Week> — slightly smaller on mobile */}
+            <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
+              <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">of</span>
+              <span className="relative inline-block">
+                <select
+                  value={method}
+                  onChange={(e) => setDataSourceOption('method', e.target.value)}
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                >
+                  <option value="artist" className="bg-lw-bg text-lw-text">
+                    Artists
                   </option>
-                ))}
-              </select>
-              <svg
-                className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </span>
+                  <option value="album" className="bg-lw-bg text-lw-text">
+                    Albums
+                  </option>
+                  <option value="tag" className="bg-lw-bg text-lw-text">
+                    Genres
+                  </option>
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+              <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">by</span>
+              <span className="relative inline-block">
+                <select
+                  value={groupBy}
+                  onChange={(e) => setDataSourceOption('group_by', e.target.value)}
+                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-sm font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                >
+                  {['day', 'week', 'month', 'year'].map((v) => (
+                    <option key={v} value={v} className="bg-lw-bg text-lw-text">
+                      {v.charAt(0).toUpperCase() + v.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </div>
           </div>
           {method === 'tag' && (
             <p className="mt-2 text-center text-sm text-amber-800 dark:text-amber-300">
