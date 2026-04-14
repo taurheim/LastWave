@@ -53,7 +53,7 @@ export default function ServiceWheel({
 
   function handleRowClick(key: ServiceKey) {
     if (!dropdownOpen) {
-      if (key === service) onToggleDropdown();
+      onToggleDropdown();
       return;
     }
     if (key === 'spotify') {
@@ -78,15 +78,9 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className={`relative flex items-center rounded-lg px-1 transition-colors duration-200 ${
-              dropdownOpen
-                ? 'cursor-pointer hover:bg-lw-accent/10'
-                : isActive
-                  ? 'cursor-pointer hover:bg-lw-accent/10'
-                  : 'pointer-events-none'
-            }`}
+            className={`relative flex items-center rounded-lg px-1 transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10`}
             style={{ height: 42 }}
-            tabIndex={dropdownOpen || isActive ? 0 : -1}
+            tabIndex={0}
           >
             {/* Label — absolutely positioned so it doesn't shift the icon.
                 Mobile (<sm): anchored to the right of this container, grows leftward.
