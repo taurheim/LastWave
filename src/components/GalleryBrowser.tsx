@@ -3,7 +3,7 @@ import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { useLastWaveStore } from '@/store/index';
 import { fetchWithRetry } from '@/core/fetchWithRetry';
-import { getVariedGridSpanClass, IMAGES_PER_BATCH } from '@/core/gallery/gridSize';
+import { packImageSpans, IMAGES_PER_BATCH } from '@/core/gallery/gridSize';
 import type { GridSpanClass } from '@/core/gallery/gridSize';
 
 const GALLERY_API_URL = 'https://res.cloudinary.com/lastwave/image/list/browser_upload.json';
@@ -42,8 +42,14 @@ export default function GalleryBrowser() {
         resources?: Array<{ public_id: string; width?: number; height?: number }>;
       }>)
       .then((data) => {
-        const images: GalleryImage[] = (data.resources ?? []).map((r, i) => {
-          const spanClass = getVariedGridSpanClass(r.width ?? 0, r.height ?? 0, i);
+        const resources = data.resources ?? [];
+        const dims = resources.map((r) => ({
+          width: r.width ?? 0,
+          height: r.height ?? 0,
+        }));
+        const spans = packImageSpans(dims);
+        const images: GalleryImage[] = resources.map((r, i) => {
+          const spanClass = spans[i];
           const thumbW = SPAN_TO_THUMB_WIDTH[spanClass];
           return {
             url: `https://res.cloudinary.com/lastwave/image/upload/${r.public_id}.png`,

@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { getGridSpanClass, getVariedGridSpanClass, IMAGES_PER_BATCH } from '@/core/gallery/gridSize';
+import {
+  getGridSpanClass,
+  getVariedGridSpanClass,
+  packImageSpans,
+  IMAGES_PER_BATCH,
+  GRID_COLS,
+} from '@/core/gallery/gridSize';
+import type { GridSpanClass } from '@/core/gallery/gridSize';
+
+const SPAN_VALUE: Record<GridSpanClass, number> = { small: 1, wide: 2, triple: 3, full: 4 };
 
 describe('getGridSpanClass', () => {
   it('returns "small" for portrait images (ratio < 1)', () => {
@@ -85,5 +94,109 @@ describe('getVariedGridSpanClass', () => {
     const a = getVariedGridSpanClass(2000, 550, 42);
     const b = getVariedGridSpanClass(2000, 550, 42);
     expect(a).toBe(b);
+  });
+});
+
+describe('packImageSpans', () => {
+  function totalSpan(spans: GridSpanClass[]): number {
+    return spans.reduce((sum, s) => sum + SPAN_VALUE[s], 0);
+  }
+
+  /** Assert every row sums to GRID_COLS. */
+  function assertRowsFull(spans: GridSpanClass[]) {
+    let rowSum = 0;
+    for (const s of spans) {
+      rowSum += SPAN_VALUE[s];
+      if (rowSum === GRID_COLS) {
+        rowSum = 0;
+      } else if (rowSum > GRID_COLS) {
+        throw new Error(`Row overflows: sum reached ${rowSum}`);
+      }
+    }
+    // Last row should also be full (padded)
+    if (rowSum !== 0) {
+      throw new Error(`Last row incomplete: sum is ${rowSum}, expected ${GRID_COLS}`);
+    }
+  }
+
+  it('returns empty array for no images', () => {
+    expect(packImageSpans([])).toEqual([]);
+  });
+
+  it('pads a single small image to fill one row', () => {
+    const spans = packImageSpans([{ width: 800, height: 600 }]);
+    expect(totalSpan(spans)).toBe(GRID_COLS);
+  });
+
+  it('pads a single full-width image to exactly one row', () => {
+    const spans = packImageSpans([{ width: 9000, height: 600 }]);
+    expect(spans).toEqual(['full']);
+  });
+
+  it('fills rows completely for 4 small images', () => {
+    const imgs = Array.from({ length: 4 }, () => ({ width: 800, height: 600 }));
+    const spans = packImageSpans(imgs);
+    assertRowsFull(spans);
+  });
+
+  it('fills rows completely for a large mixed set', () => {
+    const imgs = [
+      { width: 800, height: 600 },   // small
+      { width: 2400, height: 550 },   // wide
+      { width: 4800, height: 550 },   // triple
+      { width: 9000, height: 600 },   // full
+      { width: 600, height: 800 },    // portrait
+      { width: 2000, height: 550 },   // landscape
+      { width: 4000, height: 600 },   // wide
+      { width: 800, height: 600 },    // small
+      { width: 800, height: 600 },    // small
+      { width: 2400, height: 550 },   // wide
+    ];
+    const spans = packImageSpans(imgs);
+    assertRowsFull(spans);
+  });
+
+  it('fills rows for many identical small images', () => {
+    const imgs = Array.from({ length: 17 }, () => ({ width: 800, height: 600 }));
+    const spans = packImageSpans(imgs);
+    assertRowsFull(spans);
+  });
+
+  it('fills rows for many identical wide images', () => {
+    const imgs = Array.from({ length: 7 }, () => ({ width: 2400, height: 550 }));
+    const spans = packImageSpans(imgs);
+    assertRowsFull(spans);
+  });
+
+  it('handles all-portrait images without gaps', () => {
+    const imgs = Array.from({ length: 5 }, () => ({ width: 600, height: 800 }));
+    const spans = packImageSpans(imgs);
+    assertRowsFull(spans);
+  });
+
+  it('never exceeds GRID_COLS per row', () => {
+    const imgs = Array.from({ length: 50 }, (_, i) => ({
+      width: 800 + i * 200,
+      height: 550,
+    }));
+    const spans = packImageSpans(imgs);
+    let rowSum = 0;
+    for (const s of spans) {
+      rowSum += SPAN_VALUE[s];
+      expect(rowSum).toBeLessThanOrEqual(GRID_COLS);
+      if (rowSum === GRID_COLS) rowSum = 0;
+    }
+  });
+
+  it('is deterministic', () => {
+    const imgs = [
+      { width: 800, height: 600 },
+      { width: 2400, height: 550 },
+      { width: 4800, height: 550 },
+      { width: 600, height: 800 },
+    ];
+    const a = packImageSpans(imgs);
+    const b = packImageSpans(imgs);
+    expect(a).toEqual(b);
   });
 });
