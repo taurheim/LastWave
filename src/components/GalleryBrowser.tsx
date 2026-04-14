@@ -22,10 +22,10 @@ const SPAN_TO_CSS: Record<GridSpanClass, string> = {
 };
 
 const SPAN_TO_THUMB_WIDTH: Record<GridSpanClass, number> = {
-  small: 400,
-  wide: 600,
-  triple: 800,
-  full: 1100,
+  small: 600,
+  wide: 1200,
+  triple: 1600,
+  full: 2100,
 };
 
 export default function GalleryBrowser() {
