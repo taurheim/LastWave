@@ -149,12 +149,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl px-6 py-3 lg:py-6">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl px-3 sm:px-6 py-3 lg:py-6">
       {/* Main Options */}
-      <div className="mb-6 space-y-4 lg:space-y-5">
+      <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
         <div>
-          <div className="relative">
+          <div className="relative mr-14 sm:mr-0">
             <input
               type="search"
               value={username}
@@ -180,8 +180,8 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
         {/* Date Range + Data Set — sentence style */}
         <div>
-          <div className="flex flex-nowrap items-baseline justify-center gap-1.5 lg:gap-2">
-            <span className="text-sm text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
+          <div className="flex flex-wrap items-baseline justify-center gap-x-1 gap-y-0 sm:gap-x-1.5 lg:gap-x-2">
+            <span className="whitespace-nowrap text-sm text-lw-muted sm:text-lg lg:text-xl">Graph my</span>
             <span className="relative inline-block">
               <select
                 value={datePreset}
