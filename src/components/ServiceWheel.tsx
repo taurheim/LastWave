@@ -78,28 +78,10 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className={`relative flex items-center rounded-lg px-1 transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10`}
+            className="relative flex items-center justify-center rounded-lg px-1 transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
             style={{ height: 42 }}
             tabIndex={0}
           >
-            {/* Label — absolutely positioned so it doesn't shift the icon.
-                Mobile (<sm): anchored to the right of this container, grows leftward.
-                Desktop (sm+): anchored to the left, grows rightward. */}
-            <span
-              className={`absolute top-1/2 -translate-y-1/2 overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ease-out
-                right-full sm:right-auto sm:left-full`}
-              style={{
-                maxWidth: dropdownOpen ? 120 : 0,
-                opacity: dropdownOpen ? 1 : 0,
-              }}
-            >
-              <span
-                className={`block rounded px-2 py-1 ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
-              >
-                {getLabel(key)}
-              </span>
-            </span>
-
             {/* Icon */}
             <img
               src={getIcon(key)}
@@ -118,6 +100,21 @@ export default function ServiceWheel({
                       : 'perspective(200px) rotateX(-30deg)',
               }}
             />
+
+            {/* Label — absolutely positioned so it never shifts the icon column */}
+            <span
+              className="pointer-events-none absolute left-full top-1/2 whitespace-nowrap text-sm transition-all duration-300 ease-out"
+              style={{
+                opacity: dropdownOpen ? 1 : 0,
+                transform: `translateY(-50%) translateX(${dropdownOpen ? '0' : '-8px'})`,
+              }}
+            >
+              <span
+                className={`block px-2 py-1 ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
+              >
+                {getLabel(key)}
+              </span>
+            </span>
           </button>
         );
       })}
