@@ -74,7 +74,20 @@ export default function ServiceWheel({
         const isAbove = i === 0;
 
         return (
-          <div key={key} className="relative" style={{ height: 42 }}>
+          <button
+            key={key}
+            type="button"
+            onClick={() => handleRowClick(key)}
+            className={`relative flex items-center rounded-lg px-1 transition-colors duration-200 ${
+              dropdownOpen
+                ? 'cursor-pointer hover:bg-lw-accent/10'
+                : isActive
+                  ? 'cursor-pointer hover:bg-lw-accent/10'
+                  : 'pointer-events-none'
+            }`}
+            style={{ height: 42 }}
+            tabIndex={dropdownOpen || isActive ? 0 : -1}
+          >
             {/* Label — absolutely positioned so it doesn't shift the icon.
                 Mobile (<sm): anchored to the right of this container, grows leftward.
                 Desktop (sm+): anchored to the left, grows rightward. */}
@@ -86,50 +99,32 @@ export default function ServiceWheel({
                 opacity: dropdownOpen ? 1 : 0,
               }}
             >
-              <button
-                type="button"
-                onClick={() => handleRowClick(key)}
-                className={`block rounded px-2 py-1 transition-colors duration-200 ${
-                  dropdownOpen ? 'cursor-pointer hover:text-lw-accent' : 'pointer-events-none'
-                } ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
-                tabIndex={dropdownOpen ? 0 : -1}
+              <span
+                className={`block rounded px-2 py-1 ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
               >
                 {getLabel(key)}
-              </button>
+              </span>
             </span>
 
-            {/* Icon button */}
-            <button
-              type="button"
-              onClick={() => handleRowClick(key)}
-              className={`flex h-full items-center justify-center rounded-lg px-1 transition-colors duration-200 ${
-                dropdownOpen
-                  ? 'cursor-pointer hover:bg-lw-accent/10'
-                  : isActive
-                    ? 'cursor-pointer hover:bg-lw-accent/10'
-                    : 'pointer-events-none'
-              }`}
-              tabIndex={dropdownOpen || isActive ? 0 : -1}
-            >
-              <img
-                src={getIcon(key)}
-                alt={isActive ? getLabel(key) : ''}
-                className="shrink-0 transition-all duration-300"
-                style={{
-                  width: isActive ? 40 : 24,
-                  height: isActive ? 40 : 24,
-                  opacity: isActive ? 1 : dropdownOpen ? 0.8 : 0.3,
-                  filter: isActive ? 'none' : dropdownOpen ? 'grayscale(0%)' : 'grayscale(40%)',
-                  transform:
-                    dropdownOpen || isActive
-                      ? 'none'
-                      : isAbove
-                        ? 'perspective(200px) rotateX(30deg)'
-                        : 'perspective(200px) rotateX(-30deg)',
-                }}
-              />
-            </button>
-          </div>
+            {/* Icon */}
+            <img
+              src={getIcon(key)}
+              alt={isActive ? getLabel(key) : ''}
+              className="shrink-0 transition-all duration-300"
+              style={{
+                width: isActive ? 40 : 24,
+                height: isActive ? 40 : 24,
+                opacity: isActive ? 1 : dropdownOpen ? 0.8 : 0.3,
+                filter: isActive ? 'none' : dropdownOpen ? 'grayscale(0%)' : 'grayscale(40%)',
+                transform:
+                  dropdownOpen || isActive
+                    ? 'none'
+                    : isAbove
+                      ? 'perspective(200px) rotateX(30deg)'
+                      : 'perspective(200px) rotateX(-30deg)',
+              }}
+            />
+          </button>
         );
       })}
     </div>
