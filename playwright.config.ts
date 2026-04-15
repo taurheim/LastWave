@@ -26,9 +26,14 @@ export default defineConfig({
       testMatch: 'visual-regression.spec.ts',
     })),
     {
+      name: 'wave-snapshots',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
+      testMatch: 'wave-snapshot.spec.ts',
+    },
+    {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: 'visual-regression.spec.ts',
+      testIgnore: ['visual-regression.spec.ts', 'wave-snapshot.spec.ts'],
     },
   ],
   webServer: {

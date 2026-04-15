@@ -27,3 +27,7 @@ test-results/
 playwright-report/
 .playwright-cli/
 proto-screenshots/
+
+# Visual regression debug artifacts (baselines are tracked)
+tests/e2e/wave-snapshot.spec.ts-snapshots/*.actual.png
+tests/e2e/wave-snapshot.spec.ts-snapshots/*.diff.png
