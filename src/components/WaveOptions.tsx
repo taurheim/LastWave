@@ -19,6 +19,20 @@ const easyDateEntries = Object.entries(easyDates) as unknown as [
   { offsets: [number, number]; otherOptions: Record<string, string> },
 ][];
 
+const ALL_SEGMENTS = ['day', 'week', 'month', 'year'] as const;
+const SEGMENT_DURATIONS_MS: Record<string, number> = {
+  day: 86_400_000,
+  week: 604_800_000,
+  month: 2_628_000_000,
+  year: 31_536_000_000,
+};
+
+/** Return segment lengths that produce at least 2 segments for a given range duration. */
+function getAllowedSegments(rangeDurationMs: number | null): string[] {
+  if (rangeDurationMs === null) return [...ALL_SEGMENTS];
+  return ALL_SEGMENTS.filter((s) => rangeDurationMs / SEGMENT_DURATIONS_MS[s] >= 2);
+}
+
 export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const dataSourceOptions = useLastWaveStore((s) => s.dataSourceOptions);
   const rendererOptions = useLastWaveStore((s) => s.rendererOptions);
@@ -105,6 +119,21 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   const method = dataSourceOptions.method ?? 'artist';
   const isCustomDate = datePreset === 'Custom';
 
+  // Compute allowed segment lengths based on date preset
+  const rangeDurationMs = isCustomDate
+    ? null // custom ranges allow all segments
+    : easyDateEntries.find(([name]) => name === datePreset)?.[1].offsets[0] ?? null;
+  const allowedSegments = getAllowedSegments(rangeDurationMs);
+
+  // Auto-correct group_by if the current value is no longer allowed
+  useEffect(() => {
+    if (!isCustomDate && allowedSegments.length > 0 && !allowedSegments.includes(groupBy)) {
+      const preset = easyDateEntries.find(([name]) => name === datePreset)?.[1];
+      const fallback = preset?.otherOptions.group_by ?? allowedSegments[allowedSegments.length - 1];
+      setDataSourceOption('group_by', fallback);
+    }
+  }, [datePreset]);
+
   function handleDatePresetChange(presetName: string) {
     setDataSourceOption('_datePreset', presetName);
     if (presetName === 'Custom') return;
@@ -156,7 +185,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
         <div className="overflow-x-clip pt-4 pb-2">
           <div
             className="relative transition-all duration-300"
-            style={{ marginRight: serviceDropdownOpen ? 140 : 0 }}
+            style={{ marginRight: serviceDropdownOpen ? 130 : 0 }}
             ref={serviceDropdownRef}
           >
             <input
@@ -257,7 +286,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   onChange={(e) => setDataSourceOption('group_by', e.target.value)}
                   className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
-                  {['day', 'week', 'month', 'year'].map((v) => (
+                  {allowedSegments.map((v) => (
                     <option key={v} value={v} className="bg-lw-bg text-lw-text">
                       {v.charAt(0).toUpperCase() + v.slice(1)}
                     </option>
