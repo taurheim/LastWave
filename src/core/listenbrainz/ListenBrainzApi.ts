@@ -78,7 +78,14 @@ export default class ListenBrainzApi {
       }
 
       if (listens.length < LISTENS_PAGE_SIZE) break;
-      minTs = maxTs;
+
+      // Guard against infinite loop when all items share the same timestamp
+      if (maxTs === minTs) {
+        minTs = maxTs + 1;
+        if (minTs > to) break;
+      } else {
+        minTs = maxTs;
+      }
       page++;
     }
 
