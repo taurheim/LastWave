@@ -153,7 +153,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       {/* Main Options */}
       <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
-        <div className="overflow-x-clip">
+        <div className="overflow-x-clip pt-4 pb-2">
           <div
             className="relative transition-all duration-300"
             style={{ marginRight: serviceDropdownOpen ? 140 : 0 }}
