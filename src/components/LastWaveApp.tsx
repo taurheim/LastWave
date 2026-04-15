@@ -43,10 +43,11 @@ const MIN_ANIM_FRAMES = 50;
 
 /** Run async tasks with a concurrency cap, calling onProgress after each completes. */
 async function pooled<T>(
-  tasks: (() => Promise<T>)[],
+  tasks: ((onSubProgress?: (text: string) => void) => Promise<T>)[],
   concurrency: number,
   onProgress?: () => void,
   onResult?: (index: number, result: T) => void,
+  onSubProgress?: (text: string) => void,
 ): Promise<T[]> {
   const results = new Array<T>(tasks.length);
   let next = 0;
@@ -54,7 +55,7 @@ async function pooled<T>(
   async function worker() {
     while (next < tasks.length) {
       const idx = next++;
-      results[idx] = await tasks[idx]();
+      results[idx] = await tasks[idx](onSubProgress);
       onResult?.(idx, results[idx]);
       onProgress?.();
     }
@@ -291,7 +292,59 @@ export default function LastWaveApp() {
     if (isNaN(mp)) return;
     setSuppressLabels(true);
     const t0 = performance.now();
-    setSeriesData(cleanByMinPlays(rawSeriesDataRef.current, mp));
+    const cleaned = cleanByMinPlays(rawSeriesDataRef.current, mp);
+
+    // Incremental color assignment: when the user drags minPlays lower,
+    // new artists appear that aren't in the locked color map yet.
+    // Assign them colors using the same neighbor-safe logic as animation.
+    if (lockedColorMapRef.current) {
+      const cmap = lockedColorMapRef.current;
+      const newArtists = cleaned.filter((s) => !cmap.has(s.title));
+      if (newArtists.length > 0) {
+        const store = useLastWaveStore.getState();
+        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
+        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const palette = scheme.schemeColors;
+        const nColors = palette.length;
+
+        const allKeys = cleaned.map((s) => s.title);
+        const numSeg = cleaned[0]?.counts.length ?? 0;
+        const table: Record<string, number>[] = [];
+        for (let i = 0; i < numSeg; i++) {
+          const row: Record<string, number> = { index: i };
+          cleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          table.push(row);
+        }
+        if (allKeys.length > 0 && numSeg > 0) {
+          const stacked = d3
+            .stack<Record<string, number>>()
+            .keys(allKeys)
+            .offset(d3.stackOffsetSilhouette)
+            .order(balancedOrder)(table);
+          const orderedKeys = stacked.map((layer) => layer.key);
+
+          for (let i = 0; i < orderedKeys.length; i++) {
+            if (cmap.has(orderedKeys[i])) continue;
+            const prevColor = i > 0 ? cmap.get(orderedKeys[i - 1]) : undefined;
+            const nextColor = i < orderedKeys.length - 1 ? cmap.get(orderedKeys[i + 1]) : undefined;
+            let chosen = palette[i % nColors];
+            if (chosen === prevColor || chosen === nextColor) {
+              for (let offset = 1; offset < nColors; offset++) {
+                const candidate = palette[(i + offset) % nColors];
+                if (candidate !== prevColor && candidate !== nextColor) {
+                  chosen = candidate;
+                  break;
+                }
+              }
+            }
+            cmap.set(orderedKeys[i], chosen);
+          }
+          setLockedColorMap(new Map(cmap));
+        }
+      }
+    }
+
+    setSeriesData(cleaned);
     // Measure after React commits (next microtask)
     requestAnimationFrame(() => {
       const elapsed = performance.now() - t0;
@@ -763,8 +816,8 @@ export default function LastWaveApp() {
 
       const fetchMethod = isTagMode ? 'artist' : method;
 
-      const segmentTasks = segments.map((seg) => async () => {
-        return dataSource.fetchSegment(username, fetchMethod, seg.start, seg.end);
+      const segmentTasks = segments.map((seg) => async (onSubProgress?: (text: string) => void) => {
+        return dataSource.fetchSegment(username, fetchMethod, seg.start, seg.end, onSubProgress);
       });
 
       const segmentData = await pooled(
@@ -776,6 +829,7 @@ export default function LastWaveApp() {
               streamSegmentsRef.current[index] = result;
             }
           : undefined,
+        (text) => store.setStageSubText(text),
       );
 
       // Join and clean data

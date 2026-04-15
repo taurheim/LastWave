@@ -6,5 +6,6 @@ export interface DataSource {
     method: string,
     from: number,
     to: number,
+    onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]>;
 }

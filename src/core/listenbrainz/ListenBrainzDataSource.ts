@@ -10,10 +10,11 @@ export default class ListenBrainzDataSource implements DataSource {
     method: string,
     from: number,
     to: number,
+    onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
     if (method === 'album') {
-      return this.api.fetchTopAlbums(username, from, to);
+      return this.api.fetchTopAlbums(username, from, to, onSubProgress);
     }
-    return this.api.fetchTopArtists(username, from, to);
+    return this.api.fetchTopArtists(username, from, to, onSubProgress);
   }
 }

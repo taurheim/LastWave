@@ -2,7 +2,7 @@ import SegmentData from '@/core/models/SegmentData';
 import { fetchWithRetry } from '@/core/fetchWithRetry';
 
 const API_BASE_URL = 'https://api.listenbrainz.org/1';
-const LISTENS_PAGE_SIZE = 100;
+const LISTENS_PAGE_SIZE = 1000;
 
 /**
  * Fetches listening data from ListenBrainz by paginating through the
@@ -18,22 +18,24 @@ export default class ListenBrainzApi {
     username: string,
     from: number,
     to: number,
+    onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
     return this.aggregateListens(username, from, to, (listen) => {
       return listen.track_metadata.artist_name;
-    });
+    }, onSubProgress);
   }
 
   async fetchTopAlbums(
     username: string,
     from: number,
     to: number,
+    onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
     return this.aggregateListens(username, from, to, (listen) => {
       const release = listen.track_metadata.release_name;
       if (!release) return null;
       return `${release} · ${listen.track_metadata.artist_name}`;
-    });
+    }, onSubProgress);
   }
 
   private async aggregateListens(
@@ -41,14 +43,18 @@ export default class ListenBrainzApi {
     from: number,
     to: number,
     keyFn: (listen: Listen) => string | null,
+    onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
     const counts = new Map<string, number>();
     let minTs = from;
+    let page = 1;
 
     while (true) {
+      if (page > 1) onSubProgress?.(`page ${page}`);
+
       const url =
         `${API_BASE_URL}/user/${encodeURIComponent(username)}/listens` +
-        `?min_ts=${minTs}&count=${LISTENS_PAGE_SIZE}`;
+        `?min_ts=${minTs}&max_ts=${to}&count=${LISTENS_PAGE_SIZE}`;
 
       const response = await fetchWithRetry(url);
       if (!response.ok) {
@@ -62,7 +68,6 @@ export default class ListenBrainzApi {
 
       let maxTs = minTs;
       for (const listen of listens) {
-        if (listen.listened_at > to) continue;
         const key = keyFn(listen);
         if (key) {
           counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -72,8 +77,9 @@ export default class ListenBrainzApi {
         }
       }
 
-      if (maxTs >= to || listens.length < LISTENS_PAGE_SIZE) break;
+      if (listens.length < LISTENS_PAGE_SIZE) break;
       minTs = maxTs;
+      page++;
     }
 
     return Array.from(counts.entries())

@@ -67,17 +67,17 @@ describe('ListenBrainzApi', () => {
       expect(result).toEqual([]);
     });
 
-    it('excludes listens beyond the to timestamp', async () => {
-      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+    it('passes max_ts to bound the request to the segment window', async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
         mockListensResponse([
           { listened_at: 1500, artist: 'Radiohead', track: 'Creep' },
-          { listened_at: 3000, artist: 'Coldplay', track: 'Yellow' }, // beyond to=2000
         ]),
       );
 
-      const result = await api.fetchTopArtists('testuser', 1000, 2000);
-      expect(result.length).toBe(1);
-      expect(result[0].title).toBe('Radiohead');
+      await api.fetchTopArtists('testuser', 1000, 2000);
+      const url = fetchSpy.mock.calls[0][0] as string;
+      expect(url).toContain('min_ts=1000');
+      expect(url).toContain('max_ts=2000');
     });
 
     it('returns results sorted by count descending', async () => {
@@ -129,6 +129,42 @@ describe('ListenBrainzApi', () => {
       const result = await api.fetchTopAlbums('testuser', 1000, 2000);
       expect(result.length).toBe(1);
       expect(result[0].title).toBe('DSOTM · Pink Floyd');
+    });
+  });
+
+  describe('sub-progress reporting', () => {
+    it('calls onSubProgress with page numbers during pagination', async () => {
+      // Generate 1001 listens to force 2 pages (page size is 1000)
+      const page1Listens = Array.from({ length: 1000 }, (_, i) => ({
+        listened_at: 1100 + i,
+        artist: `Artist${i % 10}`,
+        track: `Track${i}`,
+      }));
+      const page2Listens = [
+        { listened_at: 2200, artist: 'FinalArtist', track: 'FinalTrack' },
+      ];
+
+      vi.spyOn(globalThis, 'fetch')
+        .mockResolvedValueOnce(mockListensResponse(page1Listens))
+        .mockResolvedValueOnce(mockListensResponse(page2Listens));
+
+      const subProgress = vi.fn();
+      await api.fetchTopArtists('testuser', 1000, 3000, subProgress);
+
+      expect(subProgress).toHaveBeenCalledWith('page 2');
+    });
+
+    it('does not call onSubProgress when data fits in one page', async () => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+        mockListensResponse([
+          { listened_at: 1500, artist: 'Radiohead', track: 'Creep' },
+        ]),
+      );
+
+      const subProgress = vi.fn();
+      await api.fetchTopArtists('testuser', 1000, 2000, subProgress);
+
+      expect(subProgress).not.toHaveBeenCalled();
     });
   });
 });

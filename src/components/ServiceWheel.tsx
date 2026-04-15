@@ -78,10 +78,10 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className="grid items-center rounded-lg transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
+            className="grid items-center overflow-hidden rounded-lg transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
             style={{
               height: 42,
-              width: 'max-content',
+              width: dropdownOpen ? 135 : 'max-content',
               gridTemplateColumns: '42px auto',
             }}
             tabIndex={0}
@@ -109,12 +109,12 @@ export default function ServiceWheel({
             <span
               className="overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ease-out"
               style={{
-                maxWidth: dropdownOpen ? 120 : 0,
+                maxWidth: dropdownOpen ? 100 : 0,
                 opacity: dropdownOpen ? 1 : 0,
               }}
             >
               <span
-                className={`block px-2 py-1 ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
+                className={`block px-1 py-1 text-left ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
               >
                 {getLabel(key)}
               </span>

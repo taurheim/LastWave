@@ -185,7 +185,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
         <div className="overflow-x-clip pt-4 pb-2">
           <div
             className="relative transition-all duration-300"
-            style={{ marginRight: serviceDropdownOpen ? 130 : 0 }}
+            style={{ marginRight: serviceDropdownOpen ? 145 : 0 }}
             ref={serviceDropdownRef}
           >
             <input

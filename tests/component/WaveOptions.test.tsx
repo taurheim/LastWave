@@ -29,15 +29,10 @@ describe('WaveOptions', () => {
     expect(screen.getByText('Graph my')).toBeInTheDocument();
   });
 
-  it('shows advanced options when toggle is clicked', async () => {
-    const user = userEvent.setup();
+  it('renders group-by selector inline in sentence', () => {
     render(<WaveOptions onSubmit={mockOnSubmit} />);
-
-    expect(screen.queryByText('Group by')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /Advanced Options/ }));
-
-    expect(screen.getByText('Group by')).toBeInTheDocument();
+    expect(screen.getByText('by')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Week')).toBeInTheDocument();
   });
 
   it('calls onSubmit when form is submitted', async () => {

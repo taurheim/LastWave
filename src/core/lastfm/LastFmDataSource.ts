@@ -17,6 +17,7 @@ export class LastFmDataSource implements DataSource {
     method: string,
     from: number,
     to: number,
+    _onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
     const apiMethod = method === 'tag' ? 'artist' : method;
 

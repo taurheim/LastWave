@@ -61,23 +61,13 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </p>
 
         {/* Section heading */}
-        <h3 className="mb-2 text-lg font-semibold text-lw-text">Set up last.fm and ListenBrainz</h3>
-
-        {/* Why both? */}
-        <div className="mb-5 rounded-lg border border-lw-border bg-lw-surface/50 p-4">
-          <h4 className="mb-2 text-sm font-semibold text-lw-text">Why both?</h4>
-          <p className="text-xs leading-relaxed text-lw-muted sm:text-sm">
-            An important limitation of last.fm is that you cannot update your listening history past 2
-            weeks ago. This means that even though you have your full listening history, you can only
-            actually upload the last 2 weeks of it to last.fm. ListenBrainz is an open source
-            MetaBrainz project that is less popular but has more flexibility. LastWave supports both,
-            but many other tools may only support last.fm.
-          </p>
-          <p className="mt-2 text-xs leading-relaxed text-lw-muted sm:text-sm">
-            My recommendation is to set up both for maximum flexibility, but you can always choose one
-            or the other as you prefer.
-          </p>
-        </div>
+        <h3 className="mb-2 text-lg font-semibold text-lw-text">
+          {guide === 'both'
+            ? 'Set up last.fm and ListenBrainz'
+            : guide === 'lastfm'
+              ? 'Set up last.fm'
+              : 'Set up ListenBrainz'}
+        </h3>
 
         {/* Guide toggle */}
         <div className="mb-5 flex items-center justify-center gap-1 rounded-lg border border-lw-border bg-lw-surface/50 p-1">
@@ -198,6 +188,22 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
             </ol>
           </div>
         </div>
+
+        {/* Why both? */}
+        {guide === 'both' && <div className="mt-8 rounded-lg border border-lw-border bg-lw-surface/50 p-4 pt-3">
+          <h4 className="mb-2 text-sm font-semibold text-lw-text">Why both?</h4>
+          <p className="text-xs leading-relaxed text-lw-muted sm:text-sm">
+            An important limitation of last.fm is that you cannot update your listening history past 2
+            weeks ago. This only affects historical data — going forward, last.fm will capture all
+            tracks you listen to. ListenBrainz is an open source MetaBrainz project that is less
+            popular but has more flexibility, and can import your full history. LastWave supports
+            both, but many other tools may only support last.fm.
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-lw-muted sm:text-sm">
+            My recommendation is to set up both for maximum flexibility, but you can always choose one
+            or the other as you prefer.
+          </p>
+        </div>}
       </div>
     </div>
   );
