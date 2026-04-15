@@ -97,8 +97,8 @@ interface WaveTestCase {
 }
 
 const TEST_CASES: WaveTestCase[] = [
-  { fixture: 'Taurheim', scheme: 'lastwave' },
-  { fixture: 'grimmless', scheme: 'mosaic' },
+  { fixture: 'Taurheim', scheme: 'mosaic' },
+  { fixture: 'grimmless', scheme: 'lastwave' },
   { fixture: 'BeensVonBenis', scheme: 'ember' },
   { fixture: 'cwalkpinoy', scheme: 'ocean' },
   { fixture: 'spaceBass13', scheme: 'budapest' },
