@@ -154,7 +154,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
         <div>
-          <div className={`relative transition-all duration-300 ${serviceDropdownOpen ? 'mr-24 sm:mr-0' : ''}`} ref={serviceDropdownRef}>
+          <div
+            className="relative transition-all duration-300"
+            style={{ marginRight: serviceDropdownOpen ? 150 : 0 }}
+            ref={serviceDropdownRef}
+          >
             <input
               type="search"
               value={username}
@@ -163,10 +167,17 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               data-1p-ignore
               data-lpignore="true"
               data-bwignore
-              className="w-full rounded-lg border border-lw-border bg-lw-surface pl-4 pr-14 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              className="w-full rounded-lg border border-lw-border bg-lw-surface pl-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              style={{ paddingRight: serviceDropdownOpen ? 16 : 56 }}
               placeholder={service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <div
+              className="absolute top-1/2 transition-all duration-300"
+              style={{
+                right: serviceDropdownOpen ? -8 : 8,
+                transform: `translateY(-50%)${serviceDropdownOpen ? ' translateX(100%)' : ''}`,
+              }}
+            >
               <ServiceWheel
                 service={service}
                 dropdownOpen={serviceDropdownOpen}
