@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 import LastWaveApp from '@/components/LastWaveApp';
 
 // Mock child components to isolate LastWaveApp rendering logic

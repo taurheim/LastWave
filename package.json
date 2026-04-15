@@ -9,6 +9,7 @@
     "preview": "astro preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:visual": "playwright test wave-snapshot.spec.ts",
     "test:accuracy": "vitest run tests/unit/wave-accuracy.test.ts --reporter=verbose",
     "test:thrashing": "vitest run tests/unit/animation-thrashing.test.ts --reporter=verbose",
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
@@ -18,7 +19,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,astro,css,json}\"",
     "typecheck": "tsc --noEmit --project tsconfig.check.json",
-    "verify": "npm run test && npm run build"
+    "verify": "npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
@@ -26,6 +27,7 @@
     "@astrojs/tailwind": "^6.0.0",
     "astro": "^5.2.0",
     "d3": "^7.9.0",
+    "@fontsource/dm-sans": "^5.2.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "yet-another-react-lightbox": "^3.31.0",
@@ -33,7 +35,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@fontsource/dm-sans": "^5.2.8",
     "@napi-rs/canvas": "^0.1.95",
     "@playwright/cli": "^0.1.1",
     "@playwright/test": "^1.50.0",

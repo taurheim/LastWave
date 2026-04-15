@@ -1,5 +1,5 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/core/**/*", "src/layouts/**/*", "src/pages/**/*", "src/components/**/*.tsx", "src/components/**/*.ts", "src/store/**/*"],
-  "exclude": ["node_modules", "tests", "src/main.ts", "src/App.vue", "src/store.ts", "src/router.ts", "src/lastwave.ts", "src/models/**/*", "src/views/**/*", "src/datasources/**/*", "src/renderers/**/*", "src/actions/**/*", "src/types/**/*", "src/components/**/*.vue"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "tests"]
 }

@@ -9,6 +9,6 @@
     },
     "types": ["vitest/globals"]
   },
-  "include": ["src/core/**/*", "src/layouts/**/*", "src/pages/**/*", "src/components/**/*.tsx", "src/components/**/*.ts", "src/store/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "src/main.ts", "src/App.vue", "src/store.ts", "src/router.ts", "src/lastwave.ts", "src/models/**/*", "src/views/**/*", "src/datasources/**/*", "src/renderers/**/*", "src/actions/**/*", "src/types/**/*", "src/components/**/*.vue"]
+  "include": ["src/**/*", "tests/**/*"],
+  "exclude": ["node_modules"]
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 import WaveOptions from '@/components/WaveOptions';
 import WaveVisualization from '@/components/WaveVisualization';
 import ImageActions from '@/components/ImageActions';
@@ -8,7 +8,7 @@ import type { OverflowInfo } from '@/core/wave/overflowDetection';
 import type SegmentData from '@/core/models/SegmentData';
 import type SeriesData from '@/core/models/SeriesData';
 import LoadingStage from '@/core/models/LoadingStage';
-import type { DataSource } from '@/core/dataSource';
+import type { DataSource } from '@/core/http/dataSource';
 import { LastFmDataSource } from '@/core/lastfm/LastFmDataSource';
 import ListenBrainzDataSource from '@/core/listenbrainz/ListenBrainzDataSource';
 import TimeSpan from '@/core/lastfm/models/TimeSpan';
@@ -177,15 +177,15 @@ export default function LastWaveApp() {
   const [drawingStatus, setDrawingStatus] = useState('');
   const prevCoreRef = useRef<{ sd: SeriesData[] | null; key: string }>({ sd: null, key: '' });
   const renderCompleteResolveRef = useRef<(() => void) | null>(null);
-  const labelTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const labelTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const isAnimatingRef = useRef(false);
   const streamSegmentsRef = useRef<(SegmentData[] | undefined)[]>([]);
-  const streamTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const streamTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const streamMinPlaysRef = useRef<number>(Infinity);
   const sweepBandCapRef = useRef<number>(Infinity);
   const streamTagDataRef = useRef<Record<string, { tags: string[] }>>({});
   const revealFrontierRef = useRef(0);
-  const animFrameTimerRef = useRef<ReturnType<typeof setInterval>>();
+  const animFrameTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const animFrameCountRef = useRef(0);
   const animDoneResolveRef = useRef<(() => void) | null>(null);
   const animBuildupStepsRef = useRef<number[]>([]);
@@ -636,8 +636,8 @@ export default function LastWaveApp() {
 
       // Build time span
       const startDate =
-        dsOpts.time_start instanceof Date ? dsOpts.time_start : new Date(dsOpts.time_start);
-      const endDate = dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end);
+        dsOpts.time_start instanceof Date ? dsOpts.time_start : new Date(dsOpts.time_start!);
+      const endDate = dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end!);
       const startUnix = Math.floor(startDate.getTime() / 1000);
       const endUnix = Math.floor(endDate.getTime() / 1000);
 

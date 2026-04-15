@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useLastWaveStore, type Toast } from '@/store/index';
+import { useLastWaveStore, type Toast } from '@/store/appStore';
 
 const AUTO_DISMISS_MS = 8000;
 const SUPPORT_FOOTER =

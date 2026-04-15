@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import WaveVisualization from '@/components/WaveVisualization';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 
 describe('WaveVisualization', () => {
   beforeEach(() => {

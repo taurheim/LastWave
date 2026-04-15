@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 
 const FALLBACK_FONTS = [
   'DM Sans',

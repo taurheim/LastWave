@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
-import { fetchWithRetry } from '@/core/fetchWithRetry';
+import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 
 // Fetch Google Fonts CSS, download all referenced font files, and return
 // a self-contained <style> block with base64-inlined @font-face rules.

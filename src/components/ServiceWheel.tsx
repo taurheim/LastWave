@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import type { ServiceType } from '@/store/index';
+import type { ServiceType } from '@/store/appStore';
 
 interface ServiceWheelProps {
   service: ServiceType;

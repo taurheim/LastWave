@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WaveOptions from '@/components/WaveOptions';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 
 describe('WaveOptions', () => {
   const mockOnSubmit = vi.fn();

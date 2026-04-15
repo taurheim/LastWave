@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
-import { useLastWaveStore } from '@/store/index';
-import { fetchWithRetry } from '@/core/fetchWithRetry';
+import { useLastWaveStore } from '@/store/appStore';
+import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 import { packImageSpans, IMAGES_PER_BATCH } from '@/core/gallery/gridSize';
 import type { GridSpanClass } from '@/core/gallery/gridSize';
 

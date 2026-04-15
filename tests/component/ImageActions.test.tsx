@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import ImageActions from '@/components/ImageActions';
-import { useLastWaveStore } from '@/store/index';
+import { useLastWaveStore } from '@/store/appStore';
 
 describe('ImageActions', () => {
   beforeEach(() => {

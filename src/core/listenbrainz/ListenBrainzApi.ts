@@ -1,5 +1,5 @@
 import SegmentData from '@/core/models/SegmentData';
-import { fetchWithRetry } from '@/core/fetchWithRetry';
+import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 
 const API_BASE_URL = 'https://api.listenbrainz.org/1';
 const LISTENS_PAGE_SIZE = 1000;

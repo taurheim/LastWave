@@ -1,4 +1,4 @@
-import { fetchWithRetry } from '@/core/fetchWithRetry';
+import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 
 export default class CloudinaryAPI {
   private ACCOUNT_NAME = 'lastwave';

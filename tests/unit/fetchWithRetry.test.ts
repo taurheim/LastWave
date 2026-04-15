@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchWithRetry, _resetRateLimitGate } from '@/core/fetchWithRetry';
+import { fetchWithRetry, _resetRateLimitGate } from '@/core/http/fetchWithRetry';
 
 describe('fetchWithRetry', () => {
   beforeEach(() => {

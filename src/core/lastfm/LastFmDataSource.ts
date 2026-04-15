@@ -1,8 +1,8 @@
-import type { DataSource } from '@/core/dataSource';
+import type { DataSource } from '@/core/http/dataSource';
 import type { LastFmResponse } from '@/core/lastfm/LastFmApi';
 import LastFmApi from '@/core/lastfm/LastFmApi';
 import URLParameter from '@/core/lastfm/models/URLParameter';
-import { fetchWithRetry } from '@/core/fetchWithRetry';
+import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 import type SegmentData from '@/core/models/SegmentData';
 
 export class LastFmDataSource implements DataSource {

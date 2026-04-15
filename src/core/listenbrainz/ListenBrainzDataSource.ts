@@ -1,4 +1,4 @@
-import type { DataSource } from '@/core/dataSource';
+import type { DataSource } from '@/core/http/dataSource';
 import type SegmentData from '@/core/models/SegmentData';
 import ListenBrainzApi from '@/core/listenbrainz/ListenBrainzApi';
 

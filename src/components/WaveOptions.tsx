@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/index';
+import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/appStore';
 import SpotifyModal from './SpotifyModal';
 import ServiceWheel from './ServiceWheel';
 import schemes from '@/core/config/schemes.json';

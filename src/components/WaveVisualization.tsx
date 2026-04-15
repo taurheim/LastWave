@@ -1,7 +1,7 @@
 import { useRef, useEffect, memo } from 'react';
 import * as d3 from 'd3';
 import type SeriesData from '@/core/models/SeriesData';
-import { useLastWaveStore, type ColorScheme } from '@/store/index';
+import { useLastWaveStore, type ColorScheme } from '@/store/appStore';
 import schemes from '@/core/config/schemes.json';
 import { findLabelIndices, createCanvasMeasurer } from '@/core/wave/util';
 import { findOptimalLabel } from '@/core/wave/bezierFit';
@@ -252,7 +252,10 @@ export default memo(function WaveVisualization({
     const balancedJitter = suppressLabels ? 1.0 : stackJitter;
     const orderFn =
       offsetName === 'balanced'
-        ? (s: d3.Series<Record<string, number>, string>[]) => stackOrderSlopeBalanced(s, balancedJitter)
+        ? ((s: d3.Series<Record<string, number>, string>[]) =>
+            stackOrderSlopeBalanced(s, balancedJitter)) as unknown as (
+            series: d3.Series<Record<string, number>, string>,
+          ) => number[]
         : offsetName === 'silhouette'
           ? d3.stackOrderInsideOut
           : d3.stackOrderNone;
