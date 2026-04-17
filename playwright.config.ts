@@ -8,9 +8,6 @@ const viewports = {
 };
 
 const isPreview = !!process.env.CI_USE_PREVIEW;
-const baseURL = isPreview
-  ? 'http://localhost:4321/lastwave'
-  : 'http://localhost:4321';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -21,7 +18,7 @@ export default defineConfig({
   reporter: 'html',
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}',
   use: {
-    baseURL,
+    baseURL: 'http://localhost:4321',
     trace: 'on-first-retry',
   },
   projects: [
@@ -43,7 +40,7 @@ export default defineConfig({
   ],
   webServer: {
     command: isPreview ? 'npm run preview' : 'npm run dev',
-    url: 'http://localhost:4321/lastwave/',
+    url: 'http://localhost:4321',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
