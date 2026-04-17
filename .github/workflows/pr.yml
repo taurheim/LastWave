@@ -74,9 +74,12 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: build
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
     env:
       ASTRO_BASE: /
       CI_USE_PREVIEW: true
+      HOME: /root
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -85,7 +88,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: npx playwright install --with-deps
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
