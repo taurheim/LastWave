@@ -26,4 +26,4 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
-          server-dir: /home/savafmgz/public_html/lastwave/
+          server-dir: /

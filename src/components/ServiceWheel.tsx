@@ -9,10 +9,12 @@ interface ServiceWheelProps {
   onSpotifyClick: () => void;
 }
 
+const BASE = import.meta.env.BASE_URL;
+
 const services = [
-  { key: 'spotify' as const, label: 'Spotify', icon: '/icons/spotify.svg' },
-  { key: 'lastfm' as const, label: 'Last.fm', icon: '/icons/lastfm.svg' },
-  { key: 'listenbrainz' as const, label: 'ListenBrainz', icon: '/icons/listenbrainz.svg' },
+  { key: 'spotify' as const, label: 'Spotify', icon: `${BASE}icons/spotify.svg` },
+  { key: 'lastfm' as const, label: 'Last.fm', icon: `${BASE}icons/lastfm.svg` },
+  { key: 'listenbrainz' as const, label: 'ListenBrainz', icon: `${BASE}icons/listenbrainz.svg` },
 ] as const;
 
 type ServiceKey = (typeof services)[number]['key'];

@@ -361,7 +361,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 >
                   <div className="mb-1.5 overflow-hidden rounded">
                     <img
-                      src={`/scheme-previews/${name}.png`}
+                      src={`${import.meta.env.BASE_URL}scheme-previews/${name}.png`}
                       alt={`${name} theme preview`}
                       width={140}
                       height={60}
