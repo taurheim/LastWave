@@ -20,9 +20,15 @@ export default class ListenBrainzApi {
     to: number,
     onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
-    return this.aggregateListens(username, from, to, (listen) => {
-      return listen.track_metadata.artist_name;
-    }, onSubProgress);
+    return this.aggregateListens(
+      username,
+      from,
+      to,
+      (listen) => {
+        return listen.track_metadata.artist_name;
+      },
+      onSubProgress,
+    );
   }
 
   async fetchTopAlbums(
@@ -31,11 +37,17 @@ export default class ListenBrainzApi {
     to: number,
     onSubProgress?: (subText: string) => void,
   ): Promise<SegmentData[]> {
-    return this.aggregateListens(username, from, to, (listen) => {
-      const release = listen.track_metadata.release_name;
-      if (!release) return null;
-      return `${release} · ${listen.track_metadata.artist_name}`;
-    }, onSubProgress);
+    return this.aggregateListens(
+      username,
+      from,
+      to,
+      (listen) => {
+        const release = listen.track_metadata.release_name;
+        if (!release) return null;
+        return `${release} · ${listen.track_metadata.artist_name}`;
+      },
+      onSubProgress,
+    );
   }
 
   private async aggregateListens(

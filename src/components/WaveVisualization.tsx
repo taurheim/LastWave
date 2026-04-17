@@ -55,7 +55,9 @@ function colorDistance(a: string, b: string): number {
   const [r1, g1, b1] = hexToRgb(a);
   const [r2, g2, b2] = hexToRgb(b);
   const rMean = (r1 + r2) / 2;
-  const dr = r1 - r2, dg = g1 - g2, db = b1 - b2;
+  const dr = r1 - r2,
+    dg = g1 - g2,
+    db = b1 - b2;
   return Math.sqrt((2 + rMean / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rMean) / 256) * db * db);
 }
 
@@ -107,7 +109,8 @@ function assignStackColors(
         }
         // Consecutive non-zero bands in the stack are visually adjacent
         for (let k = 0; k < nonZero.length - 1; k++) {
-          const a = nonZero[k], b = nonZero[k + 1];
+          const a = nonZero[k],
+            b = nonZero[k + 1];
           conflicts.get(a)!.add(b);
           conflicts.get(b)!.add(a);
         }
@@ -252,18 +255,14 @@ export default memo(function WaveVisualization({
     const balancedJitter = suppressLabels ? 1.0 : stackJitter;
     const orderFn =
       offsetName === 'balanced'
-        ? ((s: d3.Series<Record<string, number>, string>[]) =>
+        ? (((s: d3.Series<Record<string, number>, string>[]) =>
             stackOrderSlopeBalanced(s, balancedJitter)) as unknown as (
             series: d3.Series<Record<string, number>, string>,
-          ) => number[]
+          ) => number[])
         : offsetName === 'silhouette'
           ? d3.stackOrderInsideOut
           : d3.stackOrderNone;
-    const stack = d3
-      .stack<Record<string, number>>()
-      .keys(keys)
-      .offset(offsetFn)
-      .order(orderFn);
+    const stack = d3.stack<Record<string, number>>().keys(keys).offset(offsetFn).order(orderFn);
 
     const stackedData = stack(tableData);
 
@@ -271,9 +270,10 @@ export default memo(function WaveVisualization({
     // Fall back to hash-based assignment for final render or non-balanced modes.
     const colorKeys = offsetName === 'balanced' ? stackedData.map((layer) => layer.key) : keys;
     const fixAdj = !suppressLabels;
-    const colorMap = lockedColorMap && lockedColorMap.size > 0
-      ? lockedColorMap
-      : assignStackColors(colorKeys, colors, fixAdj, tableData);
+    const colorMap =
+      lockedColorMap && lockedColorMap.size > 0
+        ? lockedColorMap
+        : assignStackColors(colorKeys, colors, fixAdj, tableData);
 
     // Scales
     const xScale = d3
@@ -281,8 +281,10 @@ export default memo(function WaveVisualization({
       .domain([0, numSegments - 1])
       .range([0, width]);
 
-    const yMin = lockedYDomain?.[0] ?? (d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0);
-    const yMax = lockedYDomain?.[1] ?? (d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0);
+    const yMin =
+      lockedYDomain?.[0] ?? d3.min(stackedData, (layer) => d3.min(layer, (d) => d[0])) ?? 0;
+    const yMax =
+      lockedYDomain?.[1] ?? d3.max(stackedData, (layer) => d3.max(layer, (d) => d[1])) ?? 0;
     const yScale = d3.scaleLinear().domain([yMin, yMax]).range([height, 0]);
 
     // Area generator
@@ -302,10 +304,7 @@ export default memo(function WaveVisualization({
       svg.attr('width', width).attr('height', height).attr('viewBox', `0 0 ${width} ${height}`);
 
       // Background — transparent during animation so page background shows through
-      svg.append('rect')
-        .attr('width', width)
-        .attr('height', height)
-        .attr('fill', 'transparent');
+      svg.append('rect').attr('width', width).attr('height', height).attr('fill', 'transparent');
 
       const fontColor: string =
         !isDark && scheme.fontColorLight ? scheme.fontColorLight : scheme.fontColor;

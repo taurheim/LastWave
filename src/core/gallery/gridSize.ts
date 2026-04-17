@@ -7,9 +7,9 @@ const SPAN_VALUE: Record<GridSpanClass, number> = { small: 1, wide: 2, triple: 3
 const VALUE_TO_SPAN: GridSpanClass[] = [
   'small', // 0 (unused)
   'small', // 1
-  'wide',  // 2
-  'triple',// 3
-  'full',  // 4
+  'wide', // 2
+  'triple', // 3
+  'full', // 4
 ];
 
 /** Base span from pure aspect ratio — no variety applied. */
@@ -77,13 +77,11 @@ function maxSpan(width: number, height: number): number {
  *  3. When the last image in a row can't fill the gap (e.g. portrait),
  *     walk backwards and widen the nearest eligible image.
  */
-export function packImageSpans(
-  images: Array<{ width: number; height: number }>,
-): GridSpanClass[] {
+export function packImageSpans(images: Array<{ width: number; height: number }>): GridSpanClass[] {
   if (images.length === 0) return [];
 
-  const ideal = images.map((img, i) =>
-    SPAN_VALUE[getVariedGridSpanClass(img.width, img.height, i)],
+  const ideal = images.map(
+    (img, i) => SPAN_VALUE[getVariedGridSpanClass(img.width, img.height, i)],
   );
   const max = images.map((img) => maxSpan(img.width, img.height));
   const spans = new Array<number>(images.length);

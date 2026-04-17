@@ -27,7 +27,9 @@ import schemes from '@/core/config/schemes.json';
 // d3's .order() type expects (series: Series) => number[] but our ordering
 // function takes Series[] (the full array). Cast once here to avoid repetition.
 const balancedOrder = ((s: d3.Series<Record<string, number>, string>[]) =>
-  stackOrderSlopeBalanced(s, 0.15)) as unknown as (series: d3.Series<Record<string, number>, string>) => number[];
+  stackOrderSlopeBalanced(s, 0.15)) as unknown as (
+  series: d3.Series<Record<string, number>, string>,
+) => number[];
 
 const LAST_FM_API_KEY = '27ca6b1a0750cf3fb3e1f0ec5b432b72';
 const MAX_CONCURRENT = 10;
@@ -302,8 +304,10 @@ export default function LastWaveApp() {
       const newArtists = cleaned.filter((s) => !cmap.has(s.title));
       if (newArtists.length > 0) {
         const store = useLastWaveStore.getState();
-        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const schemeName = (store.rendererOptions.color_scheme ??
+          'lastwave') as keyof typeof schemes;
+        const scheme =
+          (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
         const palette = scheme.schemeColors;
         const nColors = palette.length;
 
@@ -312,7 +316,9 @@ export default function LastWaveApp() {
         const table: Record<string, number>[] = [];
         for (let i = 0; i < numSeg; i++) {
           const row: Record<string, number> = { index: i };
-          cleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          cleaned.forEach((s) => {
+            row[s.title] = s.counts[i] ?? 0;
+          });
           table.push(row);
         }
         if (allKeys.length > 0 && numSeg > 0) {
@@ -449,8 +455,10 @@ export default function LastWaveApp() {
       // and the final labeled render. See specs/animation-smoothing.md.
       if (!lockedColorMapRef.current) {
         const store = useLastWaveStore.getState();
-        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const schemeName = (store.rendererOptions.color_scheme ??
+          'lastwave') as keyof typeof schemes;
+        const scheme =
+          (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
         const palette = scheme.schemeColors;
         const nColors = palette.length;
 
@@ -461,7 +469,9 @@ export default function LastWaveApp() {
         const numSeg = sweepCleaned[0]?.counts.length ?? 0;
         for (let i = 0; i < numSeg; i++) {
           const row: Record<string, number> = { index: i };
-          sweepCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          sweepCleaned.forEach((s) => {
+            row[s.title] = s.counts[i] ?? 0;
+          });
           sweepTable.push(row);
         }
         if (sweepKeys.length > 0 && numSeg > 0) {
@@ -491,7 +501,9 @@ export default function LastWaveApp() {
         const estTable: Record<string, number>[] = [];
         for (let i = 0; i < numSeg; i++) {
           const row: Record<string, number> = { index: i };
-          finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          finalCleaned.forEach((s) => {
+            row[s.title] = s.counts[i] ?? 0;
+          });
           estTable.push(row);
         }
         const estStack = d3
@@ -527,8 +539,10 @@ export default function LastWaveApp() {
       const newArtists = cleaned.filter((s) => !cmap.has(s.title));
       if (newArtists.length > 0) {
         const store = useLastWaveStore.getState();
-        const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-        const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+        const schemeName = (store.rendererOptions.color_scheme ??
+          'lastwave') as keyof typeof schemes;
+        const scheme =
+          (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
         const palette = scheme.schemeColors;
         const nColors = palette.length;
 
@@ -538,7 +552,9 @@ export default function LastWaveApp() {
         const sweepTable: Record<string, number>[] = [];
         for (let i = 0; i < numSeg; i++) {
           const row: Record<string, number> = { index: i };
-          cleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+          cleaned.forEach((s) => {
+            row[s.title] = s.counts[i] ?? 0;
+          });
           sweepTable.push(row);
         }
         const sweepStack = d3
@@ -630,14 +646,16 @@ export default function LastWaveApp() {
     store.setStages(stages);
 
     try {
-      const dataSource: DataSource = service === 'listenbrainz'
-        ? new ListenBrainzDataSource()
-        : new LastFmDataSource(LAST_FM_API_KEY);
+      const dataSource: DataSource =
+        service === 'listenbrainz'
+          ? new ListenBrainzDataSource()
+          : new LastFmDataSource(LAST_FM_API_KEY);
 
       // Build time span
       const startDate =
         dsOpts.time_start instanceof Date ? dsOpts.time_start : new Date(dsOpts.time_start!);
-      const endDate = dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end!);
+      const endDate =
+        dsOpts.time_end instanceof Date ? dsOpts.time_end : new Date(dsOpts.time_end!);
       const startUnix = Math.floor(startDate.getTime() / 1000);
       const endUnix = Math.floor(endDate.getTime() / 1000);
 
@@ -727,8 +745,11 @@ export default function LastWaveApp() {
               // their existing colors.
               if (lockedColorMapRef.current) {
                 const store = useLastWaveStore.getState();
-                const schemeName = (store.rendererOptions.color_scheme ?? 'lastwave') as keyof typeof schemes;
-                const scheme = (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ?? schemes.lastwave;
+                const schemeName = (store.rendererOptions.color_scheme ??
+                  'lastwave') as keyof typeof schemes;
+                const scheme =
+                  (schemes as Record<string, { schemeColors: string[] }>)[schemeName] ??
+                  schemes.lastwave;
                 const palette = scheme.schemeColors;
                 const nColors = palette.length;
 
@@ -738,7 +759,9 @@ export default function LastWaveApp() {
                 const numSeg = finalCleaned[0]?.counts.length ?? 0;
                 for (let i = 0; i < numSeg; i++) {
                   const row: Record<string, number> = { index: i };
-                  finalCleaned.forEach((s) => { row[s.title] = s.counts[i] ?? 0; });
+                  finalCleaned.forEach((s) => {
+                    row[s.title] = s.counts[i] ?? 0;
+                  });
                   finalTable.push(row);
                 }
                 if (finalKeys.length > 0 && numSeg > 0) {
@@ -756,7 +779,8 @@ export default function LastWaveApp() {
 
                     // New artist: pick a color that doesn't match neighbors
                     const prevColor = i > 0 ? cmap.get(orderedKeys[i - 1]) : undefined;
-                    const nextColor = i < orderedKeys.length - 1 ? cmap.get(orderedKeys[i + 1]) : undefined;
+                    const nextColor =
+                      i < orderedKeys.length - 1 ? cmap.get(orderedKeys[i + 1]) : undefined;
 
                     // Try evenly-spaced first, then scan for non-conflicting
                     let chosen = palette[i % nColors];
@@ -1147,7 +1171,10 @@ export default function LastWaveApp() {
         {/* Portrait rotation hint — below chart, hidden in landscape and when customizing */}
         {showVisualization && !showCustomize && (
           <div className="flex items-center justify-center gap-2 py-3 opacity-[0.18] max-lg:landscape:hidden">
-            <span className="text-2xl text-lw-text" style={{ animation: 'lw-rotate-hint 2.5s ease-in-out infinite' }}>
+            <span
+              className="text-2xl text-lw-text"
+              style={{ animation: 'lw-rotate-hint 2.5s ease-in-out infinite' }}
+            >
               ↻
             </span>
             <span className="text-xs font-semibold uppercase tracking-widest text-lw-text">

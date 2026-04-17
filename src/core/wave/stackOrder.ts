@@ -81,7 +81,7 @@ export function stackOrderSlopeBalanced(
   const scored: { idx: number; score: number; key: string; hash: number }[] = new Array(n);
   const jf = Math.max(0, Math.min(MAX_EFFECTIVE_JITTER, jitterFraction));
   const BUCKET_NORMALIZER = 20; // fixed: supports peaks up to 2^20 ≈ 1M
-  const BUCKET_DIVISOR = 3;     // coarser buckets → fewer boundary crossings during sweep
+  const BUCKET_DIVISOR = 3; // coarser buckets → fewer boundary crossings during sweep
   for (let j = 0; j < n; j++) {
     const bucket = peaks[j] > 0 ? Math.floor(Math.log2(peaks[j]) / BUCKET_DIVISOR) : 0;
     const normBucket = bucket / BUCKET_NORMALIZER;
@@ -106,9 +106,7 @@ export function stackOrderSlopeBalanced(
   if (jitterFraction > STABLE_PLACEMENT_THRESHOLD) {
     const withTarget = scored.map((s) => {
       const dist = (1 - s.score) * 0.5;
-      const target = s.hash < 0.5
-        ? 0.5 - dist
-        : 0.5 + dist;
+      const target = s.hash < 0.5 ? 0.5 - dist : 0.5 + dist;
       return { idx: s.idx, target, key: s.key };
     });
     withTarget.sort((a, b) => a.target - b.target || a.key.localeCompare(b.key));

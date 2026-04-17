@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLastWaveStore, type ColorScheme, type DataSourceOptions, type RendererOptions, type ServiceType } from '@/store/appStore';
+import {
+  useLastWaveStore,
+  type ColorScheme,
+  type DataSourceOptions,
+  type RendererOptions,
+  type ServiceType,
+} from '@/store/appStore';
 import SpotifyModal from './SpotifyModal';
 import ServiceWheel from './ServiceWheel';
 import schemes from '@/core/config/schemes.json';
@@ -122,7 +128,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   // Compute allowed segment lengths based on date preset
   const rangeDurationMs = isCustomDate
     ? null // custom ranges allow all segments
-    : easyDateEntries.find(([name]) => name === datePreset)?.[1].offsets[0] ?? null;
+    : (easyDateEntries.find(([name]) => name === datePreset)?.[1].offsets[0] ?? null);
   const allowedSegments = getAllowedSegments(rangeDurationMs);
 
   // Auto-correct group_by if the current value is no longer allowed
@@ -178,11 +184,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl px-3 sm:px-6 py-3 lg:py-6">
+    <form onSubmit={handleSubmit} className="mx-auto max-w-2xl px-3 py-3 sm:px-6 lg:py-6">
       {/* Main Options */}
       <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
-        <div className="overflow-x-clip pt-4 pb-2">
+        <div className="overflow-x-clip pb-2 pt-4">
           <div
             className="relative transition-all duration-300"
             style={{ marginRight: serviceDropdownOpen ? 145 : 0 }}
@@ -196,9 +202,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               data-1p-ignore
               data-lpignore="true"
               data-bwignore
-              className="w-full rounded-lg border border-lw-border bg-lw-surface pl-4 py-3 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              className="w-full rounded-lg border border-lw-border bg-lw-surface py-3 pl-4 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
               style={{ paddingRight: serviceDropdownOpen ? 16 : 56 }}
-              placeholder={service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'}
+              placeholder={
+                service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'
+              }
             />
             <div
               className="absolute top-1/2 transition-all duration-300"
@@ -212,7 +220,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 dropdownOpen={serviceDropdownOpen}
                 onToggleDropdown={() => setServiceDropdownOpen(!serviceDropdownOpen)}
                 onServiceChange={handleServiceChange}
-                onSpotifyClick={() => { setSpotifyModalOpen(true); setServiceDropdownOpen(false); }}
+                onSpotifyClick={() => {
+                  setSpotifyModalOpen(true);
+                  setServiceDropdownOpen(false);
+                }}
               />
             </div>
           </div>
@@ -223,7 +234,9 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           <div className="flex flex-col items-center gap-y-0.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-1.5 sm:gap-y-0 lg:gap-x-2">
             {/* Line 1: Graph my <date preset> */}
             <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
-              <span className="whitespace-nowrap text-lw-muted text-[1.4rem] sm:text-lg lg:text-xl">Graph my</span>
+              <span className="whitespace-nowrap text-[1.4rem] text-lw-muted sm:text-lg lg:text-xl">
+                Graph my
+              </span>
               <span className="relative inline-block">
                 <select
                   value={datePreset}

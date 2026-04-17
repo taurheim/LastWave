@@ -80,7 +80,7 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className="grid items-center overflow-hidden rounded-lg transition-colors duration-200 cursor-pointer hover:bg-lw-accent/10"
+            className="grid cursor-pointer items-center overflow-hidden rounded-lg transition-colors duration-200 hover:bg-lw-accent/10"
             style={{
               height: 42,
               width: dropdownOpen ? 135 : 'max-content',

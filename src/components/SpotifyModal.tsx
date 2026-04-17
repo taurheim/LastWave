@@ -36,7 +36,13 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
           className="absolute right-3 top-3 rounded-lg p-1.5 text-lw-muted transition-colors hover:bg-lw-accent/10 hover:text-lw-text"
           aria-label="Close"
         >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
@@ -47,8 +53,8 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </h2>
 
         <p className="mb-6 text-sm leading-relaxed text-lw-muted sm:text-base">
-          Unfortunately, Spotify does not expose a public API to access your music listening history.
-          To use LastWave (and{' '}
+          Unfortunately, Spotify does not expose a public API to access your music listening
+          history. To use LastWave (and{' '}
           <a
             href="https://www.reddit.com/r/lastfm/comments/htzomy/list_of_spotifylastfm_stats_websites_and_not_just/"
             target="_blank"
@@ -71,11 +77,11 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
         {/* Guide toggle */}
         <div className="mb-5 flex items-center justify-center gap-1 rounded-lg border border-lw-border bg-lw-surface/50 p-1">
-          {([
+          {[
             { key: 'both' as SetupGuide, label: 'Both (Recommended)' },
             { key: 'lastfm' as SetupGuide, label: 'Last.fm only' },
             { key: 'listenbrainz' as SetupGuide, label: 'ListenBrainz only' },
-          ]).map((opt) => (
+          ].map((opt) => (
             <button
               key={opt.key}
               type="button"
@@ -95,7 +101,9 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         <div className="space-y-4 text-sm text-lw-text">
           {/* Create Account */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Create account</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+              Create account
+            </p>
             <ol className="list-decimal space-y-2 pl-5">
               {guide !== 'listenbrainz' && (
                 <li>
@@ -126,7 +134,9 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
           {/* Connect to Spotify */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Connect to Spotify</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+              Connect to Spotify
+            </p>
             <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 3 : 2}>
               {guide !== 'listenbrainz' && (
                 <li>
@@ -157,7 +167,9 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
           {/* Upload History */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">Upload history</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+              Upload history
+            </p>
             <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 5 : 3}>
               {guide !== 'listenbrainz' && (
                 <li>
@@ -190,20 +202,22 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </div>
 
         {/* Why both? */}
-        {guide === 'both' && <div className="mt-8 rounded-lg border border-lw-border bg-lw-surface/50 p-4 pt-3">
-          <h4 className="mb-2 text-sm font-semibold text-lw-text">Why both?</h4>
-          <p className="text-xs leading-relaxed text-lw-muted sm:text-sm">
-            An important limitation of last.fm is that you cannot update your listening history past 2
-            weeks ago. This only affects historical data — going forward, last.fm will capture all
-            tracks you listen to. ListenBrainz is an open source MetaBrainz project that is less
-            popular but has more flexibility, and can import your full history. LastWave supports
-            both, but many other tools may only support last.fm.
-          </p>
-          <p className="mt-2 text-xs leading-relaxed text-lw-muted sm:text-sm">
-            My recommendation is to set up both for maximum flexibility, but you can always choose one
-            or the other as you prefer.
-          </p>
-        </div>}
+        {guide === 'both' && (
+          <div className="mt-8 rounded-lg border border-lw-border bg-lw-surface/50 p-4 pt-3">
+            <h4 className="mb-2 text-sm font-semibold text-lw-text">Why both?</h4>
+            <p className="text-xs leading-relaxed text-lw-muted sm:text-sm">
+              An important limitation of last.fm is that you cannot update your listening history
+              past 2 weeks ago. This only affects historical data — going forward, last.fm will
+              capture all tracks you listen to. ListenBrainz is an open source MetaBrainz project
+              that is less popular but has more flexibility, and can import your full history.
+              LastWave supports both, but many other tools may only support last.fm.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-lw-muted sm:text-sm">
+              My recommendation is to set up both for maximum flexibility, but you can always choose
+              one or the other as you prefer.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

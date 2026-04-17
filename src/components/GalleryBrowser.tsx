@@ -38,9 +38,12 @@ export default function GalleryBrowser() {
 
   useEffect(() => {
     fetchWithRetry(GALLERY_API_URL)
-      .then((res) => res.json() as Promise<{
-        resources?: Array<{ public_id: string; width?: number; height?: number }>;
-      }>)
+      .then(
+        (res) =>
+          res.json() as Promise<{
+            resources?: Array<{ public_id: string; width?: number; height?: number }>;
+          }>,
+      )
       .then((data) => {
         const resources = data.resources ?? [];
         const dims = resources.map((r) => ({
