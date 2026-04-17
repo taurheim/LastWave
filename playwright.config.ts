@@ -22,16 +22,21 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    ...Object.entries(viewports).map(([name, viewport]) => ({
-      name: `visual-${name}`,
-      use: { ...devices['Desktop Chrome'], viewport },
-      testMatch: 'visual-regression.spec.ts',
-    })),
-    {
-      name: 'wave-snapshots',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
-      testMatch: 'wave-snapshot.spec.ts',
-    },
+    // Visual/snapshot tests use platform-specific baselines — skip in CI
+    ...(!process.env.CI
+      ? [
+          ...Object.entries(viewports).map(([name, viewport]) => ({
+            name: `visual-${name}`,
+            use: { ...devices['Desktop Chrome'], viewport },
+            testMatch: 'visual-regression.spec.ts',
+          })),
+          {
+            name: 'wave-snapshots',
+            use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
+            testMatch: 'wave-snapshot.spec.ts',
+          },
+        ]
+      : []),
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
