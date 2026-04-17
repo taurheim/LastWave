@@ -20,6 +20,7 @@ docker run --rm \
   -w /work \
   -e ASTRO_BASE=/ \
   -e CI_USE_PREVIEW=true \
+  -e CI=true \
   "$IMAGE" \
   bash -c "npm ci && npm run build && npx playwright test --update-snapshots"
 
