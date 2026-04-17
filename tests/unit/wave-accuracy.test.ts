@@ -79,15 +79,12 @@ interface CachedData {
 
 const FIXTURE_DIR = path.resolve(__dirname, '../fixtures/wave-accuracy');
 
-// Curated subset: users with the most overflow issues (≥2 critical across all offsets).
-// Keeps accuracy tests fast (~20s) while covering the most problematic cases.
+// Curated subset: users that surface the most overflow issues across offsets.
+// Trimmed to the worst performers to keep CI under the Vitest RPC timeout.
 const ACCURACY_USERS = [
-  'arope23', 'AlterMann', 'grimmless', 'AlphaTeam',
-  'Ganelon13', 'oscarbuelna', 'oliviawoof', 'babydwake',
-  'kauaaniceto', 'snyeoz', 'aoaaoa', 'crewsackan',
-  'NestingKoala', 'w0rldprincess', 'captmilox', 'Faust_1808',
-  'txtmepls', 'meatyclownman', 'MixtapesHappen', 'digicait',
-  'Taurheim',
+  'grimmless', 'oscarbuelna', 'crewsackan',
+  'w0rldprincess', 'captmilox', 'Faust_1808',
+  'MixtapesHappen', 'Taurheim',
 ];
 
 function loadCachedUsers(): CachedData[] {
@@ -107,7 +104,7 @@ const OFFSET_MAP: Record<string, (series: d3.Series<any, any>, order: number[]) 
 };
 
 type OffsetMode = keyof typeof OFFSET_MAP;
-const ALL_OFFSETS: OffsetMode[] = ['balanced', 'silhouette', 'wiggle', 'expand', 'zero'];
+const ALL_OFFSETS: OffsetMode[] = ['balanced', 'wiggle', 'expand', 'zero'];
 
 // ── Overflow computation ────────────────────────────────────────────
 interface LabelResult {

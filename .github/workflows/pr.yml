@@ -42,7 +42,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx vitest run
+      - run: npx vitest run --exclude 'tests/unit/wave-accuracy.test.ts'
 
   accuracy-tests:
     name: Accuracy Tests
@@ -79,8 +79,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build
       - run: npx playwright install --with-deps
       - run: npm run test:e2e
+        env:
+          CI_USE_PREVIEW: true
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
