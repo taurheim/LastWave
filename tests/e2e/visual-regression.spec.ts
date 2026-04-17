@@ -46,7 +46,7 @@ test.describe('Visual Regression', () => {
   test('gallery page matches baseline', async ({ page }, testInfo) => {
     await mockGalleryApi(page);
     await page.goto('/gallery');
-    await page.getByRole('button', { name: 'Next →' }).waitFor({ timeout: 15000 });
+    await page.locator('img[loading="lazy"]').first().waitFor({ timeout: 15000 });
     await page.waitForLoadState('networkidle');
     const vp = testInfo.project.name.replace('visual-', '');
     await expect(page).toHaveScreenshot(`gallery-${vp}.png`, {
