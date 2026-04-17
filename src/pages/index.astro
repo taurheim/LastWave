@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LastWaveApp from '../components/LastWaveApp';
+---
+
+<BaseLayout
+  title="LastWave – Visualize Your Music Listening History"
+  description="Create beautiful wave visualizations of your music listening history. Connect Last.fm or ListenBrainz to chart your top artists, albums, and genres over time."
+>
+  <LastWaveApp client:load />
+</BaseLayout>

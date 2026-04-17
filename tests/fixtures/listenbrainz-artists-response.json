@@ -1,0 +1,28 @@
+{
+  "payload": {
+    "artists": [
+      {
+        "artist_mbid": "a74b1b7f-71a5-4011-9441-dc7410c7388a",
+        "artist_name": "Radiohead",
+        "listen_count": 45
+      },
+      {
+        "artist_mbid": "83d91898-7763-47d7-b03b-b92132375c47",
+        "artist_name": "Pink Floyd",
+        "listen_count": 32
+      },
+      {
+        "artist_mbid": "cc197bad-dc9c-440d-a5b5-d52ba2e14234",
+        "artist_name": "Coldplay",
+        "listen_count": 28
+      }
+    ],
+    "count": 3,
+    "total_artist_count": 50,
+    "range": "custom",
+    "last_updated": 1588494361,
+    "user_id": "testuser",
+    "from_ts": 1234567890,
+    "to_ts": 1234667890
+  }
+}

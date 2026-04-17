@@ -1,0 +1,197 @@
+import { create } from 'zustand';
+import type LoadingStage from '../core/models/LoadingStage';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'error' | 'warning' | 'info';
+  createdAt: number;
+}
+
+export interface ColorScheme {
+  backgroundColor: string;
+  backgroundColorLight?: string;
+  fontColor: string;
+  fontColorLight?: string;
+  bgWaveColors?: string[];
+  schemeColors: string[];
+}
+
+export interface RendererOptions {
+  color_scheme?: string;
+  height?: string;
+  width?: string;
+  font?: string;
+  offset?: string;
+  add_labels?: boolean;
+  add_months?: boolean;
+  add_years?: boolean;
+  show_username?: boolean;
+  show_watermark?: boolean;
+  deform_text?: boolean;
+  jitter_text?: boolean;
+  loading_animation?: boolean;
+  [key: string]: string | boolean | undefined;
+}
+
+export type ServiceType = 'lastfm' | 'listenbrainz';
+
+export interface DataSourceOptions {
+  username?: string;
+  service?: ServiceType;
+  time_start?: Date;
+  time_end?: Date;
+  min_plays?: string;
+  group_by?: string;
+  method?: string;
+  _datePreset?: string;
+  [key: string]: string | Date | undefined;
+}
+
+interface LastWaveState {
+  // Logging
+  logs: string[];
+  log: (message: string) => void;
+
+  // Toasts
+  toasts: Toast[];
+  addToast: (message: string, type?: Toast['type']) => void;
+  removeToast: (id: string) => void;
+
+  // Options
+  rendererOptions: RendererOptions;
+  dataSourceOptions: DataSourceOptions;
+  setRendererOption: (key: string, value: string | boolean | undefined) => void;
+  setDataSourceOption: (key: string, value: string | Date | undefined) => void;
+  setRendererOptions: (options: RendererOptions) => void;
+  setDataSourceOptions: (options: DataSourceOptions) => void;
+
+  // UI State
+  showOptions: boolean;
+  showLoadingBar: boolean;
+  showActions: boolean;
+  showVisualization: boolean;
+  setShowOptions: (show: boolean) => void;
+  setShowLoadingBar: (show: boolean) => void;
+  setShowActions: (show: boolean) => void;
+  setShowVisualization: (show: boolean) => void;
+
+  // Loading stages
+  stages: LoadingStage[];
+  currentStage: number;
+  setStages: (stages: LoadingStage[]) => void;
+  startNextStage: (segmentCount: number) => void;
+  progressCurrentStage: () => void;
+  setStageSubText: (text: string) => void;
+
+  // Reset to initial state (for "back to options")
+  resetToOptions: () => void;
+  // Full reset (for Astro view transitions — must match SSR initial state)
+  fullReset: () => void;
+}
+
+export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
+  // Logging
+  logs: [],
+  log: (message: string) => set((state) => ({ logs: [...state.logs, message] })),
+
+  // Toasts
+  toasts: [],
+  addToast: (message, type = 'error') =>
+    set((state) => ({
+      toasts: [
+        ...state.toasts,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          message,
+          type,
+          createdAt: Date.now(),
+        },
+      ],
+    })),
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+
+  // Options
+  rendererOptions: {},
+  dataSourceOptions: { username: 'Taurheim', service: 'lastfm' },
+  setRendererOption: (key, value) =>
+    set((state) => ({ rendererOptions: { ...state.rendererOptions, [key]: value } })),
+  setDataSourceOption: (key, value) =>
+    set((state) => ({ dataSourceOptions: { ...state.dataSourceOptions, [key]: value } })),
+  setRendererOptions: (options) => set({ rendererOptions: options }),
+  setDataSourceOptions: (options) => set({ dataSourceOptions: options }),
+
+  // UI State
+  showOptions: true,
+  showLoadingBar: false,
+  showActions: false,
+  showVisualization: false,
+  setShowOptions: (show) => set({ showOptions: show }),
+  setShowLoadingBar: (show) => set({ showLoadingBar: show }),
+  setShowActions: (show) => set({ showActions: show }),
+  setShowVisualization: (show) => set({ showVisualization: show }),
+
+  // Loading stages
+  stages: [],
+  currentStage: -1,
+  setStages: (stages) => set({ stages, currentStage: -1 }),
+  startNextStage: (segmentCount) =>
+    set((state) => {
+      const nextStage = state.currentStage + 1;
+      const newStages = [...state.stages];
+      if (newStages[nextStage]) {
+        newStages[nextStage] = {
+          ...newStages[nextStage],
+          currentSegment: 0,
+          stageSegments: segmentCount,
+        };
+      }
+      return { currentStage: nextStage, stages: newStages };
+    }),
+  progressCurrentStage: () =>
+    set((state) => {
+      const newStages = [...state.stages];
+      const current = newStages[state.currentStage];
+      if (current) {
+        newStages[state.currentStage] = {
+          ...current,
+          currentSegment: current.currentSegment + 1,
+          subText: '',
+        };
+      }
+      return { stages: newStages };
+    }),
+  setStageSubText: (text: string) =>
+    set((state) => {
+      const newStages = [...state.stages];
+      const current = newStages[state.currentStage];
+      if (current) {
+        newStages[state.currentStage] = { ...current, subText: text };
+      }
+      return { stages: newStages };
+    }),
+
+  // Reset
+  resetToOptions: () =>
+    set({
+      showOptions: true,
+      showLoadingBar: false,
+      showActions: false,
+      showVisualization: false,
+      stages: [],
+      currentStage: -1,
+    }),
+  fullReset: () =>
+    set({
+      logs: [],
+      toasts: [],
+      rendererOptions: {},
+      dataSourceOptions: { username: 'Taurheim', service: 'lastfm' },
+      showOptions: true,
+      showLoadingBar: false,
+      showActions: false,
+      showVisualization: false,
+      stages: [],
+      currentStage: -1,
+    }),
+}));

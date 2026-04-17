@@ -1,19 +1,31 @@
 # LastWave
+
 Graph your music listening history!
-![An Example Graph](http://i.imgur.com/jMQoqg6.png)
+
+![An Example Graph](https://raw.githubusercontent.com/taurheim/LastWave/v4/public/LastWave_Taurheim_12-27-2024_3-27-2025.png)
 
 ## What does it do?
-LastWave is a web-app that takes data from your last.fm profile and creates a beautiful wave graph that represents your music listening trends by artist. The artists that you listen to more at a given time has a larger area on the graph.
+
+LastWave is a free web app that turns your [Last.fm](https://last.fm) or [ListenBrainz](https://listenbrainz.org) listening history into a beautiful wave graph (streamgraph). Group by artist, album, or genre — the more you listen to something, the larger its wave on the graph. Finished graphs can be exported as SVG or PNG.
 
 ## How does it work?
-LastWave is built almost entirely in JavaScript, although some of the exporting process is handled with PHP. The wave created by LastWave is rendered entirely in the browser in svg format, and LastWave allows you to export this wave to multiple sources, including saving it as an image to the web.
-The majority of the creation of the wave graph is done by libraries, but the text placement is done manually by LastWave. This is accomplished with a series of algorithms that are detailed in my blog post <http://savas.ca/blog/lastwave-1-text-placement/>
 
-## How to contribute
-LastWave is always looking for people to help with the code! This is a great beginner-intermediate project as there are lots of little things that need doing. Check out the "issues" section to see what needs to be done! I've tried to make it pretty clear how difficult each one is, but if you have any questions, just contact me at niko@savas.ca!
+The wave graph is rendered entirely in the browser as SVG using D3.js. Artist labels are placed along the wave contours using Bezier curve fitting and spline-based deformed text rendering.
 
-To build & run:
-- Clone the repo `git clone https://github.com/taurheim/LastWave.git`
-- Install modules: `yarn install`
-- Run: `yarn serve`
-- Navigate to: `http://localhost:8080/lastwave`
+## Getting Started
+
+```bash
+git clone https://github.com/taurheim/LastWave.git
+cd LastWave
+npm install
+npm run dev
+# Open http://localhost:4321
+```
+
+## Development
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for the full development workflow, commands, spec-driven process, and validation details.
+
+## How to Contribute
+
+LastWave is always looking for contributors! Check out the [issues](https://github.com/taurheim/LastWave/issues) section to see what needs doing. Questions? Contact niko@savas.ca.

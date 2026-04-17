@@ -1,6 +1,9 @@
 .DS_Store
 node_modules
 /dist
+/.astro/
+.claude/
+.validation/
 
 # local env files
 .env.local
@@ -19,3 +22,13 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
+
+# Test artifacts
+test-results/
+playwright-report/
+.playwright-cli/
+proto-screenshots/
+
+# Visual regression debug artifacts (baselines are tracked)
+tests/e2e/wave-snapshot.spec.ts-snapshots/*.actual.png
+tests/e2e/wave-snapshot.spec.ts-snapshots/*.diff.png

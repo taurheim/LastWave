@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GalleryBrowser from '../components/GalleryBrowser';
+---
+
+<BaseLayout
+  title="Gallery - LastWave"
+  description="Browse community-generated music listening visualizations. See how others chart their Last.fm and ListenBrainz listening history with LastWave."
+>
+  <GalleryBrowser client:load />
+</BaseLayout>

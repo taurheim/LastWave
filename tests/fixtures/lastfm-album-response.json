@@ -1,0 +1,11 @@
+{
+  "weeklyalbumchart": {
+    "album": [
+      { "name": "OK Computer", "artist": { "#text": "Radiohead" }, "playcount": "25" },
+      { "name": "Kid A", "artist": { "#text": "Radiohead" }, "playcount": "20" },
+      { "name": "The Dark Side of the Moon", "artist": { "#text": "Pink Floyd" }, "playcount": "18" },
+      { "name": "Currents", "artist": { "#text": "Tame Impala" }, "playcount": "15" },
+      { "name": "Music Has the Right to Children", "artist": { "#text": "Boards of Canada" }, "playcount": "10" }
+    ]
+  }
+}

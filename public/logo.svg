@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="64" height="56" viewBox="0 0 64 56" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- One full wave period at width=160, so translating -80→+80 creates seamless loop -->
+    <path id="w" d="M-160,0 C-130,0 -110,-16 -80,0 C-50,16 -30,0 0,0 C30,0 50,-16 80,0 C110,16 130,0 160,0"/>
+  </defs>
+  <g>
+    <!-- Band 1 (top, faint) -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="6" stroke-opacity="0.15"
+         transform="translate(0,12)" style="animation:waveSlide 3s linear infinite"/>
+    <!-- Band 2 -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="6" stroke-opacity="0.3"
+         transform="translate(0,20)" style="animation:waveSlide 3.5s linear infinite; animation-delay:-1s"/>
+    <!-- Band 3 (center, bold) -->
+    <use xlink:href="#w" fill="none" stroke="#27AAE1" stroke-width="7" stroke-opacity="0.8"
+         transform="translate(0,28)" style="animation:waveSlide 4s linear infinite; animation-delay:-0.5s"/>
+    <!-- Band 4 -->
+    <use xlink:href="#w" fill="none" stroke="#00CED1" stroke-width="6" stroke-opacity="0.3"
+         transform="translate(0,36)" style="animation:waveSlide 3.5s linear infinite; animation-delay:-2s"/>
+    <!-- Band 5 (bottom, faint) -->
+    <use xlink:href="#w" fill="none" stroke="#00CED1" stroke-width="6" stroke-opacity="0.15"
+         transform="translate(0,44)" style="animation:waveSlide 3s linear infinite; animation-delay:-1.5s"/>
+  </g>
+  <style>
+    @keyframes waveSlide {
+      0%   { transform: translate(-80px, 0); }
+      100% { transform: translate(80px, 0); }
+    }
+    use { transform-box: fill-box; }
+  </style>
+</svg>

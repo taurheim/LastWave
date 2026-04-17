@@ -1,0 +1,87 @@
+name: Misaligned Label Report
+description: Report a label that appears misaligned or overflowing in a LastWave chart
+title: "Misaligned label: [ARTIST]"
+labels: ["bug", "label-alignment"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a misaligned label! This helps us improve the text placement algorithms.
+
+  - type: input
+    id: username
+    attributes:
+      label: Last.fm Username
+      description: The username used to generate the chart
+      placeholder: e.g. Taurheim
+    validations:
+      required: true
+
+  - type: input
+    id: misaligned-labels
+    attributes:
+      label: Misaligned Labels
+      description: Which artist/album/tag labels looked misaligned?
+      placeholder: e.g. Gunna, FKA Twigs
+    validations:
+      required: true
+
+  - type: input
+    id: min-plays
+    attributes:
+      label: Minimum Plays
+      description: The minimum plays setting used
+      placeholder: e.g. 10
+    validations:
+      required: true
+
+  - type: input
+    id: date-range
+    attributes:
+      label: Date Range
+      description: The date range used (preset name or custom start/end dates)
+      placeholder: e.g. Last 3 months, or 2024-01-01 to 2024-06-01
+    validations:
+      required: true
+
+  - type: dropdown
+    id: color-scheme
+    attributes:
+      label: Color Scheme
+      options:
+        - lastwave
+        - ember
+        - budapest
+        - mosaic
+        - ocean
+    validations:
+      required: true
+
+  - type: dropdown
+    id: graph-type
+    attributes:
+      label: Graph Type
+      options:
+        - silhouette
+        - wiggle
+        - expand
+        - zero
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Please paste a screenshot of the chart showing the misaligned label(s)
+      placeholder: Drag and drop or paste a screenshot here
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other details that might help reproduce the issue
+    validations:
+      required: false

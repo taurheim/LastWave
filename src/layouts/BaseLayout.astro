@@ -1,0 +1,235 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import ErrorToast from '@/components/ErrorToast';
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const {
+  title = 'LastWave',
+  description = 'Visualize your music listening history as a beautiful wave graph. Connect your Last.fm or ListenBrainz account to see your top artists, albums, and genres over time.',
+  ogImage = '/LastWave_Taurheim_12-27-2024_3-27-2025.png',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca/lastwave');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL.href} />
+    <link rel="icon" type="image/x-icon" href={`${import.meta.env.BASE_URL}favicon.ico`} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL.href} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta
+      property="og:image"
+      content={new URL(ogImage, Astro.site ?? 'https://savas.ca/lastwave').href}
+    />
+    <meta property="og:site_name" content="LastWave" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta
+      name="twitter:image"
+      content={new URL(ogImage, Astro.site ?? 'https://savas.ca/lastwave').href}
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <title>{title}</title>
+    <ClientRouter />
+
+    <!-- Structured Data -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'LastWave',
+        url: 'https://savas.ca/lastwave',
+        description:
+          'Visualize your music listening history as a beautiful wave graph. Connect your Last.fm or ListenBrainz account to see your top artists, albums, and genres over time.',
+        applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Any',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        author: {
+          '@type': 'Person',
+          name: 'Niko Savas',
+          url: 'https://savas.ca',
+        },
+        keywords:
+          'music visualization, listening history, last.fm, listenbrainz, scrobble chart, music stats, artist trends, streaming history',
+      })}
+    />
+
+    <style>
+      @font-face {
+        font-family: 'Super Arena';
+        src: url('/fonts/SuperArena.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+      :root {
+        --lw-bg: 245 223 197;
+        --lw-surface: 255 255 255;
+        --lw-border: 61 12 17;
+        --lw-accent: 196 40 40;
+        --lw-accent-dim: 163 33 33;
+        --lw-teal: 212 168 67;
+        --lw-cyan: 139 107 139;
+        --lw-muted: 100 75 55;
+        --lw-text: 61 28 30;
+        --lw-heading: 45 10 16;
+        --lw-body-bg: #f5dfc5;
+      }
+      body {
+        background: var(--lw-body-bg);
+        transition: background 2s ease;
+      }
+      .nav-link {
+        position: relative;
+        transition: color 0.3s;
+      }
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 1px;
+        background: rgb(var(--lw-accent));
+        transition: width 0.3s ease;
+      }
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      /* Decorative wave slurp animation — pulled off to the right like a string */
+      #decorative-bg-waves path {
+        transition:
+          clip-path 0.6s cubic-bezier(0.5, 0, 0.15, 1),
+          fill 2s ease;
+        clip-path: inset(0 0 0 0);
+      }
+      #decorative-bg-waves.slurp path {
+        clip-path: inset(0 0 0 100%);
+      }
+      #decorative-bg-waves.slurp path:nth-child(4) {
+        transition-delay: 0s;
+      }
+      #decorative-bg-waves.slurp path:nth-child(3) {
+        transition-delay: 0.08s;
+      }
+      #decorative-bg-waves.slurp path:nth-child(2) {
+        transition-delay: 0.16s;
+      }
+      #decorative-bg-waves.slurp path:nth-child(1) {
+        transition-delay: 0.24s;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
+    <!-- Decorative background waves -->
+    <svg
+      id="decorative-bg-waves"
+      class="fixed left-0 top-0 -z-10 w-full max-lg:portrait:top-1/2 max-lg:portrait:h-[60%] max-lg:portrait:-translate-y-1/2"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <!-- Orange -->
+      <path
+        d="M-56,415 C164,538 300,203 486,203 C775,231 819,330 1005,330 C1169,308 1338,57 1524,57
+           L1526,185 C1340,185 1180,358 1007,367 C821,367 788,278 525,292 C339,292 206,560 -53,518 Z"
+        fill="#F77F00"
+        opacity="0.1"></path>
+      <!-- Red -->
+      <path
+        d="M-53,518 C206,560 339,292 525,292 C788,278 821,367 1007,367 C1180,358 1340,185 1526,185
+           L1527,357 C1341,357 1223,426 1008,421 C822,421 772,333 542,334 C377,345 195,555 -81,641 Z"
+        fill="#D62828"
+        opacity="0.1"></path>
+      <!-- Blue -->
+      <path
+        d="M-81,641 C195,555 377,345 542,334 C772,333 822,421 1008,421 C1223,426 1341,357 1527,357
+           L1529,449 C1343,449 1322,465 1023,444 C770,423 673,313 458,391 C286,466 165,567 -58,691 Z"
+        fill="#3A86FF"
+        opacity="0.1"></path>
+      <!-- Green -->
+      <path
+        d="M-58,691 C165,567 286,466 458,391 C673,313 770,423 1023,444 C1322,465 1343,449 1529,449
+           L1526,561 C1340,561 1164,492 1016,467 C849,441 741,387 544,409 C379,432 343,592 -15,826 Z"
+        fill="#6A994E"
+        opacity="0.1"></path>
+    </svg>
+
+    <header
+      class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
+    >
+      <h1
+        class="font-display text-5xl text-lw-heading lg:text-8xl max-lg:landscape:text-4xl"
+        style="text-shadow: 0 2px 8px rgba(245, 223, 197, 0.8);"
+      >
+        LastWave
+      </h1>
+    </header>
+
+    <nav class="mb-2 text-center lg:mb-6 max-lg:landscape:mb-1">
+      <div
+        class="inline-flex items-center gap-4 text-xs uppercase tracking-widest text-lw-muted lg:gap-8 lg:text-sm max-lg:landscape:gap-3"
+      >
+        <a href={import.meta.env.BASE_URL} id="nav-home-link" class="nav-link hover:text-lw-accent"
+          >Home</a
+        >
+        <span class="inline-block h-3 w-px bg-lw-border"></span>
+        <a href={`${import.meta.env.BASE_URL}gallery`} class="nav-link hover:text-lw-accent"
+          >Gallery</a
+        >
+        <span class="inline-block h-3 w-px bg-lw-border"></span>
+        <a href={`${import.meta.env.BASE_URL}about`} class="nav-link hover:text-lw-accent">About</a>
+      </div>
+    </nav>
+
+    <main>
+      <slot />
+    </main>
+
+    <ErrorToast client:load />
+
+    <footer
+      id="site-footer"
+      class="mt-4 pb-2 text-center text-xs tracking-wider text-lw-muted/40 lg:mt-6 lg:pb-3"
+    >
+      <div
+        class="mx-auto mb-2 h-px w-12 bg-gradient-to-r from-transparent via-lw-border to-transparent"
+      >
+      </div>
+      LastWave &middot; built by <a
+        href="https://savas.ca"
+        class="transition-colors hover:text-lw-accent">Niko Savas</a
+      >
+    </footer>
+  </body>
+</html>
