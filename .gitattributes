@@ -1,0 +1,18 @@
+# Ensure consistent LF line endings across platforms. Prettier's default
+# `endOfLine: "lf"` would otherwise flag files checked out on Windows (where
+# git's autocrlf can convert to CRLF) as needing reformatting.
+* text=auto eol=lf
+
+# Binary files should never be touched.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
