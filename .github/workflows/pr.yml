@@ -61,6 +61,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      ASTRO_BASE: /
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -69,6 +71,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
 
   e2e-tests:
     name: E2E Tests
@@ -87,7 +94,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

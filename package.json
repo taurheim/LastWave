@@ -14,6 +14,7 @@
     "test:thrashing": "vitest run tests/unit/animation-thrashing.test.ts --reporter=verbose",
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
     "test:e2e": "playwright test",
+    "test:e2e:snapshots": "playwright test --project=wave-snapshots --update-snapshots",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,json}\"",

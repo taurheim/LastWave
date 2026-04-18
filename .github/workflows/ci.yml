@@ -66,6 +66,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Build with default base (/lastwave/) matching the production deploy path.
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
@@ -76,7 +77,9 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: build
+    env:
+      ASTRO_BASE: /
+      CI_USE_PREVIEW: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -84,7 +87,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps
+      # E2E uses astro preview at http://localhost:4321/ so needs base=/; build its own dist.
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
