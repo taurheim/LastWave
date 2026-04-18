@@ -476,9 +476,11 @@ export default memo(function WaveVisualization({
     const defs = svg.append('defs');
     if (fontFamily === 'DM Sans') {
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      defs.append('style').text(
-        `@font-face{font-family:'DM Sans';src:url('${origin}/fonts/DMSans-Variable.woff2') format('woff2-variations');font-weight:100 1000;font-style:normal;font-display:swap;}`,
-      );
+      defs
+        .append('style')
+        .text(
+          `@font-face{font-family:'DM Sans';src:url('${origin}/fonts/DMSans-Variable.woff2') format('woff2-variations');font-weight:100 1000;font-style:normal;font-display:swap;}`,
+        );
     } else {
       const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
       defs.append('style').text(`@import url('${fontUrl}');`);
