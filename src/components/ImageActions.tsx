@@ -3,10 +3,24 @@ import { useLastWaveStore } from '@/store/appStore';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
 import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 
-// Fetch Google Fonts CSS, download all referenced font files, and return
-// a self-contained <style> block with base64-inlined @font-face rules.
+// Build a self-contained <style> block with base64-inlined @font-face rules.
 // This is needed because <img>-based SVG rendering blocks external loads.
+// DM Sans is self-hosted (public/fonts/DMSans-Variable.woff2) so that
+// restrictive environments (Meta in-app browsers, iCloud Private Relay,
+// content blockers that target fonts.googleapis.com) can't prevent it from
+// loading. Other fonts still fall back to Google Fonts on a best-effort basis.
 async function inlineFontCss(fontFamily: string): Promise<string> {
+  if (fontFamily === 'DM Sans') {
+    try {
+      const res = await fetch('/fonts/DMSans-Variable.woff2');
+      const buf = await res.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      return `@font-face{font-family:'DM Sans';src:url('data:font/woff2;base64,${b64}') format('woff2-variations');font-weight:100 1000;font-style:normal;}`;
+    } catch {
+      return '';
+    }
+  }
+
   const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
   try {
     // Request woff2 by sending a modern User-Agent
