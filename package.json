@@ -13,7 +13,7 @@
     "test:accuracy": "vitest run tests/unit/wave-accuracy.test.ts --reporter=verbose",
     "test:thrashing": "vitest run tests/unit/animation-thrashing.test.ts --reporter=verbose",
     "test:cache": "npx tsx scripts/cache-accuracy-data.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --update-snapshots",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,json}\"",

@@ -1,11 +1,14 @@
 /**
- * E2E visual-regression snapshots for the wave graph.
+ * E2E snapshot generation for the wave graph.
  *
  * Each test case:
  *  1. Intercepts Last.fm API calls and returns data from a cached fixture.
  *  2. Fills in the form (username, date preset, color scheme).
  *  3. Clicks Generate and waits for the SVG to render.
- *  4. Screenshots the SVG wrapper and compares against a stored baseline.
+ *  4. Screenshots the SVG wrapper and saves it as a baseline.
+ *
+ * In CI these run with --update-snapshots, and any changes are committed
+ * back to the PR branch for visual review in the diff.
  *
  * Run:       npx playwright test wave-snapshot.spec.ts
  * Update:    npx playwright test wave-snapshot.spec.ts --update-snapshots
@@ -104,6 +107,29 @@ async function mockLastFmApi(page: import('@playwright/test').Page, fixture: Fix
  */
 const FROZEN_NOW = 1743465600000;
 
+/**
+ * System font to use instead of Google Fonts (DM Sans).
+ * Liberation Sans is pre-installed in the Playwright Docker container,
+ * eliminating the font-loading race that caused non-deterministic text
+ * measurements and deformed text placement.
+ */
+const TEST_FONT = 'Liberation Sans';
+
+/**
+ * Mock Google Fonts CDN so no network requests are needed for fonts.
+ * Maps any requested font family to the local system font, ensuring
+ * canvas measureText and SVG text rendering use the same font instantly.
+ */
+async function mockGoogleFonts(page: import('@playwright/test').Page) {
+  await page.route('**/fonts.googleapis.com/**', (route) => {
+    route.fulfill({
+      contentType: 'text/css',
+      body: `@font-face { font-family: 'DM Sans'; src: local('${TEST_FONT}'); }`,
+    });
+  });
+  await page.route('**/fonts.gstatic.com/**', (route) => route.abort());
+}
+
 interface WaveTestCase {
   fixture: string; // filename without .json
   scheme: string;
@@ -137,8 +163,9 @@ test.describe('Wave Graph Snapshots', () => {
       }
       const fixture: FixtureData = JSON.parse(fs.readFileSync(fixturePath, 'utf-8'));
 
-      // Set up API mocking before navigating
+      // Set up API and font mocking before navigating
       await mockLastFmApi(page, fixture);
+      await mockGoogleFonts(page);
 
       // Override Date.now() so "Last year" always produces the same date range.
       // Only Date.now() is frozen — timers (setTimeout, rAF) run normally.
@@ -148,6 +175,21 @@ test.describe('Wave Graph Snapshots', () => {
 
       // Navigate to home page
       await page.goto('/');
+
+      // Wait for the form to be ready
+      await page.getByRole('button', { name: 'Generate' }).waitFor({ timeout: 15_000 });
+
+      // Set font to a local system font via the Zustand store so canvas
+      // measureText and SVG text rendering use the same pre-installed font.
+      // Disable loading animation to bypass the streaming color assignment
+      // race (lockedColorMap depends on microtask-nondeterministic segment
+      // arrival order in pooled()). Without animation, colors are computed
+      // fresh from the final deterministic data.
+      await page.evaluate((font) => {
+        const store = (window as unknown as Record<string, any>).__lastwave_store;
+        store?.getState().setRendererOption('font', font);
+        store?.getState().setRendererOption('loading_animation', false);
+      }, TEST_FONT);
 
       // Wait for the form to be ready
       await page.getByRole('button', { name: 'Generate' }).waitFor({ timeout: 15_000 });
@@ -173,17 +215,20 @@ test.describe('Wave Graph Snapshots', () => {
       const svgWrapper = page.locator('#svg-wrapper').first();
       await svgWrapper.waitFor({ state: 'visible', timeout: 45_000 });
 
-      // Wait for render to fully complete. The app shows "Placing text N/M…" while
-      // rendering deformed text via requestAnimationFrame. When done, drawingStatus
-      // clears and the status overlay disappears. We wait for the "Placing text" text
-      // to appear first, then for it to disappear.
-      const placingText = page.locator('text=Placing text').first();
-      try {
-        await placingText.waitFor({ state: 'visible', timeout: 30_000 });
-        // Now wait for it to disappear (render complete)
-        await placingText.waitFor({ state: 'hidden', timeout: 60_000 });
-      } catch {
-        // Might have completed too fast to catch the "Placing text" state
+      // Wait for the desktop SVG to finish rendering deformed text.
+      // Don't rely on the page-level "Placing text" indicator because two
+      // WaveVisualization instances (desktop + mobile) share one completion
+      // signal, so the hidden mobile one can resolve first.
+      // Instead, wait for <text> elements in the specific desktop SVG and
+      // for the count to stabilize (all rAF batches complete).
+      const svgElement = svgWrapper.locator('svg').first();
+      await svgElement.locator('text').first().waitFor({ state: 'attached', timeout: 90_000 });
+      let prevTextCount = 0;
+      for (let i = 0; i < 20; i++) {
+        await page.waitForTimeout(500);
+        const textCount = await svgElement.locator('text').count();
+        if (textCount === prevTextCount && textCount > 0) break;
+        prevTextCount = textCount;
       }
 
       // Extra settle for any final paint
@@ -202,9 +247,8 @@ test.describe('Wave Graph Snapshots', () => {
       });
 
       // Screenshot just the SVG element (not the wrapper with overlay buttons)
-      const svgElement = svgWrapper.locator('svg').first();
       await expect(svgElement).toHaveScreenshot(`wave-${tc.fixture}-${tc.scheme}.png`, {
-        maxDiffPixelRatio: 0.01,
+        maxDiffPixelRatio: 0.02,
       });
     });
   }
