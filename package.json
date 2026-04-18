@@ -20,7 +20,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,astro,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,astro,css,json}\"",
     "typecheck": "tsc --noEmit --project tsconfig.check.json",
-    "verify": "npm run typecheck && npm run test && npm run build"
+    "verify": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "@astrojs/react": "^4.2.0",
