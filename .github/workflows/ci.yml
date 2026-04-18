@@ -79,6 +79,9 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     needs: build
+    env:
+      ASTRO_BASE: /
+      CI_USE_PREVIEW: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -92,8 +95,6 @@ jobs:
           path: dist/
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-        env:
-          CI_USE_PREVIEW: true
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
