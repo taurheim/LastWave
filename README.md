@@ -2,7 +2,7 @@
 
 Graph your music listening history!
 
-![An Example Graph](https://raw.githubusercontent.com/taurheim/LastWave/v4/public/LastWave_Taurheim_12-27-2024_3-27-2025.png)
+![An Example Graph](./public/LastWave_Taurheim_12-27-2024_3-27-2025.png)
 
 ## What does it do?
 
