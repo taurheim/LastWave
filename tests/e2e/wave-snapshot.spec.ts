@@ -215,24 +215,22 @@ test.describe('Wave Graph Snapshots', () => {
       const svgWrapper = page.locator('#svg-wrapper').first();
       await svgWrapper.waitFor({ state: 'visible', timeout: 45_000 });
 
-      // Wait for the desktop SVG to finish rendering deformed text.
-      // Don't rely on the page-level "Placing text" indicator because two
-      // WaveVisualization instances (desktop + mobile) share one completion
-      // signal, so the hidden mobile one can resolve first.
-      // Instead, wait for <text> elements in the specific desktop SVG and
-      // for the count to stabilize (all rAF batches complete).
+      // Wait for deformed text placement to complete.
+      // The app shows a "Placing text…" progress indicator while computing
+      // deformed labels. Wait for it to appear (text placement started) then
+      // disappear (text placement finished). This is more reliable than
+      // counting <text> elements, which can be fooled by axis labels
+      // stabilizing before artist labels begin computing.
       const svgElement = svgWrapper.locator('svg').first();
-      await svgElement.locator('text').first().waitFor({ state: 'attached', timeout: 90_000 });
-      let prevTextCount = 0;
-      for (let i = 0; i < 20; i++) {
-        await page.waitForTimeout(500);
-        const textCount = await svgElement.locator('text').count();
-        if (textCount === prevTextCount && textCount > 0) break;
-        prevTextCount = textCount;
-      }
+      // Wait for the desktop "Placing text" indicator to appear then disappear.
+      // There are two (desktop + mobile), so scope to the desktop wrapper's parent.
+      const desktopSection = page.locator('.hidden.lg\\:block');
+      const placingTextIndicator = desktopSection.getByText(/Placing text/);
+      await placingTextIndicator.waitFor({ state: 'visible', timeout: 90_000 });
+      await placingTextIndicator.waitFor({ state: 'hidden', timeout: 90_000 });
 
       // Extra settle for any final paint
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       // Hide overlay buttons (Full Size, Customize, loading status) before screenshot
       await page.evaluate(() => {
