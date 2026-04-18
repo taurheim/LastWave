@@ -46,11 +46,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
       content={new URL(ogImage, Astro.site ?? 'https://savas.ca/lastwave').href}
     />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/DMSans-Variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <title>{title}</title>
     <ClientRouter />
@@ -87,6 +88,13 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
         font-family: 'Super Arena';
         src: url('/fonts/SuperArena.ttf') format('truetype');
         font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'DM Sans';
+        src: url('/fonts/DMSans-Variable.woff2') format('woff2-variations');
+        font-weight: 100 1000;
         font-style: normal;
         font-display: swap;
       }

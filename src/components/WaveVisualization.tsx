@@ -469,10 +469,20 @@ export default memo(function WaveVisualization({
       }
     }
 
-    // Embed font in SVG so text renders when downloaded/viewed standalone
-    const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
+    // Embed font in SVG so text renders when the SVG is viewed standalone
+    // (e.g. opened as a file or rendered through <img>). For DM Sans we
+    // self-host the font, so avoid third-party requests that can be blocked
+    // in restrictive environments (e.g. Meta in-app browsers, Private Relay).
     const defs = svg.append('defs');
-    defs.append('style').text(`@import url('${fontUrl}');`);
+    if (fontFamily === 'DM Sans') {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      defs.append('style').text(
+        `@font-face{font-family:'DM Sans';src:url('${origin}/fonts/DMSans-Variable.woff2') format('woff2-variations');font-weight:100 1000;font-style:normal;font-display:swap;}`,
+      );
+    } else {
+      const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
+      defs.append('style').text(`@import url('${fontUrl}');`);
+    }
 
     // Draw paths — capture path strings for overflow detection (keyed by series
     // title so lookup is immune to any DOM vs data ordering differences).
