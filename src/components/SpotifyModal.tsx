@@ -52,7 +52,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
           I want to see stats for my Spotify listening history!
         </h2>
 
-        <p className="mb-6 text-sm leading-relaxed text-lw-muted sm:text-base">
+        <p className="mb-4 text-sm leading-relaxed text-lw-muted sm:text-base">
           Unfortunately, Spotify does not expose a public API to access your music listening
           history. To use LastWave (and{' '}
           <a
@@ -64,6 +64,14 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
             many more visualization tools
           </a>
           ), you will need to set up last.fm and/or ListenBrainz.
+        </p>
+
+        <p className="mb-6 text-sm leading-relaxed text-lw-muted sm:text-base">
+          <strong className="font-semibold text-lw-text">
+            You&rsquo;ll only need to do this once
+          </strong>{' '}
+          - once you&rsquo;ve set it up, you&rsquo;ll be able to use LastWave and other tools that
+          use your listening history for all your future listening too!
         </p>
 
         {/* Section heading */}
