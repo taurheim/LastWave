@@ -55,30 +55,43 @@ function buildSegmentResponse(fixture: FixtureData, segmentIndex: number) {
 
 /**
  * Intercept all Last.fm API calls and serve fixture data.
- * We track each unique `from` timestamp, sort them, and use the sorted index
- * to look up the correct segment in the fixture.
+ *
+ * Pre-computes the exact segment timestamps the app will request (based on
+ * FROZEN_NOW and the "Last year" preset), then maps each `from` parameter
+ * to its deterministic fixture segment index. Responses are immediate —
+ * no batching or debouncing needed.
  */
 async function mockLastFmApi(page: import('@playwright/test').Page, fixture: FixtureData) {
-  const fromToIndex = new Map<string, number>();
-  const allFromValues: string[] = [];
+  // Pre-compute the `from` timestamps the app will generate.
+  // "Last year" preset: offset = 31536000s, group_by = month (2628000s)
+  const nowSec = Math.floor(FROZEN_NOW / 1000);
+  const yearOffsetSec = 31536000;
+  const monthIntervalSec = 2628000;
+  const startSec = nowSec - yearOffsetSec;
+
+  const expectedFroms: number[] = [];
+  for (let t = startSec; t < nowSec; t += monthIntervalSec) {
+    expectedFroms.push(t);
+  }
+
+  // Map each expected `from` to a fixture segment index, scaling to fixture size
+  const fromToSegIdx = new Map<string, number>();
+  const numExpected = expectedFroms.length;
+  for (let i = 0; i < numExpected; i++) {
+    const segIdx = Math.round((i / Math.max(numExpected - 1, 1)) * (fixture.numSegments - 1));
+    fromToSegIdx.set(String(expectedFroms[i]), segIdx);
+  }
 
   await page.route('**/ws.audioscrobbler.com/**', (route) => {
     const url = new URL(route.request().url());
     const fromParam = url.searchParams.get('from') ?? '0';
 
-    // Assign segment index based on order of unique `from` values seen
-    if (!fromToIndex.has(fromParam)) {
-      fromToIndex.set(fromParam, allFromValues.length);
-      allFromValues.push(fromParam);
-    }
-    const segIdx = fromToIndex.get(fromParam)!;
-
-    // Clamp to fixture bounds
-    const safeIdx = Math.min(segIdx, fixture.numSegments - 1);
+    // Look up pre-computed index, fall back to 0 for unexpected `from` values
+    const segIdx = fromToSegIdx.get(fromParam) ?? 0;
 
     route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify(buildSegmentResponse(fixture, safeIdx)),
+      body: JSON.stringify(buildSegmentResponse(fixture, segIdx)),
     });
   });
 }
