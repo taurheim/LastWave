@@ -475,11 +475,16 @@ export default memo(function WaveVisualization({
     // in restrictive environments (e.g. Meta in-app browsers, Private Relay).
     const defs = svg.append('defs');
     if (fontFamily === 'DM Sans') {
+      // Build an absolute URL so the SVG resolves the font when viewed
+      // standalone (e.g. rasterized through <img> for PNG export, where the
+      // document base is a blob: URL). Respect Astro's configured base path.
       const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const base = import.meta.env.BASE_URL; // e.g. "/lastwave/"
+      const fontHref = `${origin}${base}fonts/DMSans-Variable.woff2`;
       defs
         .append('style')
         .text(
-          `@font-face{font-family:'DM Sans';src:url('${origin}/fonts/DMSans-Variable.woff2') format('woff2-variations');font-weight:100 1000;font-style:normal;font-display:swap;}`,
+          `@font-face{font-family:'DM Sans';src:url('${fontHref}') format('woff2-variations');font-weight:100 1000;font-style:normal;font-display:swap;}`,
         );
     } else {
       const fontUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily).replace(/%20/g, '+')}&display=swap`;
