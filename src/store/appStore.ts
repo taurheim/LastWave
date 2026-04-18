@@ -195,3 +195,8 @@ export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
       currentStage: -1,
     }),
 }));
+
+// Expose store on window for E2E test access (e.g. setting font before render)
+if (typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__lastwave_store = useLastWaveStore;
+}
