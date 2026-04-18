@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://savas.ca/lastwave',
-  base: '/lastwave/',
+  base: process.env.ASTRO_BASE ?? '/lastwave/',
   integrations: [react(), tailwind(), sitemap()],
   vite: {
     server: {

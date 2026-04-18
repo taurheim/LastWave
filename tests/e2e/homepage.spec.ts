@@ -15,7 +15,7 @@ test.describe('Homepage', () => {
 
   test('shows the options form with username input and submit button', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('textbox', { name: 'Enter your username' })).toBeVisible();
+    await expect(page.getByRole('searchbox', { name: /username/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Generate' })).toBeVisible();
   });
 });
