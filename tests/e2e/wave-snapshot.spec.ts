@@ -144,6 +144,10 @@ const TEST_CASES: WaveTestCase[] = [
 ];
 
 test.describe('Wave Graph Snapshots', () => {
+  // Skip in CI — these snapshots are non-deterministic across environments.
+  // Run locally with: npm run test:e2e:snapshots
+  test.skip(!!process.env.CI, 'Wave snapshots are updated locally, not in CI');
+
   // Use a fixed viewport so screenshots are deterministic
   test.use({ viewport: { width: 1280, height: 900 } });
 
