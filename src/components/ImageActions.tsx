@@ -12,7 +12,7 @@ import { fetchWithRetry } from '@/core/http/fetchWithRetry';
 async function inlineFontCss(fontFamily: string): Promise<string> {
   if (fontFamily === 'DM Sans') {
     try {
-      const res = await fetch('/fonts/DMSans-Variable.woff2');
+      const res = await fetch(`${import.meta.env.BASE_URL}fonts/DMSans-Variable.woff2`);
       const buf = await res.arrayBuffer();
       const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
       return `@font-face{font-family:'DM Sans';src:url('data:font/woff2;base64,${b64}') format('woff2-variations');font-weight:100 1000;font-style:normal;}`;
