@@ -23,6 +23,7 @@ import {
 import * as d3 from 'd3';
 import { stackOrderSlopeBalanced } from '@/core/wave/stackOrder';
 import schemes from '@/core/config/schemes.json';
+import { trackEvent, trackError, startTimer } from '@/core/analytics/posthog';
 
 // d3's .order() type expects (series: Series) => number[] but our ordering
 // function takes Series[] (the full array). Cast once here to avoid repetition.
@@ -615,6 +616,24 @@ export default function LastWaveApp() {
 
     setError(null);
 
+    // Analytics: track wave generation attempt and start timer
+    const dateRangeDays =
+      dsOpts.time_start && dsOpts.time_end
+        ? Math.round(
+            (new Date(dsOpts.time_end as string | Date).getTime() -
+              new Date(dsOpts.time_start as string | Date).getTime()) /
+              86400000,
+          )
+        : undefined;
+    trackEvent('wave_submitted', {
+      service,
+      username_length: username.length,
+      method: dsOpts.method ?? 'artist',
+      group_by: dsOpts.group_by ?? 'week',
+      date_range_days: dateRangeDays,
+    });
+    const stopTimer = startTimer();
+
     // Clear previous graph data
     setSeriesData([]);
     rawSeriesDataRef.current = [];
@@ -978,11 +997,22 @@ export default function LastWaveApp() {
       });
 
       store.setShowLoadingBar(false);
+      trackEvent('wave_completed', {
+        service,
+        method: dsOpts.method ?? 'artist',
+        duration_ms: stopTimer(),
+      });
     } catch (e: unknown) {
       store.log(String(e));
       setError(e instanceof Error ? e.message : String(e));
       store.setShowLoadingBar(false);
       store.setShowOptions(true);
+      trackError(e, {
+        source: 'wave_generation',
+        service,
+        method: dsOpts.method ?? 'artist',
+        duration_ms: stopTimer(),
+      });
     }
   }
 

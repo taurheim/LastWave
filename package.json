@@ -28,6 +28,7 @@
     "@fontsource/dm-sans": "^5.2.8",
     "astro": "^6.3.1",
     "d3": "^7.9.0",
+    "posthog-js": "^1.372.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "yet-another-react-lightbox": "^3.31.0",

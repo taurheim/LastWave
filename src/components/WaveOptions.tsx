@@ -8,6 +8,7 @@ import {
 } from '@/store/appStore';
 import SpotifyModal from './SpotifyModal';
 import ServiceWheel from './ServiceWheel';
+import { trackEvent } from '@/core/analytics/posthog';
 import schemes from '@/core/config/schemes.json';
 import easyDates from '@/core/config/easyDates.json';
 
@@ -74,6 +75,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
     setDataSourceOption('service', s);
     localStorage.setItem('lastwave:service', s);
     setServiceDropdownOpen(false);
+    trackEvent('service_selected', { service: s });
   }
 
   // Auto-detect slow devices and disable animations; set default color scheme
@@ -370,7 +372,10 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                 <button
                   key={name}
                   type="button"
-                  onClick={() => setRendererOption('color_scheme', name)}
+                  onClick={() => {
+                    setRendererOption('color_scheme', name);
+                    trackEvent('theme_selected', { theme: name });
+                  }}
                   className={`group flex flex-col items-center rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 ${
                     isSelected
                       ? 'border-lw-accent bg-lw-accent/15 ring-lw-accent/30 shadow-lg ring-1'

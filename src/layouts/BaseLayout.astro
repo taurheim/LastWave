@@ -243,5 +243,9 @@ const buildNumber = process.env.GITHUB_RUN_NUMBER ?? 'local';
         class="hover:text-lw-accent transition-colors">Niko Savas</a
       >
     </footer>
+    <script>
+      import { initAnalytics } from '@/core/analytics/posthog';
+      initAnalytics();
+    </script>
   </body>
 </html>
