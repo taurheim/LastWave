@@ -996,10 +996,10 @@ export default function LastWaveApp() {
       {/* Error Dialog */}
       {error && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-xl border border-lw-border bg-lw-surface p-8 shadow-2xl">
-            <h3 className="mb-3 font-display text-xl text-red-400">Something went wrong</h3>
-            <p className="mb-4 break-words font-mono text-sm text-lw-muted">{error}</p>
-            <p className="mb-6 text-xs text-lw-muted/60">
+          <div className="border-lw-border bg-lw-surface mx-4 w-full max-w-md rounded-xl border p-8 shadow-2xl">
+            <h3 className="font-display mb-3 text-xl text-red-400">Something went wrong</h3>
+            <p className="text-lw-muted mb-4 font-mono text-sm break-words">{error}</p>
+            <p className="text-lw-muted/60 mb-6 text-xs">
               If this is unexpected, please{' '}
               <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">
                 email niko@savas.ca
@@ -1017,7 +1017,7 @@ export default function LastWaveApp() {
             </p>
             <button
               onClick={handleErrorDismiss}
-              className="rounded-lg bg-lw-accent px-6 py-2 text-sm font-medium text-lw-bg transition-all hover:bg-lw-accent-dim"
+              className="bg-lw-accent text-lw-bg hover:bg-lw-accent-dim rounded-lg px-6 py-2 text-sm font-medium transition-all"
             >
               Ok
             </button>
@@ -1031,7 +1031,7 @@ export default function LastWaveApp() {
       {/* Loading status shown before visualization renders (over decorative waves) */}
       {!showOptions && !showVisualization && showLoadingBar && (
         <div className="py-32 text-center">
-          <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
+          <span className="text-lw-muted animate-pulse text-sm font-medium tracking-wider uppercase">
             {loadingStatusText}
           </span>
         </div>
@@ -1045,7 +1045,7 @@ export default function LastWaveApp() {
           >
             {(showLoadingBar || drawingStatus) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
-                <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
+                <span className="text-lw-muted animate-pulse text-sm font-medium tracking-wider uppercase">
                   {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                 </span>
               </div>
@@ -1070,23 +1070,23 @@ export default function LastWaveApp() {
               {showActions && (
                 <>
                   {showFullSizeBtn && (
-                    <div className="absolute left-4 top-2 z-10">
+                    <div className="absolute top-2 left-4 z-10">
                       <button
                         onClick={() => setShowFullSvg(!showFullSvg)}
-                        className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
+                        className="border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent rounded-lg border px-4 py-1.5 text-xs font-medium tracking-wider uppercase backdrop-blur-sm transition-all"
                       >
                         {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
                       </button>
                     </div>
                   )}
-                  <div className="absolute right-4 top-2 z-10 flex gap-2">
+                  <div className="absolute top-2 right-4 z-10 flex gap-2">
                     <button
                       ref={customizeToggleRef}
                       onClick={() => setShowCustomize(!showCustomize)}
-                      className={`rounded-lg px-4 py-1.5 text-xs font-medium uppercase tracking-wider backdrop-blur-sm transition-all ${
+                      className={`rounded-lg px-4 py-1.5 text-xs font-medium tracking-wider uppercase backdrop-blur-sm transition-all ${
                         showCustomize
                           ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
-                          : 'border border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent'
+                          : 'border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent border'
                       }`}
                     >
                       {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
@@ -1097,7 +1097,7 @@ export default function LastWaveApp() {
               {showActions && showCustomize && (
                 <div
                   ref={customizePanelRef}
-                  className="absolute right-4 top-12 z-30 max-h-[calc(100vh-8rem)] w-[min(420px,40%)] overflow-y-auto rounded-xl border border-lw-border bg-lw-bg/95 shadow-lg backdrop-blur-sm"
+                  className="border-lw-border bg-lw-bg/95 absolute top-12 right-4 z-30 max-h-[calc(100vh-8rem)] w-[min(420px,40%)] overflow-y-auto rounded-xl border shadow-lg backdrop-blur-sm"
                 >
                   <CustomizePanel maxPlays={maxPlaysInDataset} />
                 </div>
@@ -1119,7 +1119,7 @@ export default function LastWaveApp() {
           <div className="relative">
             {(showLoadingBar || drawingStatus) && (
               <div className="absolute inset-x-0 top-3 z-20 text-center">
-                <span className="animate-pulse text-sm font-medium uppercase tracking-wider text-lw-muted">
+                <span className="text-lw-muted animate-pulse text-sm font-medium tracking-wider uppercase">
                   {drawingStatus && !showLoadingBar ? drawingStatus : loadingStatusText}
                 </span>
               </div>
@@ -1143,22 +1143,22 @@ export default function LastWaveApp() {
             {showActions && (
               <>
                 {showFullSizeBtn && (
-                  <div className="absolute left-6 top-2 z-10">
+                  <div className="absolute top-2 left-6 z-10">
                     <button
                       onClick={() => setShowFullSvg(!showFullSvg)}
-                      className="rounded-lg border border-lw-border bg-lw-surface/80 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-lw-text backdrop-blur-sm transition-all hover:border-lw-accent hover:text-lw-accent"
+                      className="border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent rounded-lg border px-4 py-1.5 text-xs font-medium tracking-wider uppercase backdrop-blur-sm transition-all"
                     >
                       {showFullSvg ? '⤡ Fit to width' : '⤢ Full size'}
                     </button>
                   </div>
                 )}
-                <div className="absolute right-6 top-2 z-10">
+                <div className="absolute top-2 right-6 z-10">
                   <button
                     onClick={() => setShowCustomize(!showCustomize)}
-                    className={`rounded-lg px-4 py-1.5 text-xs font-medium uppercase tracking-wider backdrop-blur-sm transition-all ${
+                    className={`rounded-lg px-4 py-1.5 text-xs font-medium tracking-wider uppercase backdrop-blur-sm transition-all ${
                       showCustomize
                         ? 'bg-lw-accent text-lw-bg opacity-80 hover:opacity-100'
-                        : 'border border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent'
+                        : 'border-lw-border bg-lw-surface/80 text-lw-text hover:border-lw-accent hover:text-lw-accent border'
                     }`}
                   >
                     {showCustomize ? '✕ Hide customize' : '⚙ Customize'}
@@ -1172,12 +1172,12 @@ export default function LastWaveApp() {
         {showVisualization && !showCustomize && (
           <div className="flex items-center justify-center gap-2 py-3 opacity-[0.18] max-lg:landscape:hidden">
             <span
-              className="text-2xl text-lw-text"
+              className="text-lw-text text-2xl"
               style={{ animation: 'lw-rotate-hint 2.5s ease-in-out infinite' }}
             >
               ↻
             </span>
-            <span className="text-xs font-semibold uppercase tracking-widest text-lw-text">
+            <span className="text-lw-text text-xs font-semibold tracking-widest uppercase">
               Rotate for best view
             </span>
             <style>{`
@@ -1243,7 +1243,7 @@ export default function LastWaveApp() {
 
       {/* Image Actions (download/share) — sticky on mobile */}
       {showActions && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-lw-border bg-lw-surface/80 backdrop-blur-sm lg:relative lg:z-auto lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none">
+        <div className="border-lw-border bg-lw-surface/80 fixed right-0 bottom-0 left-0 z-40 border-t backdrop-blur-sm lg:relative lg:z-auto lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none">
           <ImageActions />
         </div>
       )}

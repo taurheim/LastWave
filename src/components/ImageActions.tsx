@@ -231,7 +231,7 @@ export default function ImageActions() {
               onClick={() => {
                 void nativeShare();
               }}
-              className="w-full max-w-xs rounded-lg bg-lw-accent px-6 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:order-last max-lg:landscape:ml-auto max-lg:landscape:w-auto max-lg:landscape:py-1.5"
+              className="bg-lw-accent text-lw-bg hover:bg-lw-accent-dim w-full max-w-xs rounded-lg px-6 py-3 text-sm font-semibold tracking-wider uppercase transition-all max-lg:landscape:order-last max-lg:landscape:ml-auto max-lg:landscape:w-auto max-lg:landscape:py-1.5"
             >
               Share
             </button>
@@ -243,13 +243,13 @@ export default function ImageActions() {
                 onClick={() => {
                   void downloadPng();
                 }}
-                className="flex-1 rounded-l-lg border border-r-0 border-lw-border py-3 text-sm font-semibold uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent max-lg:landscape:px-6 max-lg:landscape:py-1.5"
+                className="border-lw-border text-lw-text hover:border-lw-accent hover:text-lw-accent flex-1 rounded-l-lg border border-r-0 py-3 text-sm font-semibold tracking-wider uppercase transition-all max-lg:landscape:px-6 max-lg:landscape:py-1.5"
               >
                 Download
               </button>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className="rounded-r-lg border border-lw-border px-3 py-3 text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent max-lg:landscape:py-1.5"
+                className="border-lw-border text-lw-text hover:border-lw-accent hover:text-lw-accent rounded-r-lg border px-3 py-3 transition-all max-lg:landscape:py-1.5"
                 aria-label="Download options"
               >
                 <svg
@@ -263,13 +263,13 @@ export default function ImageActions() {
                 </svg>
               </button>
               {dropdownOpen && (
-                <div className="absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+                <div className="border-lw-border bg-lw-surface absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border shadow-xl">
                   <button
                     onClick={() => {
                       void downloadPng();
                       setDropdownOpen(false);
                     }}
-                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                    className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
                   >
                     PNG
                   </button>
@@ -278,7 +278,7 @@ export default function ImageActions() {
                       downloadSvg();
                       setDropdownOpen(false);
                     }}
-                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                    className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
                   >
                     SVG (Vectorized)
                   </button>
@@ -296,13 +296,13 @@ export default function ImageActions() {
                 onClick={() => {
                   void downloadPng();
                 }}
-                className="flex-1 rounded-l-lg bg-lw-accent py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:px-6 max-lg:landscape:py-1.5"
+                className="bg-lw-accent text-lw-bg hover:bg-lw-accent-dim flex-1 rounded-l-lg py-3 text-sm font-semibold tracking-wider uppercase transition-all max-lg:landscape:px-6 max-lg:landscape:py-1.5"
               >
                 Download
               </button>
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className="rounded-r-lg border-l border-lw-bg/20 bg-lw-accent px-3 py-3 text-lw-bg transition-all hover:bg-lw-accent-dim max-lg:landscape:py-1.5"
+                className="border-lw-bg/20 bg-lw-accent text-lw-bg hover:bg-lw-accent-dim rounded-r-lg border-l px-3 py-3 transition-all max-lg:landscape:py-1.5"
                 aria-label="Download options"
               >
                 <svg
@@ -316,13 +316,13 @@ export default function ImageActions() {
                 </svg>
               </button>
               {dropdownOpen && (
-                <div className="absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+                <div className="border-lw-border bg-lw-surface absolute bottom-full left-0 z-50 mb-1 min-w-full overflow-hidden rounded-lg border shadow-xl">
                   <button
                     onClick={() => {
                       void downloadPng();
                       setDropdownOpen(false);
                     }}
-                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                    className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
                   >
                     PNG
                   </button>
@@ -331,7 +331,7 @@ export default function ImageActions() {
                       downloadSvg();
                       setDropdownOpen(false);
                     }}
-                    className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                    className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
                   >
                     SVG (Vectorized)
                   </button>
@@ -342,10 +342,10 @@ export default function ImageActions() {
               onClick={() => {
                 void cloudinaryUpload();
               }}
-              className="py-1 text-xs uppercase tracking-wider text-lw-muted transition-colors hover:text-lw-accent max-lg:landscape:px-4"
+              className="text-lw-muted hover:text-lw-accent py-1 text-xs tracking-wider uppercase transition-colors max-lg:landscape:px-4"
             >
               {uploadInProgress ? (
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
+                <span className="border-lw-muted inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
               ) : (
                 'Share'
               )}
@@ -362,13 +362,13 @@ export default function ImageActions() {
             onClick={() => {
               void downloadPng();
             }}
-            className="flex-1 rounded-l-lg bg-lw-accent py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:bg-lw-accent-dim active:scale-[0.98]"
+            className="bg-lw-accent text-lw-bg hover:bg-lw-accent-dim flex-1 rounded-l-lg py-3 text-sm font-semibold tracking-wider uppercase transition-all active:scale-[0.98]"
           >
             Download
           </button>
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="rounded-r-lg border-l border-lw-bg/20 bg-lw-accent px-3 py-3 text-lw-bg transition-all hover:bg-lw-accent-dim active:scale-[0.98]"
+            className="border-lw-bg/20 bg-lw-accent text-lw-bg hover:bg-lw-accent-dim rounded-r-lg border-l px-3 py-3 transition-all active:scale-[0.98]"
             aria-label="Download options"
           >
             <svg
@@ -382,13 +382,13 @@ export default function ImageActions() {
             </svg>
           </button>
           {dropdownOpen && (
-            <div className="absolute left-0 top-full z-50 mt-1 min-w-full overflow-hidden rounded-lg border border-lw-border bg-lw-surface shadow-xl">
+            <div className="border-lw-border bg-lw-surface absolute top-full left-0 z-50 mt-1 min-w-full overflow-hidden rounded-lg border shadow-xl">
               <button
                 onClick={() => {
                   void downloadPng();
                   setDropdownOpen(false);
                 }}
-                className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
               >
                 PNG
               </button>
@@ -397,7 +397,7 @@ export default function ImageActions() {
                   downloadSvg();
                   setDropdownOpen(false);
                 }}
-                className="w-full px-5 py-2.5 text-left text-xs uppercase tracking-wider text-lw-text transition-colors hover:bg-lw-bg hover:text-lw-accent"
+                className="text-lw-text hover:bg-lw-bg hover:text-lw-accent w-full px-5 py-2.5 text-left text-xs tracking-wider uppercase transition-colors"
               >
                 SVG (Vectorized)
               </button>
@@ -410,10 +410,10 @@ export default function ImageActions() {
           onClick={() => {
             void cloudinaryUpload();
           }}
-          className="w-44 rounded-lg border border-lw-border py-3 text-sm uppercase tracking-wider text-lw-text transition-all hover:border-lw-accent hover:text-lw-accent"
+          className="border-lw-border text-lw-text hover:border-lw-accent hover:text-lw-accent w-44 rounded-lg border py-3 text-sm tracking-wider uppercase transition-all"
         >
           {uploadInProgress ? (
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-lw-muted border-t-transparent" />
+            <span className="border-lw-muted inline-block h-4 w-4 animate-spin rounded-full border-2 border-t-transparent" />
           ) : (
             'Share'
           )}
@@ -427,29 +427,29 @@ export default function ImageActions() {
           onClick={() => setShowDialog(false)}
         >
           <div
-            className="mx-4 w-full max-w-md rounded-xl border border-lw-border bg-lw-surface p-8 shadow-2xl"
+            className="border-lw-border bg-lw-surface mx-4 w-full max-w-md rounded-xl border p-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="mb-4 font-display text-xl text-lw-heading">Share this wave</h3>
+            <h3 className="font-display text-lw-heading mb-4 text-xl">Share this wave</h3>
             <input
               type="text"
               readOnly
               value={sharingLink}
               onClick={(e) => (e.target as HTMLInputElement).select()}
-              className="mb-4 w-full rounded-lg border border-lw-border bg-lw-bg px-4 py-2.5 text-sm text-lw-text focus:outline-none"
+              className="border-lw-border bg-lw-bg text-lw-text mb-4 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none"
             />
             <div className="flex items-center justify-between">
               <a
                 href={sharingLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-lw-accent transition-colors hover:text-lw-cyan"
+                className="text-lw-accent hover:text-lw-cyan text-sm transition-colors"
               >
                 Open link ↗
               </a>
               <button
                 onClick={() => setShowDialog(false)}
-                className="text-sm text-lw-muted transition-colors hover:text-lw-text"
+                className="text-lw-muted hover:text-lw-text text-sm transition-colors"
               >
                 Close
               </button>

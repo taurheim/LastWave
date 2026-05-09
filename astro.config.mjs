@@ -1,13 +1,14 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwind from '@astrojs/tailwind';
+import tailwindcss from '@tailwindcss/vite';
 import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://savas.ca/lastwave',
   base: process.env.ASTRO_BASE ?? '/lastwave/',
-  integrations: [react(), tailwind(), sitemap()],
+  integrations: [react(), sitemap()],
   vite: {
+    plugins: [tailwindcss()],
     server: {
       proxy: {
         '/api/wikidata': {

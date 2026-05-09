@@ -80,7 +80,7 @@ export default function ServiceWheel({
             key={key}
             type="button"
             onClick={() => handleRowClick(key)}
-            className="grid cursor-pointer items-center overflow-hidden rounded-lg transition-colors duration-200 hover:bg-lw-accent/10"
+            className="hover:bg-lw-accent/10 grid cursor-pointer items-center overflow-hidden rounded-lg transition-colors duration-200"
             style={{
               height: 42,
               width: dropdownOpen ? 135 : 'max-content',
@@ -109,14 +109,14 @@ export default function ServiceWheel({
 
             {/* Label — in auto grid cell, expands rightward without moving icon */}
             <span
-              className="overflow-hidden whitespace-nowrap text-sm transition-all duration-300 ease-out"
+              className="overflow-hidden text-sm whitespace-nowrap transition-all duration-300 ease-out"
               style={{
                 maxWidth: dropdownOpen ? 100 : 0,
                 opacity: dropdownOpen ? 1 : 0,
               }}
             >
               <span
-                className={`block px-1 py-1 text-left ${isActive ? 'font-medium text-lw-accent' : 'text-lw-text'}`}
+                className={`block px-1 py-1 text-left ${isActive ? 'text-lw-accent font-medium' : 'text-lw-text'}`}
               >
                 {getLabel(key)}
               </span>

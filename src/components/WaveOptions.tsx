@@ -193,7 +193,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       {/* Main Options */}
       <div className="mb-6 space-y-5 lg:space-y-5">
         {/* Username */}
-        <div className="overflow-x-clip pb-2 pt-4">
+        <div className="overflow-x-clip pt-4 pb-2">
           <div
             className="relative transition-all duration-300"
             style={{ marginRight: serviceDropdownOpen ? 145 : 0 }}
@@ -207,7 +207,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
               data-1p-ignore
               data-lpignore="true"
               data-bwignore
-              className="w-full rounded-lg border border-lw-border bg-lw-surface py-3 pl-4 text-center text-lg text-lw-text placeholder-lw-muted/50 transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30 [&::-webkit-search-cancel-button]:hidden"
+              className="border-lw-border bg-lw-surface text-lw-text placeholder-lw-muted/50 focus:border-lw-accent focus:ring-lw-accent/30 w-full rounded-lg border py-3 pl-4 text-center text-lg transition-all focus:ring-1 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
               style={{ paddingRight: serviceDropdownOpen ? 16 : 56 }}
               placeholder={
                 service === 'listenbrainz' ? 'listenbrainz username' : 'last.fm username'
@@ -239,14 +239,14 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           <div className="flex flex-col items-center gap-y-0.5 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-1.5 sm:gap-y-0 lg:gap-x-2">
             {/* Line 1: Graph my <date preset> */}
             <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
-              <span className="whitespace-nowrap text-[1.4rem] text-lw-muted sm:text-lg lg:text-xl">
+              <span className="text-lw-muted text-[1.4rem] whitespace-nowrap sm:text-lg lg:text-xl">
                 Graph my
               </span>
               <span className="relative inline-block">
                 <select
                   value={datePreset}
                   onChange={(e) => handleDatePresetChange(e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1.4rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="border-lw-accent/40 text-lw-accent hover:border-lw-accent focus:border-lw-accent cursor-pointer appearance-none border-b-2 bg-transparent py-0.5 pr-5 pl-0.5 text-[1.4rem] font-medium transition-colors focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   {easyDateEntries.map(([name]) => (
                     <option key={name} value={name} className="bg-lw-bg text-lw-text">
@@ -258,7 +258,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   </option>
                 </select>
                 <svg
-                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  className="text-lw-accent/60 pointer-events-none absolute top-1/2 right-0 h-4 w-4 -translate-y-1/2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -270,12 +270,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
             </div>
             {/* Line 2: of <Artists> by <Week> — slightly smaller on mobile */}
             <div className="flex items-baseline justify-center gap-x-1.5 sm:gap-x-1.5 lg:gap-x-2">
-              <span className="text-[1rem] text-lw-muted sm:text-lg lg:text-xl">of</span>
+              <span className="text-lw-muted text-[1rem] sm:text-lg lg:text-xl">of</span>
               <span className="relative inline-block">
                 <select
                   value={method}
                   onChange={(e) => setDataSourceOption('method', e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="border-lw-accent/40 text-lw-accent hover:border-lw-accent focus:border-lw-accent cursor-pointer appearance-none border-b-2 bg-transparent py-0.5 pr-5 pl-0.5 text-[1rem] font-medium transition-colors focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   <option value="artist" className="bg-lw-bg text-lw-text">
                     Artists
@@ -288,7 +288,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   </option>
                 </select>
                 <svg
-                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  className="text-lw-accent/60 pointer-events-none absolute top-1/2 right-0 h-4 w-4 -translate-y-1/2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -297,12 +297,12 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </span>
-              <span className="text-[1rem] text-lw-muted sm:text-lg lg:text-xl">by</span>
+              <span className="text-lw-muted text-[1rem] sm:text-lg lg:text-xl">by</span>
               <span className="relative inline-block">
                 <select
                   value={groupBy}
                   onChange={(e) => setDataSourceOption('group_by', e.target.value)}
-                  className="cursor-pointer appearance-none border-b-2 border-lw-accent/40 bg-transparent py-0.5 pl-0.5 pr-5 text-[1rem] font-medium text-lw-accent transition-colors hover:border-lw-accent focus:border-lw-accent focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
+                  className="border-lw-accent/40 text-lw-accent hover:border-lw-accent focus:border-lw-accent cursor-pointer appearance-none border-b-2 bg-transparent py-0.5 pr-5 pl-0.5 text-[1rem] font-medium transition-colors focus:outline-none sm:pr-6 sm:text-lg lg:text-xl"
                 >
                   {allowedSegments.map((v) => (
                     <option key={v} value={v} className="bg-lw-bg text-lw-text">
@@ -311,7 +311,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   ))}
                 </select>
                 <svg
-                  className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-lw-accent/60"
+                  className="text-lw-accent/60 pointer-events-none absolute top-1/2 right-0 h-4 w-4 -translate-y-1/2"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -331,7 +331,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
           {isCustomDate && (
             <div className="mx-auto mt-4 grid max-w-xs grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs text-lw-muted">Start</label>
+                <label className="text-lw-muted mb-1 block text-xs">Start</label>
                 <input
                   type="date"
                   value={timeStart}
@@ -339,11 +339,11 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                     const d = new Date(e.target.value);
                     setDataSourceOption('time_start', isNaN(d.getTime()) ? undefined : d);
                   }}
-                  className="w-full rounded-lg border border-lw-border bg-lw-surface px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30"
+                  className="border-lw-border bg-lw-surface text-lw-text focus:border-lw-accent focus:ring-lw-accent/30 w-full rounded-lg border px-3 py-2 text-sm transition-all focus:ring-1 focus:outline-none"
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-lw-muted">End</label>
+                <label className="text-lw-muted mb-1 block text-xs">End</label>
                 <input
                   type="date"
                   value={timeEnd}
@@ -351,7 +351,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                     const d = new Date(e.target.value);
                     setDataSourceOption('time_end', isNaN(d.getTime()) ? undefined : d);
                   }}
-                  className="w-full rounded-lg border border-lw-border bg-lw-surface px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none focus:ring-1 focus:ring-lw-accent/30"
+                  className="border-lw-border bg-lw-surface text-lw-text focus:border-lw-accent focus:ring-lw-accent/30 w-full rounded-lg border px-3 py-2 text-sm transition-all focus:ring-1 focus:outline-none"
                 />
               </div>
             </div>
@@ -360,7 +360,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
 
         {/* Color Scheme */}
         <div>
-          <label className="mb-3 block text-xs uppercase tracking-widest text-lw-muted">
+          <label className="text-lw-muted mb-3 block text-xs tracking-widest uppercase">
             Theme
           </label>
           <div className="flex flex-wrap justify-center gap-3">
@@ -373,7 +373,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
                   onClick={() => setRendererOption('color_scheme', name)}
                   className={`group flex flex-col items-center rounded-lg border-2 p-2.5 shadow-md transition-all duration-200 ${
                     isSelected
-                      ? 'border-lw-accent bg-lw-accent/15 shadow-lg ring-1 ring-lw-accent/30'
+                      ? 'border-lw-accent bg-lw-accent/15 ring-lw-accent/30 shadow-lg ring-1'
                       : 'border-lw-border bg-lw-surface hover:border-lw-muted/50'
                   }`}
                 >
@@ -404,7 +404,7 @@ export default function WaveOptions({ onSubmit }: WaveOptionsProps) {
       <div className="text-center">
         <button
           type="submit"
-          className="relative rounded-lg bg-lw-accent px-12 py-3 text-sm font-semibold uppercase tracking-wider text-lw-bg transition-all hover:scale-[1.02] hover:bg-lw-accent-dim active:scale-[0.98]"
+          className="bg-lw-accent text-lw-bg hover:bg-lw-accent-dim relative rounded-lg px-12 py-3 text-sm font-semibold tracking-wider uppercase transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           Generate
         </button>

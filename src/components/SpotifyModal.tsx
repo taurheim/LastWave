@@ -28,12 +28,12 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="relative mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-lw-border bg-lw-bg p-6 text-left shadow-2xl sm:p-8">
+      <div className="border-lw-border bg-lw-bg relative mx-4 max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border p-6 text-left shadow-2xl sm:p-8">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 rounded-lg p-1.5 text-lw-muted transition-colors hover:bg-lw-accent/10 hover:text-lw-text"
+          className="text-lw-muted hover:bg-lw-accent/10 hover:text-lw-text absolute top-3 right-3 rounded-lg p-1.5 transition-colors"
           aria-label="Close"
         >
           <svg
@@ -48,26 +48,26 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </button>
 
         {/* Header */}
-        <h2 className="mb-4 pr-8 text-xl font-bold text-lw-text sm:text-2xl">
+        <h2 className="text-lw-text mb-4 pr-8 text-xl font-bold sm:text-2xl">
           I want to see stats for my Spotify listening history!
         </h2>
 
-        <p className="mb-4 text-sm leading-relaxed text-lw-muted sm:text-base">
+        <p className="text-lw-muted mb-4 text-sm leading-relaxed sm:text-base">
           Unfortunately, Spotify does not expose a public API to access your music listening
           history. To use LastWave (and{' '}
           <a
             href="https://www.reddit.com/r/lastfm/comments/htzomy/list_of_spotifylastfm_stats_websites_and_not_just/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+            className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
           >
             many more visualization tools
           </a>
           ), you will need to set up last.fm and/or ListenBrainz.
         </p>
 
-        <p className="mb-6 text-sm leading-relaxed text-lw-muted sm:text-base">
-          <strong className="font-semibold text-lw-text">
+        <p className="text-lw-muted mb-6 text-sm leading-relaxed sm:text-base">
+          <strong className="text-lw-text font-semibold">
             You&rsquo;ll only need to do this once
           </strong>{' '}
           - once you&rsquo;ve set it up, you&rsquo;ll be able to use LastWave and other tools that
@@ -75,7 +75,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </p>
 
         {/* Section heading */}
-        <h3 className="mb-2 text-lg font-semibold text-lw-text">
+        <h3 className="text-lw-text mb-2 text-lg font-semibold">
           {guide === 'both'
             ? 'Set up last.fm and ListenBrainz'
             : guide === 'lastfm'
@@ -84,7 +84,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </h3>
 
         {/* Guide toggle */}
-        <div className="mb-5 flex items-center justify-center gap-1 rounded-lg border border-lw-border bg-lw-surface/50 p-1">
+        <div className="border-lw-border bg-lw-surface/50 mb-5 flex items-center justify-center gap-1 rounded-lg border p-1">
           {[
             { key: 'both' as SetupGuide, label: 'Both (Recommended)' },
             { key: 'lastfm' as SetupGuide, label: 'Last.fm only' },
@@ -106,10 +106,10 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
         </div>
 
         {/* Instructions */}
-        <div className="space-y-4 text-sm text-lw-text">
+        <div className="text-lw-text space-y-4 text-sm">
           {/* Create Account */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+            <p className="text-lw-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
               Create account
             </p>
             <ol className="list-decimal space-y-2 pl-5">
@@ -119,7 +119,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://www.last.fm/join"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     Create a last.fm account
                   </a>
@@ -131,7 +131,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://musicbrainz.org/register"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     Create a ListenBrainz account
                   </a>
@@ -142,7 +142,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
           {/* Connect to Spotify */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+            <p className="text-lw-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
               Connect to Spotify
             </p>
             <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 3 : 2}>
@@ -152,7 +152,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://www.last.fm/settings/applications"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     Connect &ldquo;Spotify Scrobbling&rdquo; to last.fm
                   </a>
@@ -164,7 +164,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://listenbrainz.org/settings/music-services/details/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     &ldquo;Record Spotify Listening History&rdquo; in ListenBrainz
                   </a>
@@ -175,7 +175,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
           {/* Upload History */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-lw-muted">
+            <p className="text-lw-muted mb-1.5 text-xs font-semibold tracking-wider uppercase">
               Upload history
             </p>
             <ol className="list-decimal space-y-2 pl-5" start={guide === 'both' ? 5 : 3}>
@@ -185,7 +185,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://savas.ca/scrobblify"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     Upload your last two weeks from Spotify
                   </a>{' '}
@@ -198,7 +198,7 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
                     href="https://listenbrainz.org/settings/import/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-lw-accent underline decoration-lw-accent/30 transition-colors hover:decoration-lw-accent"
+                    className="text-lw-accent decoration-lw-accent/30 hover:decoration-lw-accent underline transition-colors"
                   >
                     Upload your Spotify history
                   </a>{' '}
@@ -211,16 +211,16 @@ export default function SpotifyModal({ open, onClose }: SpotifyModalProps) {
 
         {/* Why both? */}
         {guide === 'both' && (
-          <div className="mt-8 rounded-lg border border-lw-border bg-lw-surface/50 p-4 pt-3">
-            <h4 className="mb-2 text-sm font-semibold text-lw-text">Why both?</h4>
-            <p className="text-xs leading-relaxed text-lw-muted sm:text-sm">
+          <div className="border-lw-border bg-lw-surface/50 mt-8 rounded-lg border p-4 pt-3">
+            <h4 className="text-lw-text mb-2 text-sm font-semibold">Why both?</h4>
+            <p className="text-lw-muted text-xs leading-relaxed sm:text-sm">
               An important limitation of last.fm is that you cannot update your listening history
               past 2 weeks ago. This only affects historical data — going forward, last.fm will
               capture all tracks you listen to. ListenBrainz is an open source MetaBrainz project
               that is less popular but has more flexibility, and can import your full history.
               LastWave supports both, but many other tools may only support last.fm.
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-lw-muted sm:text-sm">
+            <p className="text-lw-muted mt-2 text-xs leading-relaxed sm:text-sm">
               My recommendation is to set up both for maximum flexibility, but you can always choose
               one or the other as you prefer.
             </p>

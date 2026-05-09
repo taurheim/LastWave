@@ -1,6 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import ErrorToast from '@/components/ErrorToast';
+import '@/styles/global.css';
 
 interface Props {
   title?: string;
@@ -99,16 +100,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
         font-display: swap;
       }
       :root {
-        --lw-bg: 245 223 197;
-        --lw-surface: 255 255 255;
-        --lw-border: 61 12 17;
-        --lw-accent: 196 40 40;
-        --lw-accent-dim: 163 33 33;
-        --lw-teal: 212 168 67;
-        --lw-cyan: 139 107 139;
-        --lw-muted: 100 75 55;
-        --lw-text: 61 28 30;
-        --lw-heading: 45 10 16;
         --lw-body-bg: #f5dfc5;
       }
       body {
@@ -126,7 +117,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
         left: 0;
         width: 0;
         height: 1px;
-        background: rgb(var(--lw-accent));
+        background: var(--color-lw-accent);
         transition: width 0.3s ease;
       }
       .nav-link:hover::after {
@@ -157,11 +148,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
       }
     </style>
   </head>
-  <body class="min-h-screen pb-3 font-body text-lw-text lg:pb-6">
+  <body class="font-body text-lw-text min-h-screen pb-3 lg:pb-6">
     <!-- Decorative background waves -->
     <svg
       id="decorative-bg-waves"
-      class="fixed left-0 top-0 -z-10 w-full max-lg:portrait:top-1/2 max-lg:portrait:h-[60%] max-lg:portrait:-translate-y-1/2"
+      class="fixed top-0 left-0 -z-10 w-full max-lg:portrait:top-1/2 max-lg:portrait:h-[60%] max-lg:portrait:-translate-y-1/2"
       viewBox="0 0 1440 900"
       preserveAspectRatio="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -194,10 +185,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
     </svg>
 
     <header
-      class="pb-1 pt-4 text-center lg:pb-3 lg:pt-10 max-lg:landscape:pb-0 max-lg:landscape:pt-2"
+      class="pt-4 pb-1 text-center lg:pt-10 lg:pb-3 max-lg:landscape:pt-2 max-lg:landscape:pb-0"
     >
       <h1
-        class="font-display text-5xl text-lw-heading lg:text-8xl max-lg:landscape:text-4xl"
+        class="font-display text-lw-heading text-5xl lg:text-8xl max-lg:landscape:text-4xl"
         style="text-shadow: 0 2px 8px rgba(245, 223, 197, 0.8);"
       >
         LastWave
@@ -206,16 +197,16 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
 
     <nav class="mb-2 text-center lg:mb-6 max-lg:landscape:mb-1">
       <div
-        class="inline-flex items-center gap-4 text-xs uppercase tracking-widest text-lw-muted lg:gap-8 lg:text-sm max-lg:landscape:gap-3"
+        class="text-lw-muted inline-flex items-center gap-4 text-xs tracking-widest uppercase lg:gap-8 lg:text-sm max-lg:landscape:gap-3"
       >
         <a href={import.meta.env.BASE_URL} id="nav-home-link" class="nav-link hover:text-lw-accent"
           >Home</a
         >
-        <span class="inline-block h-3 w-px bg-lw-border"></span>
+        <span class="bg-lw-border inline-block h-3 w-px"></span>
         <a href={`${import.meta.env.BASE_URL}gallery`} class="nav-link hover:text-lw-accent"
           >Gallery</a
         >
-        <span class="inline-block h-3 w-px bg-lw-border"></span>
+        <span class="bg-lw-border inline-block h-3 w-px"></span>
         <a href={`${import.meta.env.BASE_URL}about`} class="nav-link hover:text-lw-accent">About</a>
       </div>
     </nav>
@@ -228,15 +219,15 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site ?? 'https://savas.ca
 
     <footer
       id="site-footer"
-      class="mt-4 pb-2 text-center text-xs tracking-wider text-lw-muted/40 lg:mt-6 lg:pb-3"
+      class="text-lw-muted/40 mt-4 pb-2 text-center text-xs tracking-wider lg:mt-6 lg:pb-3"
     >
       <div
-        class="mx-auto mb-2 h-px w-12 bg-gradient-to-r from-transparent via-lw-border to-transparent"
+        class="via-lw-border mx-auto mb-2 h-px w-12 bg-gradient-to-r from-transparent to-transparent"
       >
       </div>
       LastWave &middot; built by <a
         href="https://savas.ca"
-        class="transition-colors hover:text-lw-accent">Niko Savas</a
+        class="hover:text-lw-accent transition-colors">Niko Savas</a
       >
     </footer>
   </body>
