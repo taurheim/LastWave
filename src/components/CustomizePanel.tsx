@@ -69,15 +69,15 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
 
   return (
     <div className="px-6 py-4 sm:px-3 sm:py-2 lg:px-6 lg:py-4">
-      <div className="space-y-6 rounded-xl border border-lw-border bg-lw-surface/50 p-6 sm:space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
+      <div className="border-lw-border bg-lw-surface/50 space-y-6 rounded-xl border p-6 sm:space-y-4 sm:p-4 lg:space-y-6 lg:p-6">
         {/* Top controls */}
         <div className="space-y-4 sm:space-y-3 lg:space-y-4">
           <div>
             <div className="mb-2 flex items-baseline justify-between sm:mb-1 lg:mb-2">
-              <label htmlFor="min-plays" className="text-sm font-medium text-lw-text">
+              <label htmlFor="min-plays" className="text-lw-text text-sm font-medium">
                 Minimum plays
               </label>
-              <span className="text-lg font-semibold tabular-nums text-lw-accent sm:text-base lg:text-lg">
+              <span className="text-lw-accent text-lg font-semibold tabular-nums sm:text-base lg:text-lg">
                 {minPlays}
               </span>
             </div>
@@ -85,7 +85,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
               <button
                 onClick={() => setDataSourceOption('min_plays', String(Math.max(1, minPlays - 1)))}
                 disabled={minPlays <= 1}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-lw-border bg-lw-bg text-sm text-lw-muted transition-all hover:border-lw-accent hover:text-lw-text disabled:cursor-not-allowed disabled:opacity-30"
+                className="border-lw-border bg-lw-bg text-lw-muted hover:border-lw-accent hover:text-lw-text flex h-6 w-6 shrink-0 items-center justify-center rounded border text-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
               >
                 −
               </button>
@@ -96,14 +96,14 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 max={maxPlays}
                 value={minPlays}
                 onChange={(e) => setDataSourceOption('min_plays', e.target.value)}
-                className="h-2 w-full cursor-pointer accent-lw-accent"
+                className="accent-lw-accent h-2 w-full cursor-pointer"
               />
               <button
                 onClick={() =>
                   setDataSourceOption('min_plays', String(Math.min(maxPlays, minPlays + 1)))
                 }
                 disabled={minPlays >= maxPlays}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded border border-lw-border bg-lw-bg text-sm text-lw-muted transition-all hover:border-lw-accent hover:text-lw-text disabled:cursor-not-allowed disabled:opacity-30"
+                className="border-lw-border bg-lw-bg text-lw-muted hover:border-lw-accent hover:text-lw-text flex h-6 w-6 shrink-0 items-center justify-center rounded border text-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
               >
                 +
               </button>
@@ -112,7 +112,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
           <div>
             <label
               htmlFor="graph-type"
-              className="mb-2 block text-sm font-medium text-lw-text sm:mb-1 lg:mb-2"
+              className="text-lw-text mb-2 block text-sm font-medium sm:mb-1 lg:mb-2"
             >
               Graph type
             </label>
@@ -120,7 +120,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
               id="graph-type"
               value={offset}
               onChange={(e) => setRendererOption('offset', e.target.value)}
-              className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
+              className="border-lw-border bg-lw-bg text-lw-text focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
             >
               {[
                 ['balanced', 'Balanced Silhouette'],
@@ -137,12 +137,12 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
           </div>
         </div>
 
-        <div className="h-px w-full bg-lw-border" />
+        <div className="bg-lw-border h-px w-full" />
 
         <div className="grid grid-cols-1 gap-8 sm:gap-4 lg:grid-cols-2 lg:gap-8">
           {/* Options */}
           <div>
-            <h3 className="mb-4 text-xs uppercase tracking-widest text-lw-accent sm:mb-2 lg:mb-4">
+            <h3 className="text-lw-accent mb-4 text-xs tracking-widest uppercase sm:mb-2 lg:mb-4">
               Options
             </h3>
             <div className="space-y-3 sm:space-y-1.5 lg:space-y-3">
@@ -159,9 +159,9 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                     type="checkbox"
                     checked={opt.checked}
                     onChange={(e) => setRendererOption(opt.key, e.target.checked)}
-                    className="rounded border-lw-border bg-lw-bg accent-lw-accent"
+                    className="border-lw-border bg-lw-bg accent-lw-accent rounded"
                   />
-                  <span className="text-xs text-lw-muted transition-colors group-hover:text-lw-text">
+                  <span className="text-lw-muted group-hover:text-lw-text text-xs transition-colors">
                     {opt.label}
                   </span>
                 </label>
@@ -173,14 +173,14 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
           <div>
             <div className="space-y-3 sm:space-y-2 lg:space-y-3">
               <div>
-                <label htmlFor="font-picker" className="mb-1 block text-xs text-lw-muted">
+                <label htmlFor="font-picker" className="text-lw-muted mb-1 block text-xs">
                   Font
                 </label>
                 {fontsLoaded ? (
                   <select
                     value={font}
                     onChange={(e) => setRendererOption('font', e.target.value)}
-                    className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
+                    className="border-lw-border bg-lw-bg text-lw-text focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
                   >
                     {displayFonts.map((f) => (
                       <option key={f} value={f} style={{ fontFamily: f }}>
@@ -191,7 +191,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 ) : (
                   <button
                     onClick={fetchFonts}
-                    className="text-xs text-lw-accent transition-colors hover:text-lw-text"
+                    className="text-lw-accent hover:text-lw-text text-xs transition-colors"
                   >
                     Load available fonts
                   </button>
@@ -202,12 +202,12 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
 
           {/* Image */}
           <div>
-            <h3 className="mb-4 text-xs uppercase tracking-widest text-lw-accent sm:mb-2 lg:mb-4">
+            <h3 className="text-lw-accent mb-4 text-xs tracking-widest uppercase sm:mb-2 lg:mb-4">
               Image
             </h3>
             <div className="space-y-3 sm:space-y-2 lg:space-y-3">
               <div>
-                <label htmlFor="img-width" className="mb-1 block text-xs text-lw-muted">
+                <label htmlFor="img-width" className="text-lw-muted mb-1 block text-xs">
                   Width
                 </label>
                 <input
@@ -216,11 +216,11 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   value={width}
                   onChange={(e) => setRendererOption('width', e.target.value)}
                   placeholder="auto"
-                  className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text placeholder-lw-muted/40 transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
+                  className="border-lw-border bg-lw-bg text-lw-text placeholder-lw-muted/40 focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
                 />
               </div>
               <div>
-                <label htmlFor="img-height" className="mb-1 block text-xs text-lw-muted">
+                <label htmlFor="img-height" className="text-lw-muted mb-1 block text-xs">
                   Height
                 </label>
                 <input
@@ -228,7 +228,7 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   type="text"
                   value={height}
                   onChange={(e) => setRendererOption('height', e.target.value)}
-                  className="w-full rounded-lg border border-lw-border bg-lw-bg px-3 py-2 text-sm text-lw-text transition-all focus:border-lw-accent focus:outline-none sm:py-1.5 lg:py-2"
+                  className="border-lw-border bg-lw-bg text-lw-text focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
                 />
               </div>
             </div>

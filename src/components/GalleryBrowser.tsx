@@ -81,15 +81,15 @@ export default function GalleryBrowser() {
       {/* Loading state */}
       {isLoading && (
         <div className="flex justify-center py-16" data-testid="gallery-spinner">
-          <div className="h-11 w-11 animate-spin rounded-full border-[3px] border-lw-border border-t-lw-accent" />
+          <div className="border-lw-border border-t-lw-accent h-11 w-11 animate-spin rounded-full border-[3px]" />
         </div>
       )}
 
       {/* Error state */}
       {!isLoading && loadError && (
         <div className="py-12 text-center">
-          <p className="mb-2 text-sm text-lw-muted">Could not load gallery images.</p>
-          <p className="text-xs text-lw-muted/60">
+          <p className="text-lw-muted mb-2 text-sm">Could not load gallery images.</p>
+          <p className="text-lw-muted/60 text-xs">
             Please try refreshing, or report this at{' '}
             <a href="mailto:niko@savas.ca" className="text-lw-accent hover:underline">
               niko@savas.ca
@@ -119,7 +119,7 @@ export default function GalleryBrowser() {
               <div
                 key={img.url}
                 onClick={() => setLightboxIndex(i)}
-                className={`cursor-pointer overflow-hidden rounded-lg border border-lw-border transition-all duration-200 hover:scale-[1.03] hover:border-lw-accent hover:shadow-[0_0_20px_rgba(39,170,225,0.15)] ${SPAN_TO_CSS[img.spanClass]}`}
+                className={`border-lw-border hover:border-lw-accent cursor-pointer overflow-hidden rounded-lg border transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_20px_rgba(39,170,225,0.15)] ${SPAN_TO_CSS[img.spanClass]}`}
               >
                 <img
                   src={img.thumbnailUrl}
@@ -137,12 +137,12 @@ export default function GalleryBrowser() {
             <div className="mt-8 text-center">
               <button
                 onClick={() => setVisibleCount((c) => c + IMAGES_PER_BATCH)}
-                className="rounded-lg border border-lw-accent px-6 py-2.5 text-xs uppercase tracking-wider text-lw-accent transition-all hover:bg-lw-accent/10 hover:shadow-[0_0_16px_rgba(39,170,225,0.12)]"
+                className="border-lw-accent text-lw-accent hover:bg-lw-accent/10 rounded-lg border px-6 py-2.5 text-xs tracking-wider uppercase transition-all hover:shadow-[0_0_16px_rgba(39,170,225,0.12)]"
                 data-testid="load-more"
               >
                 Load More
               </button>
-              <p className="mt-2 text-xs text-lw-muted/60">
+              <p className="text-lw-muted/60 mt-2 text-xs">
                 Showing {visibleImages.length} of {allImages.length}
               </p>
             </div>
@@ -150,7 +150,7 @@ export default function GalleryBrowser() {
 
           {/* All loaded indicator */}
           {!hasMore && allImages.length > 0 && (
-            <p className="mt-6 text-center text-xs uppercase tracking-widest text-lw-muted/40">
+            <p className="text-lw-muted/40 mt-6 text-center text-xs tracking-widest uppercase">
               {allImages.length} visualizations
             </p>
           )}

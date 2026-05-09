@@ -31,17 +31,17 @@ function ToastItem({ toast }: { toast: Toast }) {
 
   return (
     <div
-      className={`border bg-lw-surface ${borderColor} w-full max-w-sm animate-[slideIn_0.2s_ease-out] rounded-lg p-4 shadow-2xl`}
+      className={`bg-lw-surface border ${borderColor} w-full max-w-sm animate-[slideIn_0.2s_ease-out] rounded-lg p-4 shadow-2xl`}
     >
       <div className="flex items-start gap-3">
         <span className={`${iconColor} mt-0.5 shrink-0 text-sm`}>{icon}</span>
         <div className="min-w-0 flex-1">
-          <p className="break-words text-sm text-lw-text">{toast.message}</p>
-          <p className="mt-2 text-[11px] leading-relaxed text-lw-muted/60">{SUPPORT_FOOTER}</p>
+          <p className="text-lw-text text-sm break-words">{toast.message}</p>
+          <p className="text-lw-muted/60 mt-2 text-[11px] leading-relaxed">{SUPPORT_FOOTER}</p>
         </div>
         <button
           onClick={() => removeToast(toast.id)}
-          className="ml-1 shrink-0 text-xs text-lw-muted hover:text-lw-text"
+          className="text-lw-muted hover:text-lw-text ml-1 shrink-0 text-xs"
           aria-label="Dismiss"
         >
           ✕
@@ -64,7 +64,7 @@ export default function ErrorToast() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div className="fixed right-4 top-4 z-[60] flex flex-col gap-2">
+      <div className="fixed top-4 right-4 z-[60] flex flex-col gap-2">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} />
         ))}

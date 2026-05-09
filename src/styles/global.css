@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+@source '../**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}';
+
+@theme {
+  --color-lw-bg: rgb(245 223 197);
+  --color-lw-surface: rgb(255 255 255);
+  --color-lw-border: rgb(61 12 17);
+  --color-lw-accent: rgb(196 40 40);
+  --color-lw-accent-dim: rgb(163 33 33);
+  --color-lw-teal: rgb(212 168 67);
+  --color-lw-cyan: rgb(139 107 139);
+  --color-lw-muted: rgb(100 75 55);
+  --color-lw-text: rgb(61 28 30);
+  --color-lw-heading: rgb(45 10 16);
+
+  --font-display: 'Super Arena', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+}
