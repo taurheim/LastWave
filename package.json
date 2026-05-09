@@ -23,10 +23,10 @@
     "verify": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
-    "@astrojs/react": "^4.2.0",
+    "@astrojs/react": "^5.0.4",
     "@astrojs/sitemap": "^3.7.2",
     "@fontsource/dm-sans": "^5.2.8",
-    "astro": "^5.18.1",
+    "astro": "^6.3.1",
     "d3": "^7.9.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
