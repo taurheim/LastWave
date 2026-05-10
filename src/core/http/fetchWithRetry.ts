@@ -90,8 +90,18 @@ export async function fetchWithRetry(
         `Request failed (${response.status}): ${response.statusText}`,
         response.status,
       );
+      // Strip query params and path segments that may contain usernames
+      const rawUrl =
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      let safeUrl: string;
+      try {
+        const parsed = new URL(rawUrl);
+        safeUrl = `${parsed.origin}${parsed.pathname.replace(/\/user\/[^/]+/, '/user/***')}`;
+      } catch {
+        safeUrl = '(unparseable)';
+      }
       trackEvent('api_error', {
-        url: typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        url: safeUrl,
         status: response.status,
         message: fetchError.message,
       });

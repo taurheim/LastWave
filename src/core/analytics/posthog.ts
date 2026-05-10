@@ -22,6 +22,7 @@ export function initAnalytics(): void {
     capture_pageview: true,
     capture_pageleave: true,
     disable_session_recording: true,
+    persistence: 'memory',
   });
   initialized = true;
 

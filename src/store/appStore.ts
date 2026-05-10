@@ -100,7 +100,7 @@ export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
   toasts: [],
   addToast: (message, type = 'error') =>
     set((state) => {
-      trackEvent('error_displayed', { message, type });
+      trackEvent('error_displayed', { type });
       return {
         toasts: [
           ...state.toasts,
