@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLastWaveStore } from '@/store/appStore';
 import CloudinaryAPI from '@/core/cloudinary/CloudinaryAPI';
 import { fetchWithRetry } from '@/core/http/fetchWithRetry';
+import { trackEvent } from '@/core/analytics/posthog';
 
 // Build a self-contained <style> block with base64-inlined @font-face rules.
 // This is needed because <img>-based SVG rendering blocks external loads.
@@ -139,6 +140,7 @@ export default function ImageActions() {
   function downloadSvg() {
     const svgEl = getSvgElement();
     if (!svgEl) return;
+    trackEvent('image_downloaded', { format: 'svg' });
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -154,6 +156,7 @@ export default function ImageActions() {
   async function downloadPng() {
     const svgEl = getSvgElement();
     if (!svgEl) return;
+    trackEvent('image_downloaded', { format: 'png' });
     const fontFamily = rendererOptions.font ?? 'DM Sans';
 
     try {
@@ -179,6 +182,7 @@ export default function ImageActions() {
 
     const svgEl = getSvgElement();
     if (!svgEl) return;
+    trackEvent('image_shared', { method: 'cloudinary' });
     const fontFamily = rendererOptions.font ?? 'DM Sans';
 
     setUploadInProgress(true);
@@ -206,6 +210,7 @@ export default function ImageActions() {
   async function nativeShare() {
     const svgEl = getSvgElement();
     if (!svgEl) return;
+    trackEvent('image_shared', { method: 'native' });
     const fontFamily = rendererOptions.font ?? 'DM Sans';
 
     try {

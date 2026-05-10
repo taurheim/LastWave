@@ -5,6 +5,8 @@
  * when X-RateLimit-Remaining is low to avoid hitting 429 in the first place.
  */
 
+import { trackEvent } from '../analytics/posthog';
+
 const DEFAULT_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 const RATE_LIMIT_HEADROOM = 2;
@@ -84,10 +86,26 @@ export async function fetchWithRetry(
       }
 
       // Non-retryable 4xx or final attempt — throw
-      throw new FetchError(
+      const fetchError = new FetchError(
         `Request failed (${response.status}): ${response.statusText}`,
         response.status,
       );
+      // Strip query params and path segments that may contain usernames
+      const rawUrl =
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      let safeUrl: string;
+      try {
+        const parsed = new URL(rawUrl);
+        safeUrl = `${parsed.origin}${parsed.pathname.replace(/\/user\/[^/]+/, '/user/***')}`;
+      } catch {
+        safeUrl = '(unparseable)';
+      }
+      trackEvent('api_error', {
+        url: safeUrl,
+        status: response.status,
+        message: fetchError.message,
+      });
+      throw fetchError;
     } catch (err) {
       if (err instanceof FetchError) throw err;
 

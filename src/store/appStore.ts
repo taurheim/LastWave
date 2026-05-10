@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type LoadingStage from '../core/models/LoadingStage';
+import { trackEvent } from '../core/analytics/posthog';
 
 export interface Toast {
   id: string;
@@ -98,17 +99,20 @@ export const useLastWaveStore = create<LastWaveState>((set, _get) => ({
   // Toasts
   toasts: [],
   addToast: (message, type = 'error') =>
-    set((state) => ({
-      toasts: [
-        ...state.toasts,
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          message,
-          type,
-          createdAt: Date.now(),
-        },
-      ],
-    })),
+    set((state) => {
+      trackEvent('error_displayed', { type });
+      return {
+        toasts: [
+          ...state.toasts,
+          {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            message,
+            type,
+            createdAt: Date.now(),
+          },
+        ],
+      };
+    }),
   removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   // Options

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useLastWaveStore } from '@/store/appStore';
+import { trackEvent } from '@/core/analytics/posthog';
 
 const FALLBACK_FONTS = [
   'DM Sans',
@@ -119,7 +120,10 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
             <select
               id="graph-type"
               value={offset}
-              onChange={(e) => setRendererOption('offset', e.target.value)}
+              onChange={(e) => {
+                setRendererOption('offset', e.target.value);
+                trackEvent('graph_type_changed', { graph_type: e.target.value });
+              }}
               className="border-lw-border bg-lw-bg text-lw-text focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
             >
               {[
@@ -158,7 +162,10 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                   <input
                     type="checkbox"
                     checked={opt.checked}
-                    onChange={(e) => setRendererOption(opt.key, e.target.checked)}
+                    onChange={(e) => {
+                      setRendererOption(opt.key, e.target.checked);
+                      trackEvent('option_changed', { option: opt.key, value: e.target.checked });
+                    }}
                     className="border-lw-border bg-lw-bg accent-lw-accent rounded"
                   />
                   <span className="text-lw-muted group-hover:text-lw-text text-xs transition-colors">
@@ -179,7 +186,10 @@ export default function CustomizePanel({ maxPlays }: { maxPlays: number }) {
                 {fontsLoaded ? (
                   <select
                     value={font}
-                    onChange={(e) => setRendererOption('font', e.target.value)}
+                    onChange={(e) => {
+                      setRendererOption('font', e.target.value);
+                      trackEvent('font_changed', { font: e.target.value });
+                    }}
                     className="border-lw-border bg-lw-bg text-lw-text focus:border-lw-accent w-full rounded-lg border px-3 py-2 text-sm transition-all focus:outline-none sm:py-1.5 lg:py-2"
                   >
                     {displayFonts.map((f) => (
