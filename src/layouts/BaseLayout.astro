@@ -242,6 +242,7 @@ const buildNumber = process.env.GITHUB_RUN_NUMBER ?? 'local';
         href="https://savas.ca"
         class="hover:text-lw-accent transition-colors">Niko Savas</a
       >
+      <span class="text-lw-muted/20 ml-1" title={`Build ${buildNumber}`}>{gitSha}</span>
     </footer>
     <script>
       import { initAnalytics } from '@/core/analytics/posthog';

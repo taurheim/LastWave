@@ -18,10 +18,10 @@ export function initAnalytics(): void {
   if (initialized || !POSTHOG_KEY) return;
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
-    autocapture: true,
+    autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
-    disable_session_recording: false,
+    disable_session_recording: true,
   });
   initialized = true;
 
