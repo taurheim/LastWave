@@ -5,6 +5,9 @@ node_modules
 .claude/
 .validation/
 
+# Generated at build time
+public/version.json
+
 # local env files
 .env.local
 .env.*.local
