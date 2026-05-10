@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
 
+run-name: "CI #${{ github.run_number }} — ${{ github.event.head_commit.message }}"
+
 jobs:
   lint:
     name: Lint & Format
@@ -66,8 +68,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Generate version.json
+        run: |
+          echo '{
+            "sha": "'${GITHUB_SHA::7}'",
+            "fullSha": "'$GITHUB_SHA'",
+            "run": '$GITHUB_RUN_NUMBER',
+            "builtAt": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+          }' > public/version.json
       # Build with default base (/lastwave/) matching the production deploy path.
       - run: npm run build
+        env:
+          GIT_SHA: ${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: dist
