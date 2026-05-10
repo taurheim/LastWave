@@ -7,7 +7,8 @@
 
 import posthog from 'posthog-js';
 
-const POSTHOG_KEY = import.meta.env.PUBLIC_POSTHOG_KEY as string | undefined;
+// Public write-only project key — safe to expose in client-side code.
+const POSTHOG_KEY = 'phc_nhGFP4vdzuGrL5B7VGoeGRKcAtnPMvEsumoWhWTkp4a5';
 const POSTHOG_HOST =
   (import.meta.env.PUBLIC_POSTHOG_HOST as string | undefined) ?? 'https://us.i.posthog.com';
 
@@ -15,7 +16,7 @@ let initialized = false;
 
 /** Call once on page load (BaseLayout). */
 export function initAnalytics(): void {
-  if (initialized || !POSTHOG_KEY) return;
+  if (initialized) return;
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
     autocapture: false,
