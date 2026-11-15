@@ -89,9 +89,13 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    # Browsers come from the pinned image (same as pr.yml); `playwright install` fails on newer ubuntu-latest images.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
     env:
       ASTRO_BASE: /
       CI_USE_PREVIEW: true
+      HOME: /root
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,7 +105,6 @@ jobs:
       - run: npm ci
       # E2E uses astro preview at http://localhost:4321/ so needs base=/; build its own dist.
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
