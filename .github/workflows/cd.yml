@@ -8,6 +8,13 @@ on:
 
 run-name: "Deploy CI #${{ github.event.workflow_run.run_number }} — ${{ github.event.workflow_run.head_sha }}"
 
+# One deploy at a time: overlapping FTP uploads let an older build finish last and win.
+# Don't cancel in-progress runs (a half-finished upload leaves a mixed site); a newer
+# queued run replaces any older pending one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy to Namecheap
