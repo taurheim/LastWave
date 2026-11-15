@@ -6,6 +6,9 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://savas.ca/lastwave',
   base: process.env.ASTRO_BASE ?? '/lastwave/',
+  // Astro 7 defaults to 'jsx' whitespace rules, which drop the spaces around
+  // Prettier-wrapped inline links (e.g. "Last.fmor"). Keep HTML-aware compression.
+  compressHTML: true,
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
